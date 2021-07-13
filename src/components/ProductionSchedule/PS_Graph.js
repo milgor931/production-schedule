@@ -3,6 +3,7 @@ import SelectBox from 'devextreme-react/select-box';
 import Switch from '@material-ui/core/Switch';
 import FormGroup from '@material-ui/core/FormGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
+import Paper from '@material-ui/core/Paper';
 
 import {
   Chart,
@@ -18,66 +19,95 @@ import {
   Label,
   Format
 } from 'devextreme-react/chart';
-import { sources, tasks, shopData } from './data.js';
-import { graphData } from './graphData.js';
+import { jobs, shopData } from './data.js';
+
+const sources = [
+  { value: 'units', name: 'Units' },
+  { value: 'emps', name: 'Employees' },
+];
 
 const Graph = (props) => {
-  const [state, setState] = React.useState({});
-
-  const [ options, setOptions ] = useState([]);
+  const [ state, setState ] = React.useState({});
   const [ data, setData ]  = useState([]);
+  const [ shops, setShops ] = useState(["Shop A", "Shop B"]);
+
+  useEffect(() => {
+    calculateForOffSets();
+  }, [ state ])
+
+  const calculateForOffSets = () => {
+    let all_data = [];
+    jobs.forEach(job => {
+      for (let w = 0; w < job.weeks; w++) {
+        all_data.push({ shop: job.shop, offSet: (job.offSet + w), unitsPerWeek: job.unitsPerWeek, emps: job.emps })
+      }
+    })
+
+    let filtered = all_data.filter(d => state[d.shop]);
+    let new_data = [];
+
+    let num = Math.max(...filtered.map(item => item.offSet));
+    for (let i = 0; i < num; i++) {
+      let total_units = 0;
+      let total_emps = 0;
+      filtered.forEach(d => {
+        if (d.offSet === i) {
+          total_units += d.unitsPerWeek;
+          total_emps += d.emps;
+        }
+      })
+      new_data.push({ offSet: i, units: total_units, emps: total_emps})
+    }
+    setData(new_data);
+  }
 
   const handleChange = (event) => {
-    setOptions([ ...options, event.target.id]);
     setState({ ...state, [event.target.name]: event.target.checked });
   };
 
-  useEffect(() => {
+  const convertDaysToMilliseconds = (days) => {
+    return days * 24 * 60 * 60 * 1000;
+  }
 
-    // use map
-    for (let i = 0; i < options.length; i++) {
-      shopData[options[i]].forEach(shop => {
-        for (let day = 0; day < 31; day++){
+  const convertMillisecondsToDays = (ms) => {
+    return Math.ceil(ms / (24 * 60 * 60 * 1000));
+  }
 
-          setData([...data, {
-            week: new Date(shop.week).getDate()+day,
-            units: shop.units,
-            emps: shop.emps
-          }])
+  const convertToDate = (value) => {
+    let date = (value * 7) + convertMillisecondsToDays(new Date('7/1/2021').getTime());
+    date = new Date(convertDaysToMilliseconds(date));
+    return date.toLocaleDateString();
+  }
 
-        }
-      })
-    }
-  }, [options])
-
-
-  const shopSwitches = shopData.map(shop => (
+  const shopSwitches = shops.map(shop => (
       <FormControlLabel
-        key={shop[0].name}
+        key={shop}
         control={
           <Switch 
-            name={shop[0].name} 
-            id={shopData.indexOf(shop)}
-            checked={state[shop[0].name]} 
+            name={shop} 
+            id={shop}
+            checked={state[shop]} 
             onChange={handleChange} 
           />
         }
-        
-        label={shop[0].name}
+        label={shop}
       />
   ))
 
   return (
-    <React.Fragment>
+    <Paper elevation={5}>
+      <FormGroup row style={{position: 'fixed', 'top': 0, width: '100%', margin: '50px'}}>
+          {shopSwitches}
+        </FormGroup>
       <Chart
         // palette="Violet"
-        dataSource={graphData}
+        dataSource={data}
         title="Units and Employees Over Time"
-        style={{margin: '50px', position: 'fixed', top: '0px', width: '90vw'}}
+        style={{margin: '50px', position: 'fixed', top: '75px', width: '90vw'}}
       >
         <CommonSeriesSettings
-          argumentField="day"
-          type={"stackedspline"}
+          argumentField="offSet"
+          type={"spline"}
         />
         <CommonAxisSettings>
           <Grid visible={true} />
@@ -91,8 +121,9 @@ const Graph = (props) => {
         <ArgumentAxis
           allowDecimals={false}
           axisDivisionFactor={60}
+          
         >
-          <Label visible={true} backgroundColor="#c18e92" />
+          <Label  customizeText={data => convertToDate(data.value)}/>
         </ArgumentAxis>
         <Legend
           verticalAlignment="center"
@@ -101,11 +132,8 @@ const Graph = (props) => {
         <Export enabled={true} />
         <Tooltip enabled={true} />
       </Chart>
-      
-      <FormGroup row style={{margin: '50px', top: 0}}>
-        {shopSwitches}
-      </FormGroup>
-    </React.Fragment>
+
+    </Paper>
   );
 }
 

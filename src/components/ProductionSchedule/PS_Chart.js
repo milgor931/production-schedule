@@ -1,14 +1,71 @@
 
-import React, { useState, createRef } from 'react';
-import { tasks, dependencies, resources, resourceAssignments } from '../../data.js';
-import Gantt, { Tasks, Dependencies, Resources, ResourceAssignments, Column, Editing, Toolbar, Item, Validation, ContextMenu } from 'devextreme-react/gantt';
-
+import React, { useState, createRef, useEffect } from 'react';
+import { jobs, dependencies, resources, resourceAssignments } from './data.js';
+import Gantt, { Tasks, Toolbar, Item } from 'devextreme-react/gantt';
+import DataGrid, {
+  Column,
+  Grouping,
+  GroupPanel,
+  Pager,
+  Paging,
+  SearchPanel,
+  Editing,
+  Summary, 
+  TotalItem,
+  MasterDetail,
+  GroupItem,
+  RemoteOperations
+} from 'devextreme-react/data-grid';
+import axios from "axios";
 
 const ProductionScheduleChart = (props) => {
+
+    const [ data, setData ] = useState([]);
 
     const [ scaleType, setScaleType ] = useState('weeks');
     const [ taskTitlePosition, setTaskTitlePosition ] = useState('inside');
     const [ selectedIndex, setSelectedIndex ] = useState(0);
+
+    const [ startDate, setStartDate ] = useState(new Date());
+
+    useEffect(() => {
+      axios.get("https://ww-production-schedule-default-rtdb.firebaseio.com/jobs.json")
+        .then(response => {
+          setData(response.data);
+          data.forEach(row => {
+            convertDate(row)
+            getOffSet(row, data[getStartDateIndex()].start);
+          })
+          setStartDate(data[getStartDateIndex()].start);
+        })
+        .catch(error => {
+          alert(error);
+        })
+    }, [])
+
+    const getStartDateIndex = () => {
+      let s = convertMillisecondsToDays(new Date(data[0].start).getTime());
+      let jobIndex = 0;
+      data.forEach((job, index) => {
+        if (convertMillisecondsToDays(new Date(job.start).getTime()) < s) {
+          jobIndex = index;
+        } 
+      })
+      return jobIndex;
+    }
+
+    const getOffSet = (row, start) => {
+      let days = convertMillisecondsToDays(new Date(row.start).getTime());
+      row.offSet = (days - convertMillisecondsToDays(new Date(start).getTime()))/7;
+    }
+
+    const convertDaysToMilliseconds = (days) => {
+      return days * 24 * 60 * 60 * 1000;
+    }
+
+    const convertMillisecondsToDays = (ms) => {
+      return Math.ceil(ms / (24 * 60 * 60 * 1000));
+    }
 
     const itemTitleRender = (tab) => {
         return <span>{tab.name}</span>;
@@ -24,25 +81,7 @@ const ProductionScheduleChart = (props) => {
         }
     }
 
-    const ganttRef = createRef();
-
-    const update = () => {
-
-    }
-
-    const empUnitCell = (data) => {
-      return (
-        <div>
-            <span style={{color: "#5a87d1", marginRight: "30px"}}>{data.data.emps}</span>
-            <br></br>
-            <span style={{color: "green", marginLeft: "30px"}}>{data.data.units}</span>
-        </div>
-      )
-    }
-
     const jobWallCell = (data) => {
-      
-      // console.log(data.cellElement.style)
       if (!data.data.booked && data.cellElement) {
         data.cellElement.style.backgroundColor = "#9cf5ff"
       }
@@ -57,95 +96,121 @@ const ProductionScheduleChart = (props) => {
       )
     }
 
-    const onCustomCommand = (e) => {
-      if(e.name == 'edit') {
-          alert("you are editing")
-      } else if (e.name == "delete") {
-        console.log(e)
-      }
-    };
-
-    const onTaskEditShowing = (e) => {
-      e.hiddenFields = ["Resources"];
-    }
-
-    const editCell = (cell) => {
-      return (
-        <input type="text" />
-      )
-    }
-
-    const renderCell = (cell, t) => {
-      if (!cell.data.booked && cell.cellElement) {
-        cell.cellElement.style.backgroundColor = "#9cf5ff"
-      }
-
+    const editJobWallCell = (data) => {
       return (
         <div>
-            <span>{cell.data[t]}</span>
+            <input type="text" placeholder={data.data.title} name={data.data.title} onChange={e => data.data.title = e.target.value}/>
+            <br></br>
+            <input type="text" placeholder={data.data.wallType} name={data.data.wallType} onChange={e => data.data.wallType = e.target.value}/>
         </div>
       )
     }
 
-    const calculateEndDate = (row) => {
-      console.log(row.start);
 
-      // row.end = row.start.getTime();
-
-      return row.end
-
+    const renderRow = (row) => {
+      if (row.rowType === "data") {
+        if (!row.data.booked) {
+          row.rowElement.style.backgroundColor = "#9cf5ff";
+        } else if (row.data.header) {
+          row.rowElement.style.backgroundColor = "#a8a8a8";
+        }
+      } 
     }
 
     const convertDate = (row) => {
       if (!row.header) {
-
         row.start = new Date(row.start);
         let start = row.start.getTime();
-
-
         let weeks = Math.ceil(row.units/row.unitsPerWeek);
         row.weeks = weeks;
         let time = weeks * 7 * 24 * 60 * 60 * 1000;
         time = start + time;
-
         row.end = new Date(time);
-        
-        
       }
-
       return row.end;
     }
 
-    const editCellRender = (cell) => {
-      return (
-        <input type="text" />
-      )
+    const updateRow = (row) => {
+      let newData = data.filter(d => d.id !== row.data.id);
+      setData([ ...newData, row.data ]);
     }
 
     return (
-      <div>
+      <div style={{margin: '50px'}}>
+        <DataGrid
+          dataSource={data}
+          allowColumnReordering
+          showBorders
+          allowColumnResizing
+          columnAutoWidth
+          highlightChanges
+          repaintChangesOnly
+          onRowPrepared={renderRow}
+          twoWayBindingEnabled
+          columnResizingMode="nextColumn"
+          onRowUpdated={updateRow}
+          wordWrapEnabled
+          autoExpandAll
+        >
+
+          <GroupPanel visible autoExpandAll/>
+          <SearchPanel visible={true} highlightCaseSensitive={false} />
+          <Grouping autoExpandAll />
+
+          <Editing
+            mode="cell"
+            allowUpdating
+            allowDeleting
+            allowAdding
+          />
+
+          <Column dataField="shop" groupIndex={0} />
+          <Column dataField="jobName" caption="Job Name & Wall Type" cellRender={jobWallCell} editCellRender={editJobWallCell} alignment="left" />
+          <Column dataField="jobNumber" caption="Job Number" alignment="center"/>
+          <Column dataField="customer" caption="Customer" alignment="center" />
+          <Column dataField="unitsPerWeek" caption="Units/Week" alignment="center" />
+          <Column dataField="start" caption="Shop Start Date" alignment="center"/>
+          <Column dataField="weeks" caption="Weeks" alignment="center" allowEditing={false}/>
+          <Column dataField="end" caption="End Date" alignment="center" calculateCellValue={convertDate} allowEditing={false}/>
+          <Column dataField="fieldStart" cption="Field Start Date" alignment="center" />
+          <Column dataField="units" caption="Units" alignment="center"/>
+          <Column dataField="emps" caption="Emps" alignment="center"/>
+          <Column dataField="offSet" caption="Offset" alignment="center"/>
+          
+          <Summary recalculateWhileEditing>
+            <GroupItem
+              column="units"
+              summaryType="sum"
+              customizeText={data => `Total Units: ` + data.value}
+            />
+            <GroupItem
+              column="emps"
+              summaryType="sum"
+              customizeText={data => `Total Emps: ` + data.value}
+            />
+            <GroupItem
+              column="unitsPerWeek"
+              summaryType="sum"
+              customizeText={data => `Total Units/Week: ` + data.value}
+            />
+          </Summary>
+
+        </DataGrid>
+        
         <div className="widget-container">
           <Gantt
             taskListWidth={500}
-            height={window.innerHeight}
+            height={window.height}
             taskTitlePosition={taskTitlePosition}
             scaleType={scaleType}
             showResources={false}
-            showRowLines={true}
+            showRowLines
             showColumnLines={false}
-            showBorders={true}
-            onCustomCommand={onCustomCommand}
+            showBorders
             onTaskEditDialogShowing={data => data.cancel = true}
-            onTaskDblClick={task => {
-              console.log(task)
-            }}
           >
 
-            <Tasks dataSource={tasks} />
-            {/* <Dependencies dataSource={dependencies} />
-            <Resources dataSource={resources} />
-
-            <ResourceAssignments dataSource={resourceAssignments} /> */}
+            <Tasks dataSource={data} />
 
             <Toolbar>
                 <Item name="undo" />
@@ -161,28 +226,8 @@ const ProductionScheduleChart = (props) => {
                 <Item name="zoomOut" />
             </Toolbar>
 
-            <ContextMenu>
-                <Item text="Edit Row" name="edit"></Item>
-                <Item text="Delete Row" name="delete"></Item>
-            </ContextMenu>   
-
-            <Column dataField="jobName" caption="Job Name & Wall Type" editinCellRender={editCellRender} cellRender={jobWallCell} alignment="left" editCellRender={editCell}/>
-            <Column dataField="jobNumber" caption="Job Number" alignment="center"/>
-            <Column dataField="customer" caption="Customer" alignment="center" />
-            <Column dataField="unitsPerWeek" caption="Units/Week" alignment="center" />
-            <Column dataField="start" caption="Shop Start Date" alignment="center"/>
-            <Column dataField="weeks" caption="Weeks" alignment="center"/>
-            <Column dataField="end" caption="End Date" alignment="center" calculateCellValue={convertDate} />
-            <Column dataField="fieldStart" caption="Field Start Date" alignment="center" />
-            <Column dataField="emps" caption="Emps/Units" cellRender={empUnitCell} alignment="center"/>
-
-            <Editing 
-              enabled={false} 
-              allowResourceAdding={false}
-              allowResourceDeleting={false}
-              allowResourceUpdating={false}
-              allowTaskResourceUpdating={false}
-            />
+            <Column dataField="jobName" caption="Job Name & Wall Type" cellRender={jobWallCell} alignment="left"/>
+            <Column dataField="jobNumber" caption="Job Number" alignment="left"/>
           </Gantt>
         </div>
       </div>
