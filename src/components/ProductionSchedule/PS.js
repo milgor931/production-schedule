@@ -4,6 +4,7 @@ import { jobs, dependencies, resources, resourceAssignments } from '../../data.j
 import Gantt, { Tasks, Dependencies, Resources, ResourceAssignments, Column, Editing, Toolbar, Item, Validation, ContextMenu } from 'devextreme-react/gantt';
 import TabPanel from 'devextreme-react/tab-panel';
 import ProductionScheduleChart from './PS_Chart.js';
+import ProductionScheduleGantt from './PS_Gantt.js';
 import Gallery from 'devextreme-react/gallery';
 import Graph from './PS_Graph.js';
 import { makeStyles } from '@material-ui/core/styles';
@@ -12,8 +13,20 @@ import BottomNavigationAction from '@material-ui/core/BottomNavigationAction';
 import RestoreIcon from '@material-ui/icons/Restore';
 import FavoriteIcon from '@material-ui/icons/Favorite';
 import LocationOnIcon from '@material-ui/icons/LocationOn';
+import ShowChartIcon from '@material-ui/icons/ShowChart';
+import TableChartIcon from '@material-ui/icons/TableChart';
 import CheckBox from 'devextreme-react/check-box';
 import MultiView from 'devextreme-react/multi-view';
+import { Switch, View } from 'react-view-switch';
+import Accordion from '@material-ui/core/Accordion';
+import AccordionSummary from '@material-ui/core/AccordionSummary';
+import AccordionDetails from '@material-ui/core/AccordionDetails';
+import Typography from '@material-ui/core/Typography';
+import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
+
+
+// gantt chart view
+// tooltip for gallery view
 
 const useStyles = makeStyles({
     root: {
@@ -22,11 +35,7 @@ const useStyles = makeStyles({
   });
 
 const ProductionSchedule = (props) => {
-
-    const classes = useStyles();
-
-    const [ selectedIndex, setSelectedIndex ] = useState(0);
-    const [value, setValue] = useState(0);
+    const [ selectedIndex, setSelectedIndex ] = useState();
 
     const itemTitleRender = (tab) => {
         return <span>{tab.name}</span>;
@@ -42,22 +51,27 @@ const ProductionSchedule = (props) => {
         }
     }
 
+
     return (
       <div>
-
         <Gallery
             id="gallery"
             dataSource={[
-              {
-                  'ID': 0,
-                  'name': 'Production Schedule',
-                  'component': <ProductionScheduleChart />
-              }, 
-              {
-                  'ID': 1,
-                  'name': 'Units Graph',
-                  'component': <Graph />
-              }
+                {
+                    'ID': 0,
+                    'name': 'Gantt Chart',
+                    'component': <ProductionScheduleGantt />
+                },
+                {
+                    'ID': 1,
+                    'name': 'Production Schedule',
+                    'component': <ProductionScheduleChart />
+                }, 
+                {
+                    'ID': 2,
+                    'name': 'Units Graph',
+                    'component': <Graph />
+                }
             ]}
             height={'auto'}
             slideshowDelay={0}
@@ -79,86 +93,3 @@ const ProductionSchedule = (props) => {
 
 
 export default ProductionSchedule;
-
-
-
-
-
-
-// import React from 'react';
-// import PropTypes from 'prop-types';
-// import { makeStyles } from '@material-ui/core/styles';
-// import AppBar from '@material-ui/core/AppBar';
-// import Tabs from '@material-ui/core/Tabs';
-// import Tab from '@material-ui/core/Tab';
-// import Typography from '@material-ui/core/Typography';
-// import Box from '@material-ui/core/Box';
-// import ProductionScheduleChart from './PS_Chart';
-
-// function TabPanel(props) {
-//   const { children, value, index, ...other } = props;
-
-//   return (
-//     <div
-//       role="tabpanel"
-//       hidden={value !== index}
-//       id={`simple-tabpanel-${index}`}
-//       aria-labelledby={`simple-tab-${index}`}
-//       {...other}
-//     >
-//       {value === index && (
-//         <Box p={3}>
-//           <Typography>{children}</Typography>
-//         </Box>
-//       )}
-//     </div>
-//   );
-// }
-
-// TabPanel.propTypes = {
-//   children: PropTypes.node,
-//   index: PropTypes.any.isRequired,
-//   value: PropTypes.any.isRequired,
-// };
-
-// function a11yProps(index) {
-//   return {
-//     id: `simple-tab-${index}`,
-//     'aria-controls': `simple-tabpanel-${index}`,
-//   };
-// }
-
-// const useStyles = makeStyles((theme) => ({
-//   root: {
-//     flexGrow: 1,
-//     backgroundColor: theme.palette.background.paper,
-//   },
-// }));
-
-// const ProductionSchedule = (props) => {
-//   const classes = useStyles();
-//   const [value, setValue] = React.useState(0);
-
-//   const handleChange = (event, newValue) => {
-//     setValue(newValue);
-//   };
-
-//   return (
-//     <div className={classes.root}>
-//       <AppBar position="static">
-//         <Tabs value={value} onChange={handleChange} aria-label="simple tabs example">
-//           <Tab label="Schedule" {...a11yProps(0)} />
-//           <Tab label="Graph" {...a11yProps(1)} />
-//         </Tabs>
-//       </AppBar>
-//       <TabPanel value={value} index={0}>
-//         <ProductionScheduleChart />
-//       </TabPanel>
-//       <TabPanel value={value} index={1}>
-//         <Graph />
-//       </TabPanel>
-//     </div>
-//   );
-// }
-
-// export default ProductionSchedule;

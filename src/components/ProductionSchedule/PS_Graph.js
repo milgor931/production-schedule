@@ -19,7 +19,7 @@ import {
   Label,
   Format
 } from 'devextreme-react/chart';
-import { jobs, shopData } from './data.js';
+import axios from 'axios';
 
 const sources = [
   { value: 'units', name: 'Units' },
@@ -27,9 +27,20 @@ const sources = [
 ];
 
 const Graph = (props) => {
+  const [ jobs, setJobs ] = useState([]);
   const [ state, setState ] = React.useState({});
   const [ data, setData ]  = useState([]);
   const [ shops, setShops ] = useState(["Shop A", "Shop B"]);
+
+  useEffect(() => {
+    axios.get("https://ww-production-schedule-default-rtdb.firebaseio.com/jobs.json")
+      .then(response => {
+        setJobs(response.data);
+      })
+      .catch(error => {
+        alert(error);
+      })
+  }, [])
 
   useEffect(() => {
     calculateForOffSets();
@@ -39,24 +50,24 @@ const Graph = (props) => {
     let all_data = [];
     jobs.forEach(job => {
       for (let w = 0; w < job.weeks; w++) {
-        all_data.push({ shop: job.shop, offSet: (job.offSet + w), unitsPerWeek: job.unitsPerWeek, emps: job.emps })
+        all_data.push({ shop: job.shop, offset: (job.offset + w), unitsPerWeek: job.unitsPerWeek, emps: job.emps })
       }
     })
 
     let filtered = all_data.filter(d => state[d.shop]);
     let new_data = [];
 
-    let num = Math.max(...filtered.map(item => item.offSet));
+    let num = Math.max(...filtered.map(item => item.offset));
     for (let i = 0; i < num; i++) {
       let total_units = 0;
       let total_emps = 0;
       filtered.forEach(d => {
-        if (d.offSet === i) {
+        if (d.offset === i) {
           total_units += d.unitsPerWeek;
           total_emps += d.emps;
         }
       })
-      new_data.push({ offSet: i, units: total_units, emps: total_emps})
+      new_data.push({ offset: i, units: total_units, emps: total_emps})
     }
     setData(new_data);
   }
@@ -95,7 +106,7 @@ const Graph = (props) => {
   ))
 
   return (
-    <Paper elevation={5}>
+    <Paper>
       <FormGroup row style={{position: 'fixed', 'top': 0, width: '100%', margin: '50px'}}>
           {shopSwitches}
         </FormGroup>
@@ -106,7 +117,7 @@ const Graph = (props) => {
         style={{margin: '50px', position: 'fixed', top: '75px', width: '90vw'}}
       >
         <CommonSeriesSettings
-          argumentField="offSet"
+          argumentField="offset"
           type={"spline"}
         />
         <CommonAxisSettings>

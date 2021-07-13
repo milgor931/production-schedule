@@ -1,6 +1,5 @@
 
 import React, { useState, createRef, useEffect } from 'react';
-import { jobs, dependencies, resources, resourceAssignments } from './data.js';
 import Gantt, { Tasks, Toolbar, Item } from 'devextreme-react/gantt';
 import Spinner from '../Spinner';
 import DataGrid, {
@@ -18,17 +17,16 @@ import DataGrid, {
   RemoteOperations
 } from 'devextreme-react/data-grid';
 import axios from "axios";
+import { jobs } from './data.js';
 
 const ProductionScheduleChart = (props) => {
 
     const [ data, setData ] = useState([]);
     const [ loaded, setLoaded ] = useState(false);
-
     const [ scaleType, setScaleType ] = useState('weeks');
     const [ taskTitlePosition, setTaskTitlePosition ] = useState('inside');
     const [ selectedIndex, setSelectedIndex ] = useState(0);
-
-    const [ startDate, setStartDate ] = useState(new Date());
+    const [ startDate, setStartDate ] = useState();
 
     useEffect(() => {
       axios.get("https://ww-production-schedule-default-rtdb.firebaseio.com/jobs.json")
@@ -44,12 +42,13 @@ const ProductionScheduleChart = (props) => {
       if (data.length > 0) {
         data.forEach(row => {
           convertDate(row)
-          getOffSet(row, data[getStartDateIndex()].start);
+          getOffset(row, data[getStartDateIndex()].start);
         })
         setStartDate(data[getStartDateIndex()].start);
-        setLoaded(true);
+        
+        axios.put("https://ww-production-schedule-default-rtdb.firebaseio.com/jobs.json", JSON.stringify(data))
+        .then(response => setLoaded(true))
       }
-      
     }, [ data ])
 
     const saveChanges = (row) => {
@@ -70,9 +69,9 @@ const ProductionScheduleChart = (props) => {
       return jobIndex;
     }
 
-    const getOffSet = (row, start) => {
+    const getOffset = (row, start) => {
       let days = convertMillisecondsToDays(new Date(row.start).getTime());
-      row.offSet = Math.ceil((days - convertMillisecondsToDays(new Date(start).getTime()))/7);
+      row.offset = Math.ceil((days - convertMillisecondsToDays(new Date(start).getTime()))/7);
     }
 
     const convertDaysToMilliseconds = (days) => {
@@ -121,7 +120,6 @@ const ProductionScheduleChart = (props) => {
         </div>
       )
     }
-
 
     const renderRow = (row) => {
       if (row.rowType === "data") {
@@ -193,7 +191,7 @@ const ProductionScheduleChart = (props) => {
             <Column dataField="fieldStart" cption="Field Start Date" alignment="center" />
             <Column dataField="units" caption="Units" alignment="center"/>
             <Column dataField="emps" caption="Emps" alignment="center"/>
-            <Column dataField="offSet" caption="Offset" alignment="center"/>
+            <Column dataField="offset" caption="Offset" alignment="center"/>
             
             <Summary recalculateWhileEditing>
               <GroupItem
@@ -214,44 +212,10 @@ const ProductionScheduleChart = (props) => {
             </Summary>
 
           </DataGrid>
-          
-          <div className="widget-container">
-            <Gantt
-              taskListWidth={500}
-              height={window.height}
-              taskTitlePosition={taskTitlePosition}
-              scaleType={scaleType}
-              showResources={false}
-              showRowLines
-              showColumnLines={false}
-              showBorders
-              onTaskEditDialogShowing={data => data.cancel = true}
-            >
-
-              <Tasks dataSource={data} />
-
-              <Toolbar>
-                  <Item name="undo" />
-                  <Item name="redo" />
-                  <Item name="separator" />
-                  <Item name="collapseAll" />
-                  <Item name="expandAll" />
-                  <Item name="separator" />
-                  <Item name="addTask" />
-                  <Item name="deleteTask" />
-                  <Item name="separator" />
-                  <Item name="zoomIn" />
-                  <Item name="zoomOut" />
-              </Toolbar>
-
-              <Column dataField="jobName" caption="Job Name & Wall Type" cellRender={jobWallCell} alignment="left"/>
-              <Column dataField="jobNumber" caption="Job Number" alignment="left"/>
-            </Gantt>
-          </div>
-          </div>
-        : <Spinner />
+        </div>
+      : <Spinner />
       }
-     </div> 
+      </div>
     );
 }
 
