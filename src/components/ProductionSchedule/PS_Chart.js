@@ -2,6 +2,7 @@
 import React, { useState, createRef, useEffect } from 'react';
 import { jobs, dependencies, resources, resourceAssignments } from './data.js';
 import Gantt, { Tasks, Toolbar, Item } from 'devextreme-react/gantt';
+import Spinner from '../Spinner';
 import DataGrid, {
   Column,
   Grouping,
@@ -21,6 +22,7 @@ import axios from "axios";
 const ProductionScheduleChart = (props) => {
 
     const [ data, setData ] = useState([]);
+    const [ loaded, setLoaded ] = useState(false);
 
     const [ scaleType, setScaleType ] = useState('weeks');
     const [ taskTitlePosition, setTaskTitlePosition ] = useState('inside');
@@ -32,16 +34,30 @@ const ProductionScheduleChart = (props) => {
       axios.get("https://ww-production-schedule-default-rtdb.firebaseio.com/jobs.json")
         .then(response => {
           setData(response.data);
-          data.forEach(row => {
-            convertDate(row)
-            getOffSet(row, data[getStartDateIndex()].start);
-          })
-          setStartDate(data[getStartDateIndex()].start);
         })
         .catch(error => {
           alert(error);
         })
     }, [])
+
+    useEffect(() => {
+      if (data.length > 0) {
+        data.forEach(row => {
+          convertDate(row)
+          getOffSet(row, data[getStartDateIndex()].start);
+        })
+        setStartDate(data[getStartDateIndex()].start);
+        setLoaded(true);
+      }
+      
+    }, [ data ])
+
+    const saveChanges = (row) => {
+      const rowData = row.changes[0].data;
+      axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/jobs/${rowData.id}.json`, rowData)
+      .then(response => console.log("changes saved"))
+      .catch(error => alert(error))
+    }
 
     const getStartDateIndex = () => {
       let s = convertMillisecondsToDays(new Date(data[0].start).getTime());
@@ -56,7 +72,7 @@ const ProductionScheduleChart = (props) => {
 
     const getOffSet = (row, start) => {
       let days = convertMillisecondsToDays(new Date(row.start).getTime());
-      row.offSet = (days - convertMillisecondsToDays(new Date(start).getTime()))/7;
+      row.offSet = Math.ceil((days - convertMillisecondsToDays(new Date(start).getTime()))/7);
     }
 
     const convertDaysToMilliseconds = (days) => {
@@ -136,101 +152,106 @@ const ProductionScheduleChart = (props) => {
     }
 
     return (
-      <div style={{margin: '50px'}}>
-        <DataGrid
-          dataSource={data}
-          allowColumnReordering
-          showBorders
-          allowColumnResizing
-          columnAutoWidth
-          highlightChanges
-          repaintChangesOnly
-          onRowPrepared={renderRow}
-          twoWayBindingEnabled
-          columnResizingMode="nextColumn"
-          onRowUpdated={updateRow}
-          wordWrapEnabled
-          autoExpandAll
-        >
-
-          <GroupPanel visible autoExpandAll/>
-          <SearchPanel visible={true} highlightCaseSensitive={false} />
-          <Grouping autoExpandAll />
-
-          <Editing
-            mode="cell"
-            allowUpdating
-            allowDeleting
-            allowAdding
-          />
-
-          <Column dataField="shop" groupIndex={0} />
-          <Column dataField="jobName" caption="Job Name & Wall Type" cellRender={jobWallCell} editCellRender={editJobWallCell} alignment="left" />
-          <Column dataField="jobNumber" caption="Job Number" alignment="center"/>
-          <Column dataField="customer" caption="Customer" alignment="center" />
-          <Column dataField="unitsPerWeek" caption="Units/Week" alignment="center" />
-          <Column dataField="start" caption="Shop Start Date" alignment="center"/>
-          <Column dataField="weeks" caption="Weeks" alignment="center" allowEditing={false}/>
-          <Column dataField="end" caption="End Date" alignment="center" calculateCellValue={convertDate} allowEditing={false}/>
-          <Column dataField="fieldStart" cption="Field Start Date" alignment="center" />
-          <Column dataField="units" caption="Units" alignment="center"/>
-          <Column dataField="emps" caption="Emps" alignment="center"/>
-          <Column dataField="offSet" caption="Offset" alignment="center"/>
-          
-          <Summary recalculateWhileEditing>
-            <GroupItem
-              column="units"
-              summaryType="sum"
-              customizeText={data => `Total Units: ` + data.value}
-            />
-            <GroupItem
-              column="emps"
-              summaryType="sum"
-              customizeText={data => `Total Emps: ` + data.value}
-            />
-            <GroupItem
-              column="unitsPerWeek"
-              summaryType="sum"
-              customizeText={data => `Total Units/Week: ` + data.value}
-            />
-          </Summary>
-
-        </DataGrid>
-        
-        <div className="widget-container">
-          <Gantt
-            taskListWidth={500}
-            height={window.height}
-            taskTitlePosition={taskTitlePosition}
-            scaleType={scaleType}
-            showResources={false}
-            showRowLines
-            showColumnLines={false}
+    <div style={{margin: '50px'}}>
+      {loaded 
+        ? <div>
+          <DataGrid
+            dataSource={data}
             showBorders
-            onTaskEditDialogShowing={data => data.cancel = true}
+            allowColumnResizing
+            columnAutoWidth
+            highlightChanges
+            repaintChangesOnly
+            onRowPrepared={renderRow}
+            twoWayBindingEnabled
+            columnResizingMode="nextColumn"
+            onRowUpdated={updateRow}
+            wordWrapEnabled
+            autoExpandAll
+            onSaved={saveChanges}
           >
 
-            <Tasks dataSource={data} />
+            <GroupPanel visible autoExpandAll/>
+            <SearchPanel visible={true} highlightCaseSensitive={false} />
+            <Grouping autoExpandAll />
 
-            <Toolbar>
-                <Item name="undo" />
-                <Item name="redo" />
-                <Item name="separator" />
-                <Item name="collapseAll" />
-                <Item name="expandAll" />
-                <Item name="separator" />
-                <Item name="addTask" />
-                <Item name="deleteTask" />
-                <Item name="separator" />
-                <Item name="zoomIn" />
-                <Item name="zoomOut" />
-            </Toolbar>
+            <Editing
+              mode="cell"
+              allowUpdating
+              allowDeleting
+              allowAdding
+            />
 
-            <Column dataField="jobName" caption="Job Name & Wall Type" cellRender={jobWallCell} alignment="left"/>
-            <Column dataField="jobNumber" caption="Job Number" alignment="left"/>
-          </Gantt>
-        </div>
-      </div>
+            <Column dataField="shop" groupIndex={0} />
+            <Column dataField="jobName" caption="Job Name & Wall Type" cellRender={jobWallCell} editCellRender={editJobWallCell} alignment="left" />
+            <Column dataField="jobNumber" caption="Job Number" alignment="center"/>
+            <Column dataField="customer" caption="Customer" alignment="center" />
+            <Column dataField="unitsPerWeek" caption="Units/Week" alignment="center" />
+            <Column dataField="start" caption="Shop Start Date" alignment="center"/>
+            <Column dataField="weeks" caption="Weeks" alignment="center" allowEditing={false}/>
+            <Column dataField="end" caption="End Date" alignment="center" calculateCellValue={convertDate} allowEditing={false}/>
+            <Column dataField="fieldStart" cption="Field Start Date" alignment="center" />
+            <Column dataField="units" caption="Units" alignment="center"/>
+            <Column dataField="emps" caption="Emps" alignment="center"/>
+            <Column dataField="offSet" caption="Offset" alignment="center"/>
+            
+            <Summary recalculateWhileEditing>
+              <GroupItem
+                column="units"
+                summaryType="sum"
+                customizeText={data => `Total Units: ` + data.value}
+              />
+              <GroupItem
+                column="emps"
+                summaryType="sum"
+                customizeText={data => `Total Emps: ` + data.value}
+              />
+              <GroupItem
+                column="unitsPerWeek"
+                summaryType="sum"
+                customizeText={data => `Total Units/Week: ` + data.value}
+              />
+            </Summary>
+
+          </DataGrid>
+          
+          <div className="widget-container">
+            <Gantt
+              taskListWidth={500}
+              height={window.height}
+              taskTitlePosition={taskTitlePosition}
+              scaleType={scaleType}
+              showResources={false}
+              showRowLines
+              showColumnLines={false}
+              showBorders
+              onTaskEditDialogShowing={data => data.cancel = true}
+            >
+
+              <Tasks dataSource={data} />
+
+              <Toolbar>
+                  <Item name="undo" />
+                  <Item name="redo" />
+                  <Item name="separator" />
+                  <Item name="collapseAll" />
+                  <Item name="expandAll" />
+                  <Item name="separator" />
+                  <Item name="addTask" />
+                  <Item name="deleteTask" />
+                  <Item name="separator" />
+                  <Item name="zoomIn" />
+                  <Item name="zoomOut" />
+              </Toolbar>
+
+              <Column dataField="jobName" caption="Job Name & Wall Type" cellRender={jobWallCell} alignment="left"/>
+              <Column dataField="jobNumber" caption="Job Number" alignment="left"/>
+            </Gantt>
+          </div>
+          </div>
+        : <Spinner />
+      }
+     </div> 
     );
 }
 
