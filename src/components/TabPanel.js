@@ -1,7 +1,7 @@
 import React from 'react';
 import { useState } from 'react';
 
-import ProductionSchedule from './components/ProductionSchedule/PS';
+import ProductionSchedule from './ProductionSchedule/PS';
 import TabPanel from 'devextreme-react/tab-panel';
 
 const Panel = (props) => {

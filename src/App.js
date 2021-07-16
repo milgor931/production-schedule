@@ -1,6 +1,4 @@
-import logo from './logo.svg';
-import './App.css';
-import TabPanel from './TabPanel';
+import TabPanel from './components/TabPanel';
 
 function App() {
   return (

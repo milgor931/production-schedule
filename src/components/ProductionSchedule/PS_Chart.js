@@ -1,7 +1,7 @@
 
 import React, { useState, createRef, useEffect } from 'react';
-import Gantt, { Tasks, Toolbar, Item } from 'devextreme-react/gantt';
 import Spinner from '../Spinner';
+import CheckBox from "devextreme/ui/check_box";
 import DataGrid, {
   Column,
   Grouping,
@@ -17,96 +17,22 @@ import DataGrid, {
   RemoteOperations
 } from 'devextreme-react/data-grid';
 import axios from "axios";
-import { jobs } from './data.js';
 
 const ProductionScheduleChart = (props) => {
-
-    const [ data, setData ] = useState([]);
+    const { data, handleUpdate, rowAdded, rowRemoved, onRowInit } = props;
     const [ loaded, setLoaded ] = useState(false);
-    const [ scaleType, setScaleType ] = useState('weeks');
-    const [ taskTitlePosition, setTaskTitlePosition ] = useState('inside');
-    const [ selectedIndex, setSelectedIndex ] = useState(0);
     const [ startDate, setStartDate ] = useState();
 
     useEffect(() => {
-      axios.get("https://ww-production-schedule-default-rtdb.firebaseio.com/jobs.json")
-        .then(response => {
-          setData(response.data);
-        })
-        .catch(error => {
-          alert(error);
-        })
-    }, [])
-
-    useEffect(() => {
-      if (data.length > 0) {
-        data.forEach(row => {
-          convertDate(row)
-          getOffset(row, data[getStartDateIndex()].start);
-        })
-        setStartDate(data[getStartDateIndex()].start);
-        
-        axios.put("https://ww-production-schedule-default-rtdb.firebaseio.com/jobs.json", JSON.stringify(data))
-        .then(response => setLoaded(true))
-      }
+      data && setLoaded(true);
     }, [ data ])
 
-    const saveChanges = (row) => {
-      const rowData = row.changes[0].data;
-      axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/jobs/${rowData.id}.json`, rowData)
-      .then(response => console.log("changes saved"))
-      .catch(error => alert(error))
-    }
-
-    const getStartDateIndex = () => {
-      let s = convertMillisecondsToDays(new Date(data[0].start).getTime());
-      let jobIndex = 0;
-      data.forEach((job, index) => {
-        if (convertMillisecondsToDays(new Date(job.start).getTime()) < s) {
-          jobIndex = index;
-        } 
-      })
-      return jobIndex;
-    }
-
-    const getOffset = (row, start) => {
-      let days = convertMillisecondsToDays(new Date(row.start).getTime());
-      row.offset = Math.ceil((days - convertMillisecondsToDays(new Date(start).getTime()))/7);
-    }
-
-    const convertDaysToMilliseconds = (days) => {
-      return days * 24 * 60 * 60 * 1000;
-    }
-
-    const convertMillisecondsToDays = (ms) => {
-      return Math.ceil(ms / (24 * 60 * 60 * 1000));
-    }
-
-    const itemTitleRender = (tab) => {
-        return <span>{tab.name}</span>;
-    }
-
-    const itemComponentRender = (tab) => {
-        return tab.component;
-    }
-
-    const onSelectionChanged = (selected) => {
-        if (selected.name === "selectedIndex") {
-            setSelectedIndex(selected.ID);
-        }
-    }
-
     const jobWallCell = (data) => {
-      if (!data.data.booked && data.cellElement) {
-        data.cellElement.style.backgroundColor = "#9cf5ff"
-      }
-
-      // title is actually the job name 
       return (
         <div>
-            <span>{data.data.title}</span>
-            <br></br>
-            <span style={{color: "#5a87d1"}}>{data.data.wallType}</span>
+          <span>{data.data.jobName}</span>
+          <br></br>
+          <span style={{color: "#5a87d1"}}>{data.data.wallType}</span>
         </div>
       )
     }
@@ -114,9 +40,9 @@ const ProductionScheduleChart = (props) => {
     const editJobWallCell = (data) => {
       return (
         <div>
-            <input type="text" placeholder={data.data.title} name={data.data.title} onChange={e => data.data.title = e.target.value}/>
-            <br></br>
-            <input type="text" placeholder={data.data.wallType} name={data.data.wallType} onChange={e => data.data.wallType = e.target.value}/>
+          <input type="text" placeholder={data.data.jobName} name={data.data.jobName} onChange={e => data.data.jobName = e.target.value}/>
+          <br></br>
+          <input type="text" placeholder={data.data.wallType} name={data.data.wallType} onChange={e => data.data.wallType = e.target.value}/>
         </div>
       )
     }
@@ -129,24 +55,6 @@ const ProductionScheduleChart = (props) => {
           row.rowElement.style.backgroundColor = "#a8a8a8";
         }
       } 
-    }
-
-    const convertDate = (row) => {
-      if (!row.header) {
-        row.start = new Date(row.start);
-        let start = row.start.getTime();
-        let weeks = Math.ceil(row.units/row.unitsPerWeek);
-        row.weeks = weeks;
-        let time = weeks * 7 * 24 * 60 * 60 * 1000;
-        time = start + time;
-        row.end = new Date(time);
-      }
-      return row.end;
-    }
-
-    const updateRow = (row) => {
-      let newData = data.filter(d => d.id !== row.data.id);
-      setData([ ...newData, row.data ]);
     }
 
     return (
@@ -163,14 +71,17 @@ const ProductionScheduleChart = (props) => {
             onRowPrepared={renderRow}
             twoWayBindingEnabled
             columnResizingMode="nextColumn"
-            onRowUpdated={updateRow}
             wordWrapEnabled
             autoExpandAll
-            onSaved={saveChanges}
+            highlightChanges
+            onInitNewRow={onRowInit}
+            onRowUpdated={handleUpdate}
+            onRowInserted={handleUpdate}
+            onRowRemoved={rowRemoved}
           >
 
             <GroupPanel visible autoExpandAll/>
-            <SearchPanel visible={true} highlightCaseSensitive={false} />
+            <SearchPanel visible highlightCaseSensitive={false} />
             <Grouping autoExpandAll />
 
             <Editing
@@ -181,17 +92,18 @@ const ProductionScheduleChart = (props) => {
             />
 
             <Column dataField="shop" groupIndex={0} />
+            <Column dataField="booked" alignment="center" />
             <Column dataField="jobName" caption="Job Name & Wall Type" cellRender={jobWallCell} editCellRender={editJobWallCell} alignment="left" />
             <Column dataField="jobNumber" caption="Job Number" alignment="center"/>
             <Column dataField="customer" caption="Customer" alignment="center" />
             <Column dataField="unitsPerWeek" caption="Units/Week" alignment="center" />
             <Column dataField="start" caption="Shop Start Date" alignment="center"/>
             <Column dataField="weeks" caption="Weeks" alignment="center" allowEditing={false}/>
-            <Column dataField="end" caption="End Date" alignment="center" calculateCellValue={convertDate} allowEditing={false}/>
+            <Column dataField="end" caption="End Date" alignment="center" allowEditing={false} allowEditing={false}/>
             <Column dataField="fieldStart" cption="Field Start Date" alignment="center" />
             <Column dataField="units" caption="Units" alignment="center"/>
             <Column dataField="emps" caption="Emps" alignment="center"/>
-            <Column dataField="offset" caption="Offset" alignment="center"/>
+            <Column dataField="offset" caption="Offset" allowEditing={false} alignment="center"/>
             
             <Summary recalculateWhileEditing>
               <GroupItem
