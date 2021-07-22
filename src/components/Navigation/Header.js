@@ -27,18 +27,19 @@ const Header = (props) => {
   const { tabs } = props;
   const [ title, setTitle ] = useState("");
 
-  // useEffect(() => {
-  //   if (tabs) {
-  //     let i = tabs.findIndex(tab => tab.link === window.location.pathname);
-  //     tabs[i].name && setTitle(tabs[i].name);
-  //   } 
-  // }, [ props ])
+  useEffect(() => {
+    if (tabs) {
+      let i = tabs.findIndex(tab => tab.link === window.location.pathname);
+      tabs[i].name && setTitle(tabs[i].name);
+    } 
+  }, [ props ])
 
   return (
     <div className={classes.root}>
       <AppBar position="sticky">
         <Toolbar>
           <Typography variant="h6" className={classes.title}>
+            {/* {title} */}
             Production Schedule
           </Typography>
         </Toolbar>

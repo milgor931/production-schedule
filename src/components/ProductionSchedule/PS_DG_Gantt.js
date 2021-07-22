@@ -15,7 +15,8 @@ import DataGrid, {
   MasterDetail,
   GroupItem,
   Sorting,
-  RemoteOperations
+  RemoteOperations,
+  FilterRow
 } from 'devextreme-react/data-grid';
 import { makeStyles } from '@material-ui/core/styles';
 import InputLabel from '@material-ui/core/InputLabel';
@@ -23,6 +24,8 @@ import MenuItem from '@material-ui/core/MenuItem';
 import FormHelperText from '@material-ui/core/FormHelperText';
 import FormControl from '@material-ui/core/FormControl';
 import Select from '@material-ui/core/Select';
+import Paper from '@material-ui/core/Paper';
+import { Typography } from '../../../node_modules/@material-ui/core';
 
 const useStyles = makeStyles((theme) => ({
   formControl: {
@@ -32,6 +35,9 @@ const useStyles = makeStyles((theme) => ({
   selectEmpty: {
     marginTop: theme.spacing(2),
   },
+  dateColumn: {
+    backgroundColor: "rgb(0, 0, 0)"
+  }
 }));
 
 const ProductionScheduleChart = (props) => {
@@ -39,6 +45,10 @@ const ProductionScheduleChart = (props) => {
     const [ loaded, setLoaded ] = useState(false);
     const [ jobs, setJobs ] = useState(null);
     const [ columns, setColumns ] = useState(null);
+    const [ expanded, setExpanded ] = useState(true);
+    const [ hint, setHint ] = useState("");
+    const [ totalUnits, setTotalUnits ] = useState(0);
+    const [ totalEmps, setTotalEmps ] = useState(0);
     const classes = useStyles();
 
     useEffect(() => {
@@ -72,11 +82,12 @@ const ProductionScheduleChart = (props) => {
             cols.push(i);
         }
 
-        console.log(cols)
         data.forEach(job => {
+            setTotalUnits(total => total + parseInt(job.units));
+            setTotalEmps(total => total + parseInt(job.emps));
             job.offsets = [];
-            for (let w = 0; w < job.weeks; w++) {
-                job.offsets.push(job.offset + w)
+            for (let w = 1; w <= job.weeks; w++) {
+                job.offsets.push(job.offset + w);
             }
         })
 
@@ -86,6 +97,8 @@ const ProductionScheduleChart = (props) => {
                 dataField={row}
                 caption={convertToDate(row)}
                 minWidth={50}
+                type="date"
+                // cssClass={classes.dateColumn}
             />
         ))    
     }
@@ -120,13 +133,12 @@ const ProductionScheduleChart = (props) => {
 
     const cellPrepared = (cell) => {
        if (cell.data && cell.data.offsets) {
-            if (cell.data.offsets.includes(cell.column.dataField)) {
-              cell.cellElement.style.backgroundColor = "#3f50b5";
-            } else if (!cell.data.booked && cell.column.caption === "jobName") {
-              cell.cellElement.style.backgroundColor = "#9cf5ff";
-            } else {
-              cell.cellElement.style.backgroundColor = "white";
-            }
+          if (cell.data.offsets.includes(cell.column.dataField) && cell.column.type === "date") {
+            cell.cellElement.style.backgroundColor = "#3f50b5";
+          }
+          else if (!cell.data.booked) {
+            cell.cellElement.style.backgroundColor = "#b6cdd1";
+          }
        }
        
     }
@@ -135,6 +147,11 @@ const ProductionScheduleChart = (props) => {
     <div>
       {loaded 
         ? <div>
+          {/* <CheckBox 
+              text="Expand Rows"
+              value={expanded}
+              onValueChanged={setExpanded(!expanded)} 
+          /> */}
           <DataGrid
             dataSource={data}
             columnAutoWidth
@@ -144,19 +161,24 @@ const ProductionScheduleChart = (props) => {
             twoWayBindingEnabled
             columnResizingMode="nextColumn"
             wordWrapEnabled
-            autoExpandAll
             highlightChanges
-            showColumnLines={false}
+            showColumnLines={true}
             onCellPrepared={cellPrepared}
+            hoverStateEnabled
+            hint={hint}
+            onCellHoverChanged={row => {
+              row.rowType === "data" && setHint(`${row.data.jobName} ${row.data.start.toLocaleDateString()} - ${row.data.end.toLocaleDateString()}`);
+            }}
           >
 
-            <GroupPanel visible autoExpandAll/>
+            <GroupPanel visible/>
             <SearchPanel visible highlightCaseSensitive={false} />
-            <Grouping autoExpandAll />
+            <Grouping  />
             <Sorting mode="multiple" />
+            {/* <FilterRow visible={true} /> */}
 
             <Column dataField="shop" groupIndex={0} />
-            <Column dataField="jobName" caption="Job Name & Wall Type" cellRender={jobWallCell} alignment="left" />
+            <Column minWidth={'10vw'} dataField="jobName" caption="Job Name & Wall Type" cellRender={jobWallCell} alignment="left"/>
             <Column allowSorting dataField="jobNumber" caption="Job Number" alignment="center"/>
             <Column allowSorting dataField="start" caption="Shop Start Date" alignment="center"/>
             <Column dataField="end" caption="End Date" alignment="center"/>
@@ -167,21 +189,39 @@ const ProductionScheduleChart = (props) => {
               <GroupItem
                 column="units"
                 summaryType="sum"
-                customizeText={data => `Total Units: ` + data.value}
+                customizeText={data => {
+                  return `Total Units: ` + data.value;
+                }}
               />
               <GroupItem
                 column="emps"
                 summaryType="sum"
-                customizeText={data => `Total Emps: ` + data.value}
+                customizeText={data => {
+                  return `Total Emps: ` + data.value;
+                }}
               />
               <GroupItem
                 column="unitsPerWeek"
                 summaryType="sum"
-                customizeText={data => `Total Units/Week: ` + data.value}
+                customizeText={data => {
+                  return `Total Units/Week: ` + data.value;
+                }}
               />
             </Summary>
 
           </DataGrid>
+
+          <Paper style={{marginTop: '50px', width: '100%', padding: '10px'}}>
+            <Typography color="primary">
+              <b>TOTALS</b>
+            </Typography>
+            <Typography color="primary">
+              Total Units For All Shops: <b>{totalUnits}</b>
+            </Typography>
+            <Typography color="primary">
+              Total Employees For All Shops: <b>{totalEmps}</b>
+            </Typography>
+          </Paper>
         </div>
       : <Spinner />
       }

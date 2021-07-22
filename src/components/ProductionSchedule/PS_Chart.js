@@ -1,7 +1,6 @@
 
 import React, { useState, createRef, useEffect } from 'react';
 import Spinner from '../Spinner';
-import CheckBox from "devextreme/ui/check_box";
 import DataGrid, {
   Column,
   Grouping,
@@ -18,6 +17,7 @@ import DataGrid, {
   MasterDetail,
   GroupItem,
   Button,
+  FilterRow, 
   RemoteOperations
 } from 'devextreme-react/data-grid';
 import { makeStyles } from '@material-ui/core/styles';
@@ -26,6 +26,11 @@ import MenuItem from '@material-ui/core/MenuItem';
 import FormHelperText from '@material-ui/core/FormHelperText';
 import FormControl from '@material-ui/core/FormControl';
 import Select from '@material-ui/core/Select';
+import PopupForm from '../UI/PopupForm';
+import CheckBox from 'devextreme-react/check-box';
+import TextField from '@material-ui/core/TextField';
+import { Typography } from '../../../node_modules/@material-ui/core';
+
 
 const useStyles = makeStyles((theme) => ({
   formControl: {
@@ -40,6 +45,7 @@ const useStyles = makeStyles((theme) => ({
 const ProductionScheduleChart = (props) => {
     const { data, handleUpdate, rowAdded, rowRemoved, onRowInit } = props;
     const [ loaded, setLoaded ] = useState(false);
+    const [ expanded, setExpanded ] = useState(true);
     const classes = useStyles();
 
     useEffect(() => {
@@ -73,10 +79,9 @@ const ProductionScheduleChart = (props) => {
 
     const editJobWallCell = (data) => {
       return (
-        <div>
-          <input type="text" placeholder={data.data.jobName} name={data.data.jobName} onChange={e => data.data.jobName = e.target.value}/>
-          <br></br>
-          <input type="text" placeholder={data.data.wallType} name={data.data.wallType} onChange={e => data.data.wallType = e.target.value}/>
+        <div style={{padding: '10px'}}>
+          <TextField id="jobName" type="text" size="small" label="Job Name" variant="outlined" onChange={e => data.data.jobName = e.target.value}/>
+          <TextField id="wallType" type="text" size="small" label="Wall Type" variant="outlined" onChange={e => data.data.wallType = e.target.value}/>
         </div>
       )
     }
@@ -84,31 +89,11 @@ const ProductionScheduleChart = (props) => {
     const renderRow = (row) => {
       if (row.rowType === "data") {
         if (!row.data.booked) {
-          row.rowElement.style.backgroundColor = "#9cf5ff";
+          row.rowElement.style.backgroundColor = "#b6cdd1";
         } else if (row.data.header) {
           row.rowElement.style.backgroundColor = "#a8a8a8";
         }
       } 
-    }
-
-    const shopDropDown = (row) => {
-      return (
-        <FormControl className={classes.formControl}>
-          <Select
-            value={row.data.shop}
-            onChange={e => row.data.shop = e.target.value}
-            displayEmpty
-            className={classes.selectEmpty}
-          >
-            <MenuItem value="">
-              <em>None</em>
-            </MenuItem>
-            <MenuItem value="Shop A">Shop A</MenuItem>
-            <MenuItem value="Shop B">Shop B</MenuItem>
-          </Select>
-          {/* <FormHelperText>Without label</FormHelperText> */}
-        </FormControl>
-      )
     }
 
     const jobNumberRender = (row) => {
@@ -132,6 +117,11 @@ const ProductionScheduleChart = (props) => {
     <div>
       {loaded 
         ? <div>
+          <CheckBox 
+              text="Expand Rows"
+              value={expanded}
+              onValueChanged={() => setExpanded(!expanded)} 
+            />
           <DataGrid
             dataSource={data}
             showBorders
@@ -151,11 +141,14 @@ const ProductionScheduleChart = (props) => {
             onRowInserted={handleUpdate}
             onRowRemoved={rowRemoved}
             onCellPrepared={cellPrepared}
+            cellHintEnabled
+
           >
 
             <GroupPanel visible autoExpandAll/>
             <SearchPanel visible highlightCaseSensitive={false} />
-            <Grouping autoExpandAll />
+            <Grouping autoExpandAll={expanded} />
+            {/* <FilterRow visible={true} /> */}
             <Sorting mode="multiple" />
 
             <Editing
@@ -178,11 +171,13 @@ const ProductionScheduleChart = (props) => {
               <Button name="delete" />
             </Column>
             <Column 
-              dataField="shop" 
+              dataField="shopName" 
               groupIndex={0} 
               dataType="string"
             />
-            {/* <Column dataField="shop" caption="Shop" editCellRender={shopDropDown}/> */}
+            <Column dataField="shop" caption="Shop">
+              <RequiredRule />
+            </Column>
 
             <Column
               dataField="booked" 
@@ -229,6 +224,9 @@ const ProductionScheduleChart = (props) => {
              alignment="center">
               <RequiredRule />
             </Column>
+            <Column dataField="end" caption="End Date" alignment="center" allowEditing={false} allowEditing={false} >
+              {/* <RequiredRule /> */}
+            </Column>
             <Column
              dataField="fieldStart" 
              dataType="date"
@@ -254,9 +252,6 @@ const ProductionScheduleChart = (props) => {
             <Column dataField="weeks" caption="Weeks" alignment="center" allowEditing={false}>
               {/* <RequiredRule /> */}
             </Column>
-            <Column dataField="end" caption="End Date" alignment="center" allowEditing={false} allowEditing={false} >
-              {/* <RequiredRule /> */}
-            </Column>
             <Column dataField="offset" caption="Offset" allowEditing={false} alignment="center">
               {/* <RequiredRule /> */}
             </Column>
@@ -278,7 +273,6 @@ const ProductionScheduleChart = (props) => {
                 customizeText={data => `Total Units/Week: ` + data.value}
               />
             </Summary>
-
           </DataGrid>
         </div>
       : <Spinner />

@@ -28,7 +28,7 @@ const useStyles = makeStyles((theme) => ({
     },
     links: {
         listStyleType: 'none',
-        border: '1px solid #ccc',
+        // border: '1px solid #ccc',
     },
     linkContainer: {
         padding: '1vw',
@@ -54,9 +54,11 @@ const TabPanel = (props) => {
     )
 
     return (
-        <Grid container direction="row" justifyContent="space-evenly"  alignItems="center" className={classes.links}>
-            {links}
-        </Grid>
+        <Paper elevation={5}>
+            <Grid container direction="row" justifyContent="space-evenly"  alignItems="center" className={classes.links}>
+                {links}
+            </Grid>
+        </Paper>
     )
 }
 

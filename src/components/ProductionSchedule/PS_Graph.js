@@ -5,6 +5,7 @@ import FormGroup from '@material-ui/core/FormGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Paper from '@material-ui/core/Paper';
 import Spinner from '../Spinner';
+import Grid from '@material-ui/core/Grid';
 
 import {
   Chart,
@@ -12,7 +13,6 @@ import {
   ArgumentAxis,
   CommonSeriesSettings,
   CommonAxisSettings,
-  Grid,
   Export,
   Legend,
   Margin,
@@ -21,6 +21,7 @@ import {
   Format
 } from 'devextreme-react/chart';
 import axios from 'axios';
+import { Typography } from '../../../node_modules/@material-ui/core';
 
 const sources = [
   { value: 'units', name: 'Units' },
@@ -36,9 +37,7 @@ const Graph = (props) => {
 
   useEffect(() => {
     if (data) {
-      // let loadedShops = data.map(job => 
-      //   job.
-      // )
+      setShops(findShopDups().reverse())
       setLoaded(true);
     }
   }, [ data ])
@@ -48,6 +47,11 @@ const Graph = (props) => {
     jobs && calculateForOffSets();
     setLoaded(true);
   }, [ state ])
+
+  const findShopDups = () => {
+    const unique = [...new Set(data.map(item => item.shop))];
+    return unique;
+  }
 
   const calculateForOffSets = () => {
     let all_data = [];
@@ -94,57 +98,72 @@ const Graph = (props) => {
   }
 
   const shopSwitches = shops.map(shop => (
-      <FormControlLabel
-        key={shop}
-        control={
-          <Switch 
-            name={shop} 
-            id={shop}
-            checked={state[shop]} 
-            onChange={handleChange} 
-          />
-        }
-        label={shop}
-      />
+      <Grid item>
+        <FormControlLabel
+          key={shop}
+          control={
+            <Switch 
+              name={shop} 
+              id={shop}
+              color="primary"
+              // size="small"
+              checked={state[shop]} 
+              onChange={handleChange} 
+            />
+          }
+          label={shop}
+        />
+      </Grid>
   ))
 
   return (
     <div>
-      <FormGroup row style={{width: '100%'}}>
-        {shopSwitches}
-      </FormGroup>
-      <Chart
-        // palette="Violet"
-        dataSource={jobs}
-        title="Units and Employees Over Time"
-      >
-        <CommonSeriesSettings
-          argumentField="offset"
-          type={"spline"}
-        />
-        <CommonAxisSettings>
-          <Grid visible={true} />
-        </CommonAxisSettings>
-        {
-          sources.map(function(item) {
-            return <Series key={item.value} valueField={item.value} name={item.name} />;
-          })
-        }
-        <Margin bottom={20} />
-        <ArgumentAxis
-          allowDecimals={false}
-          axisDivisionFactor={60}
-          
-        >
-          <Label customizeText={data => convertToDate(data.value)}/>
-        </ArgumentAxis>
-        <Legend
-          verticalAlignment="center"
-          horizontalAlignment="right"
-        />
-        <Export enabled={true} />
-        <Tooltip enabled={true} />
-      </Chart>
+      <Grid container direction="row" style={{width: '100%'}}>
+        <Grid item style={{width: '10vw'}}>
+          {/* <Paper elevation={10}> */}
+            <FormGroup column style={{marginTop: '50px', padding: '10px'}}>
+              <Typography>
+                SHOPS
+              </Typography> 
+              {shopSwitches}
+            </FormGroup>
+          {/* </Paper> */}
+        </Grid>
+        <Grid item style={{width: '80vw'}}>
+          <Chart
+            // palette=""
+            dataSource={jobs}
+            title="Units and Employees Over Time"
+          >
+            <CommonSeriesSettings
+              argumentField="offset"
+              type={"spline"}
+            />
+            <CommonAxisSettings>
+              <Grid visible={true} />
+            </CommonAxisSettings>
+            {
+              sources.map(function(item) {
+                return <Series key={item.value} valueField={item.value} name={item.name} />;
+              })
+            }
+            <Margin bottom={20} />
+            <ArgumentAxis
+              allowDecimals={false}
+              axisDivisionFactor={60}
+              
+            >
+              <Label customizeText={data => convertToDate(data.value)}/>
+            </ArgumentAxis>
+            <Legend
+              verticalAlignment="center"
+              horizontalAlignment="right"
+            />
+            <Export enabled={true} />
+            <Tooltip enabled={true} />
+          </Chart>
+        </Grid>
+      </Grid>
     </div>
   );
 }

@@ -47,6 +47,11 @@ const ProductionSchedule = (props) => {
         })
     }, [])
 
+    const getTotals = () => {
+        let total_units = data.reduce(( total, job ) => total + job.units)
+        
+    }
+
     useEffect(() => {
         if (data) {
             data.forEach(row => {
@@ -148,6 +153,7 @@ const ProductionSchedule = (props) => {
         if (row.data) {
             row = row.data;
         }
+        row.shopName = row.shop;
         row.title = row.jobName;
         axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/jobs/${row.id}.json`, row)
         .then(response => {
@@ -168,6 +174,7 @@ const ProductionSchedule = (props) => {
     const onRowInit = (row) => {
         row.data.booked = false;
         row.data.shop = "";
+        row.data.shopName = "";
         row.data.jobName = "job name";
         row.data.title = "job name";
         row.data.wallType = "wall type";
@@ -194,7 +201,7 @@ const ProductionSchedule = (props) => {
       <div>
           { loaded
             ? 
-            <div>
+            <div style={{alignItems: 'center', justifyContent: 'center'}}>
                 <Grid container style={{marginTop: '20px'}} direction="row" alignItems="center" justifyContent="center">
                     {inputs}
                 </Grid>
