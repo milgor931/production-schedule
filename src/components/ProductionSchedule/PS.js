@@ -11,19 +11,31 @@ import { makeStyles } from '@material-ui/core/styles';
 import axios from "axios";
 import Spinner from '../Spinner';
 import { Tooltip } from 'devextreme-react/tooltip';
+import DG_Grantt from './PS_DG_Gantt';
+import Grid from '@material-ui/core/Grid';
+import Radio from '@material-ui/core/Radio';
 
 const useStyles = makeStyles({
     root: {
       width: 500,
     },
+    radio: {
+
+    }
   });
 
 const ProductionSchedule = (props) => {
+    const classes = useStyles();
     const [ tabs, setTabs ] = useState([]);
     const [ data, setData ] = useState(null);
-    const [ loaded, setLoaded ] = useState(true);
+    const [ loaded, setLoaded ] = useState(false);
     const [ selectedIndex, setSelectedIndex ] = useState(0);
     const [ startDate, setStartDate ] = useState();
+    const [value, setValue] = React.useState(0);
+
+    const handleChange = (event, newValue) => {
+        setValue(newValue);
+    };
 
     useEffect(() => {
         axios.get("https://ww-production-schedule-default-rtdb.firebaseio.com/jobs.json")
@@ -47,10 +59,12 @@ const ProductionSchedule = (props) => {
         setTabs([
             {
                 'ID': 0,
-                'name': 'Gantt Chart',
-                'component': <ProductionScheduleGantt 
+                'name': 'Gantt',
+                'component': <DG_Grantt
                                 data={data} 
                                 handleUpdate={handleUpdate}
+                                getStartDateIndex={getStartDateIndex}
+                                getEndDateIndex={getEndDateIndex}
                              />
             },
             {
@@ -59,7 +73,7 @@ const ProductionSchedule = (props) => {
                 'component': <ProductionScheduleChart 
                                 data={data} 
                                 handleUpdate={handleUpdate}
-                                rowAdded={rowAdded}
+                                rowAdded={handleUpdate}
                                 rowRemoved={rowRemoved}
                                 onRowInit={onRowInit}
                             />
@@ -71,8 +85,19 @@ const ProductionSchedule = (props) => {
                                 data={data} 
                                 handleUpdate={handleUpdate}
                              />
-            }
+            },
+            {
+                'ID': 3,
+                'name': 'Gantt Chart',
+                'component': <ProductionScheduleGantt 
+                                data={data} 
+                                handleUpdate={handleUpdate}
+                             />
+            },
         ])
+
+        setLoaded(true);
+
     }, [ data ])
 
     const convertDate = (row) => {
@@ -91,7 +116,20 @@ const ProductionSchedule = (props) => {
         let jobIndex = 0;
         data.forEach((job, index) => {
             if (convertMillisecondsToDays(new Date(job.start).getTime()) < s) {
-            jobIndex = index;
+                jobIndex = index;
+                s = convertMillisecondsToDays(new Date(job.start).getTime());
+            } 
+        })
+        return jobIndex;
+    }
+
+    const getEndDateIndex = () => {
+        let s = convertMillisecondsToDays(new Date(data[0].start).getTime());
+        let jobIndex = 0;
+        data.forEach((job, index) => {
+            if (convertMillisecondsToDays(new Date(job.start).getTime()) > s) {
+                jobIndex = index;
+                s = convertMillisecondsToDays(new Date(job.start).getTime());
             } 
         })
         return jobIndex;
@@ -107,18 +145,13 @@ const ProductionSchedule = (props) => {
     }
 
     const handleUpdate = (row) => {
-        row.data.title = row.data.jobName;
-        axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/jobs/${row.data.id}.json`, row.data)
+        if (row.data) {
+            row = row.data;
+        }
+        row.title = row.jobName;
+        axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/jobs/${row.id}.json`, row)
         .then(response => {
             setData([ ...data ])
-        })
-        .catch(error => alert(error))
-    }
-
-    const rowAdded = (row) => {
-        axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/jobs/${row.data.id}.json`, row.data)
-        .then(response => {
-            // console.dir(data)
         })
         .catch(error => alert(error))
     }
@@ -133,9 +166,8 @@ const ProductionSchedule = (props) => {
     }
 
     const onRowInit = (row) => {
-        let shop = prompt("What shop is the job for?");
         row.data.booked = false;
-        row.data.shop = shop;
+        row.data.shop = "";
         row.data.jobName = "job name";
         row.data.title = "job name";
         row.data.wallType = "wall type";
@@ -144,122 +176,33 @@ const ProductionSchedule = (props) => {
         row.data.id = row.data.__KEY__;
     }
 
-    // const inputs = ["gantt", "chart", "graph"].map((value, index) => {
-    //     <input 
-    //         defaultChecked
-    //         id={value}
-    //         type="radio" 
-    //         name="view" 
-    //         value={value} 
-    //         onClick={e => {
-    //             setSelectedIndex(index);
-    //         }}
-    //     />
-    // })
+    const inputs = ["gantt", "chart", "graph"].map((value, index) => 
+        <Grid item>
+            <Radio
+                checked={selectedIndex === index}
+                onChange={e => setSelectedIndex(index)}
+                value={index}
+                color="primary"
+                name="radio-buttons"
+                inputProps={{ 'aria-label': index }}
+                size="small"
+            />
+        </Grid>
+    )
 
     return (
       <div>
           { loaded
             ? 
             <div>
-                <div style={{margin: '20px', textAlign:"center"}}>
-                    {/* {inputs} */}
-                    <input 
-                        defaultChecked
-                        id="gantt"
-                        type="radio" 
-                        name="view" 
-                        value="gantt" 
-                        onClick={e => {
-                            setSelectedIndex(0);
-                        }}
-                    />
-                     {/* <Tooltip
-                        target="#gantt"
-                        showEvent="dxhoverstart"
-                        hideEvent="dxhoverend"
-                        position="right"
-                    >
-                        <div>ExcelRemote IR</div>
-                    </Tooltip> */}
-                    <input 
-                        id="chart"
-                        type="radio" 
-                        name="view" 
-                        value="chart" 
-                        onClick={e => setSelectedIndex(1)}
-                    />
-                     {/* <Tooltip
-                        target="#chart"
-                        showEvent="dxhoverstart"
-                        hideEvent="dxhoverend"
-                    >
-                        <div>ExcelRemote IR</div>
-                    </Tooltip> */}
-                    <input 
-                        id="graph"
-                        type="radio" 
-                        name="view" 
-                        value="graph" 
-                        onClick={e => setSelectedIndex(2)}
-                    />
-                     {/* <Tooltip
-                        target="#graph"
-                        showEvent="dxhoverstart"
-                        hideEvent="dxhoverend"
-                    >
-                        <div>ExcelRemote IR</div>
-                    </Tooltip> */}
-                </div>
+                <Grid container style={{marginTop: '20px'}} direction="row" alignItems="center" justifyContent="center">
+                    {inputs}
+                </Grid>
 
-                <div>
+                <div style={{margin: '3vw'}}>
                     {data && tabs[selectedIndex].component}
                 </div>
             </div>
-
-            // <Gallery
-            //     id="gallery"
-            //     dataSource={[
-            //         {
-            //             'ID': 0,
-            //             'name': 'Gantt Chart',
-            //             'component': <ProductionScheduleGantt 
-            //                             data={data} 
-            //                             handleUpdate={handleUpdate}
-            //                          />
-            //         },
-            //         {
-            //             'ID': 1,
-            //             'name': 'Production Schedule',
-            //             'component': <ProductionScheduleChart 
-            //                             data={data} 
-            //                             handleUpdate={handleUpdate}
-            //                             rowAdded={rowAdded}
-            //                             rowRemoved={rowRemoved}
-            //                             onRowInit={onRowInit}
-            //                         />
-            //         }, 
-            //         {
-            //             'ID': 3,
-            //             'name': 'Units Graph',
-            //             'component': <Graph 
-            //                             data={data} 
-            //                             handleUpdate={handleUpdate}
-            //                          />
-            //         }
-            //     ]}
-            //     height={height}
-            //     hoverStateEnabled
-            //     slideshowDelay={0}
-            //     showNavButtons={false}
-            //     loop={false}
-            //     showIndicator
-            //     selectedIndex={selectedIndex}
-            //     onOptionChanged={onSelectionChanged}
-            //     itemRender={itemComponentRender}
-            //     animationEnabled={false}
-            //     swipeEnabled={false}
-            // />
             : 
             <Spinner />
           }

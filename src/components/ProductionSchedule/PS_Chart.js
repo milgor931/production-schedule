@@ -8,24 +8,58 @@ import DataGrid, {
   GroupPanel,
   Pager,
   Paging,
+  RowDragging,
   SearchPanel,
   Editing,
   Summary, 
+  Sorting,
+  RequiredRule,
   TotalItem,
   MasterDetail,
   GroupItem,
+  Button,
   RemoteOperations
 } from 'devextreme-react/data-grid';
-import axios from "axios";
+import { makeStyles } from '@material-ui/core/styles';
+import InputLabel from '@material-ui/core/InputLabel';
+import MenuItem from '@material-ui/core/MenuItem';
+import FormHelperText from '@material-ui/core/FormHelperText';
+import FormControl from '@material-ui/core/FormControl';
+import Select from '@material-ui/core/Select';
+
+const useStyles = makeStyles((theme) => ({
+  formControl: {
+    margin: theme.spacing(1),
+    minWidth: 120,
+  },
+  selectEmpty: {
+    marginTop: theme.spacing(2),
+  },
+}));
 
 const ProductionScheduleChart = (props) => {
     const { data, handleUpdate, rowAdded, rowRemoved, onRowInit } = props;
     const [ loaded, setLoaded ] = useState(false);
-    const [ startDate, setStartDate ] = useState();
+    const classes = useStyles();
 
     useEffect(() => {
       data && setLoaded(true);
     }, [ data ])
+
+    const onReorder = (e) => {
+      const visibleRows = e.component.getVisibleRows();
+      const newTasks = [...data];
+      const toIndex = newTasks.indexOf(visibleRows[e.toIndex].data);
+      const fromIndex = newTasks.indexOf(e.itemData);
+
+      newTasks.splice(fromIndex, 1);
+      newTasks.splice(toIndex, 0, e.itemData);
+
+      let shop = data[toIndex].shop;
+      e.itemData.shop = shop;
+
+      handleUpdate(e.itemData);
+    }
 
     const jobWallCell = (data) => {
       return (
@@ -57,8 +91,45 @@ const ProductionScheduleChart = (props) => {
       } 
     }
 
+    const shopDropDown = (row) => {
+      return (
+        <FormControl className={classes.formControl}>
+          <Select
+            value={row.data.shop}
+            onChange={e => row.data.shop = e.target.value}
+            displayEmpty
+            className={classes.selectEmpty}
+          >
+            <MenuItem value="">
+              <em>None</em>
+            </MenuItem>
+            <MenuItem value="Shop A">Shop A</MenuItem>
+            <MenuItem value="Shop B">Shop B</MenuItem>
+          </Select>
+          {/* <FormHelperText>Without label</FormHelperText> */}
+        </FormControl>
+      )
+    }
+
+    const jobNumberRender = (row) => {
+      if (!row.data.booked) {
+        row.data.jobNumber = "Could book in 90 days";
+        row.column.allowEditing = false;
+      } else if (row.data.booked && row.data.jobNumber === "Could book in 90 days") {
+        row.data.jobNumber = "";
+        row.column.allowEditing = true;
+      }
+      return row.data.jobNumber;
+    }
+
+    const cellPrepared = (cell) => {
+      if (cell.column.dataField === "weeks" || cell.column.dataField === "offset" || cell.column.dataField === "end") {
+        cell.cellElement.style.backgroundColor = "#c2c4c4";
+      }
+    }
+
     return (
-    <div style={{margin: '50px'}}>
+    <div>
       {loaded 
         ? <div>
           <DataGrid
@@ -75,35 +146,120 @@ const ProductionScheduleChart = (props) => {
             autoExpandAll
             highlightChanges
             onInitNewRow={onRowInit}
+            // onInitialized={onRowInit}
             onRowUpdated={handleUpdate}
             onRowInserted={handleUpdate}
             onRowRemoved={rowRemoved}
+            onCellPrepared={cellPrepared}
           >
 
             <GroupPanel visible autoExpandAll/>
             <SearchPanel visible highlightCaseSensitive={false} />
             <Grouping autoExpandAll />
+            <Sorting mode="multiple" />
 
             <Editing
               mode="cell"
               allowUpdating
               allowDeleting
               allowAdding
+              useIcons
+              allowSorting
             />
 
-            <Column dataField="shop" groupIndex={0} />
-            <Column dataField="booked" alignment="center" />
-            <Column dataField="jobName" caption="Job Name & Wall Type" cellRender={jobWallCell} editCellRender={editJobWallCell} alignment="left" />
-            <Column dataField="jobNumber" caption="Job Number" alignment="center"/>
-            <Column dataField="customer" caption="Customer" alignment="center" />
-            <Column dataField="unitsPerWeek" caption="Units/Week" alignment="center" />
-            <Column dataField="start" caption="Shop Start Date" alignment="center"/>
-            <Column dataField="weeks" caption="Weeks" alignment="center" allowEditing={false}/>
-            <Column dataField="end" caption="End Date" alignment="center" allowEditing={false} allowEditing={false}/>
-            <Column dataField="fieldStart" cption="Field Start Date" alignment="center" />
-            <Column dataField="units" caption="Units" alignment="center"/>
-            <Column dataField="emps" caption="Emps" alignment="center"/>
-            <Column dataField="offset" caption="Offset" allowEditing={false} alignment="center"/>
+            <RowDragging
+              allowReordering
+              onReorder={onReorder}
+              showDragIcons
+            />
+
+            <Column type="buttons">
+              <Button name="edit" />
+              <Button name="delete" />
+            </Column>
+            <Column 
+              dataField="shop" 
+              groupIndex={0} 
+              dataType="string"
+            />
+            {/* <Column dataField="shop" caption="Shop" editCellRender={shopDropDown}/> */}
+
+            <Column
+              dataField="booked" 
+              alignment="center"
+            >
+              {/* <RequiredRule /> */}
+            </Column>
+            <Column 
+              dataField="jobName" 
+              dataType="string"
+              caption="Job Name & Wall Type" 
+              cellRender={jobWallCell} 
+              editCellRender={editJobWallCell} 
+              alignment="left">
+              <RequiredRule />
+            </Column>
+            <Column
+             dataField="jobNumber" 
+             dataType="string"
+             caption="Job Number" 
+             alignment="center" 
+             cellRender={jobNumberRender} >
+              <RequiredRule />
+            </Column>
+            <Column
+             dataField="customer" 
+             dataType="string"
+             caption="Customer" 
+             alignment="center" >
+              <RequiredRule />
+            </Column>
+            <Column 
+              dataField="unitsPerWeek" 
+              dataType="number"
+              caption="Units/Week" 
+              alignment="center" >
+              <RequiredRule />
+            </Column>
+            <Column
+             allowSorting 
+             dataField="start" 
+             dataType="date"
+             caption="Shop Start Date" 
+             alignment="center">
+              <RequiredRule />
+            </Column>
+            <Column
+             dataField="fieldStart" 
+             dataType="date"
+             cption="Field Start Date" 
+             alignment="center" >
+              <RequiredRule />
+            </Column>
+            <Column 
+              dataField="units" 
+              dataType="number"
+              caption="Units" 
+              alignment="center">
+              <RequiredRule />
+            </Column>
+            <Column 
+              dataField="emps" 
+              dataType="number"
+              caption="Emps" 
+              alignment="center">
+              <RequiredRule />
+            </Column>
+            
+            <Column dataField="weeks" caption="Weeks" alignment="center" allowEditing={false}>
+              {/* <RequiredRule /> */}
+            </Column>
+            <Column dataField="end" caption="End Date" alignment="center" allowEditing={false} allowEditing={false} >
+              {/* <RequiredRule /> */}
+            </Column>
+            <Column dataField="offset" caption="Offset" allowEditing={false} alignment="center">
+              {/* <RequiredRule /> */}
+            </Column>
             
             <Summary recalculateWhileEditing>
               <GroupItem

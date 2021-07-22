@@ -30,20 +30,6 @@ const ProductionScheduleGantt = (props) => {
       data && setLoaded(true);
     }, [ data ])
 
-    const jobWallCell = (data) => {
-      if (!data.data.booked && data.cellElement) {
-        data.cellElement.style.backgroundColor = "#9cf5ff"
-      }
-
-      return (
-        <div>
-            <span>{data.data.jobName}</span>
-            <br></br>
-            <span style={{color: "#5a87d1"}}>{data.data.wallType}</span>
-        </div>
-      )
-    }
-
     return (
     <div style={{margin: '50px'}}>
       {loaded 
@@ -76,7 +62,7 @@ const ProductionScheduleGantt = (props) => {
             <Item name="zoomOut" />
           </Toolbar>
 
-          <Column dataField="jobName" caption="Job Name & Wall Type" cellRender={jobWallCell} alignment="left"/>
+          <Column dataField="jobName" caption="Job Name"alignment="left"/>
           <Column dataField="jobNumber" caption="Job Number" alignment="left"/>
 
         </Gantt>

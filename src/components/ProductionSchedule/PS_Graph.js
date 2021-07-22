@@ -35,11 +35,18 @@ const Graph = (props) => {
   const [ loaded, setLoaded ] = useState(false);
 
   useEffect(() => {
-    data && setLoaded(true);
+    if (data) {
+      // let loadedShops = data.map(job => 
+      //   job.
+      // )
+      setLoaded(true);
+    }
   }, [ data ])
 
   useEffect(() => {
+    setLoaded(false);
     jobs && calculateForOffSets();
+    setLoaded(true);
   }, [ state ])
 
   const calculateForOffSets = () => {
@@ -102,15 +109,14 @@ const Graph = (props) => {
   ))
 
   return (
-    <div style={{margin: '50px', height: '100vh'}}>
-      <FormGroup row style={{width: '100%', margin: '50px'}}>
+    <div>
+      <FormGroup row style={{width: '100%'}}>
         {shopSwitches}
       </FormGroup>
       <Chart
         // palette="Violet"
         dataSource={jobs}
         title="Units and Employees Over Time"
-        style={{margin: '50px', position: 'fixed', top: '75px', width: '90vw'}}
       >
         <CommonSeriesSettings
           argumentField="offset"
