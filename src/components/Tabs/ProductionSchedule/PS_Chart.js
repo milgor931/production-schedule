@@ -1,6 +1,6 @@
 
 import React, { useState, createRef, useEffect } from 'react';
-import Spinner from '../Spinner';
+import Spinner from '../../UI/Spinner';
 import DataGrid, {
   Column,
   Grouping,
@@ -21,15 +21,9 @@ import DataGrid, {
   RemoteOperations
 } from 'devextreme-react/data-grid';
 import { makeStyles } from '@material-ui/core/styles';
-import InputLabel from '@material-ui/core/InputLabel';
-import MenuItem from '@material-ui/core/MenuItem';
-import FormHelperText from '@material-ui/core/FormHelperText';
-import FormControl from '@material-ui/core/FormControl';
-import Select from '@material-ui/core/Select';
-import PopupForm from '../UI/PopupForm';
 import CheckBox from 'devextreme-react/check-box';
 import TextField from '@material-ui/core/TextField';
-import { Typography } from '../../../node_modules/@material-ui/core';
+import { Typography } from '@material-ui/core';
 
 
 const useStyles = makeStyles((theme) => ({
@@ -152,7 +146,7 @@ const ProductionScheduleChart = (props) => {
             <Sorting mode="multiple" />
 
             <Editing
-              mode="cell"
+              mode="batch"
               allowUpdating
               allowDeleting
               allowAdding

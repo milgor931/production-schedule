@@ -1,6 +1,6 @@
 
 import React, { useState, createRef, useEffect } from 'react';
-import Spinner from '../Spinner';
+import Spinner from '../../UI/Spinner';
 import CheckBox from "devextreme/ui/check_box";
 import DataGrid, {
   Column,
@@ -19,13 +19,8 @@ import DataGrid, {
   FilterRow
 } from 'devextreme-react/data-grid';
 import { makeStyles } from '@material-ui/core/styles';
-import InputLabel from '@material-ui/core/InputLabel';
-import MenuItem from '@material-ui/core/MenuItem';
-import FormHelperText from '@material-ui/core/FormHelperText';
-import FormControl from '@material-ui/core/FormControl';
-import Select from '@material-ui/core/Select';
 import Paper from '@material-ui/core/Paper';
-import { Typography } from '../../../node_modules/@material-ui/core';
+import { Typography } from '@material-ui/core';
 
 const useStyles = makeStyles((theme) => ({
   formControl: {
@@ -49,6 +44,7 @@ const ProductionScheduleChart = (props) => {
     const [ hint, setHint ] = useState("");
     const [ totalUnits, setTotalUnits ] = useState(0);
     const [ totalEmps, setTotalEmps ] = useState(0);
+    const [ totalUnitsPerWeek, setTotalUnitsPerWeek ] = useState(0);
     const classes = useStyles();
 
     useEffect(() => {
@@ -85,6 +81,7 @@ const ProductionScheduleChart = (props) => {
         data.forEach(job => {
             setTotalUnits(total => total + parseInt(job.units));
             setTotalEmps(total => total + parseInt(job.emps));
+            setTotalUnitsPerWeek(total => total + parseInt(job.unitsPerWeek));
             job.offsets = [];
             for (let w = 1; w <= job.weeks; w++) {
                 job.offsets.push(job.offset + w);
@@ -155,6 +152,7 @@ const ProductionScheduleChart = (props) => {
           <DataGrid
             dataSource={data}
             columnAutoWidth
+            autoExpandAll
             highlightChanges
             repaintChangesOnly
             onRowPrepared={renderRow}
@@ -171,14 +169,14 @@ const ProductionScheduleChart = (props) => {
             }}
           >
 
-            <GroupPanel visible/>
+            <GroupPanel visible autoExpandAll/>
             <SearchPanel visible highlightCaseSensitive={false} />
-            <Grouping  />
+            <Grouping autoExpandAll={expanded} />
             <Sorting mode="multiple" />
             {/* <FilterRow visible={true} /> */}
 
             <Column dataField="shop" groupIndex={0} />
-            <Column minWidth={'10vw'} dataField="jobName" caption="Job Name & Wall Type" cellRender={jobWallCell} alignment="left"/>
+            <Column fixed minWidth={'10vw'} dataField="jobName" caption="Job Name & Wall Type" cellRender={jobWallCell} alignment="left"/>
             <Column allowSorting dataField="jobNumber" caption="Job Number" alignment="center"/>
             <Column allowSorting dataField="start" caption="Shop Start Date" alignment="center"/>
             <Column dataField="end" caption="End Date" alignment="center"/>
@@ -217,6 +215,9 @@ const ProductionScheduleChart = (props) => {
             </Typography>
             <Typography color="primary">
               Total Units For All Shops: <b>{totalUnits}</b>
+            </Typography>
+            <Typography color="primary">
+              Total Units/Week For All Shops: <b>{totalUnitsPerWeek}</b>
             </Typography>
             <Typography color="primary">
               Total Employees For All Shops: <b>{totalEmps}</b>

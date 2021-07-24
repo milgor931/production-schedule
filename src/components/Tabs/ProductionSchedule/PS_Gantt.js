@@ -1,7 +1,7 @@
 
 import React, { useState, createRef, useEffect } from 'react';
 import Gantt, { Tasks, Toolbar, Item } from 'devextreme-react/gantt';
-import Spinner from '../Spinner';
+import Spinner from '../../UI/Spinner';
 import DataGrid, {
   Column,
   Grouping,

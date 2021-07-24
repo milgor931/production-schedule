@@ -1,16 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
-import { jobs, dependencies, resources, resourceAssignments } from '../../data.js';
-import Gantt, { Tasks, Dependencies, Resources, ResourceAssignments, Column, Editing, Toolbar, Item, Validation, ContextMenu } from 'devextreme-react/gantt';
-import TabPanel from 'devextreme-react/tab-panel';
 import ProductionScheduleChart from './PS_Chart.js';
 import ProductionScheduleGantt from './PS_Gantt.js';
-import Gallery from 'devextreme-react/gallery';
 import Graph from './PS_Graph.js';
 import { makeStyles } from '@material-ui/core/styles';
 import axios from "axios";
-import Spinner from '../Spinner';
-import { Tooltip } from 'devextreme-react/tooltip';
+import Spinner from '../../UI/Spinner';
 import DG_Grantt from './PS_DG_Gantt';
 import Grid from '@material-ui/core/Grid';
 import Radio from '@material-ui/core/Radio';
@@ -206,7 +201,7 @@ const ProductionSchedule = (props) => {
                     {inputs}
                 </Grid>
 
-                <div style={{margin: '3vw'}}>
+                <div>
                     {data && tabs[selectedIndex].component}
                 </div>
             </div>

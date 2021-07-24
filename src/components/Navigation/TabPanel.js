@@ -1,22 +1,9 @@
 import React from 'react';
-import { useState } from 'react';
-
-import ProductionSchedule from './ProductionSchedule/PS';
-// import TabPanel from 'devextreme-react/tab-panel';
-import PropTypes from 'prop-types';
-import SwipeableViews from 'react-swipeable-views';
 import { makeStyles, useTheme } from '@material-ui/core/styles';
-import AppBar from '@material-ui/core/AppBar';
-import Tabs from '@material-ui/core/Tabs';
-import Tab from '@material-ui/core/Tab';
-import Typography from '@material-ui/core/Typography';
-import Box from '@material-ui/core/Box';
 import Paper from '@material-ui/core/Paper';
 import Grid from '@material-ui/core/Grid';
 import {
     BrowserRouter as Router,
-    Switch,
-    Route,
     NavLink
 } from "react-router-dom"
 

@@ -1,5 +1,12 @@
+// colorful blue #00c7d9
+// dark blue #3f50b5
+
+
+
+
+
 import React, { useState, useEffect } from 'react';
-import TabPanel from './components/TabPanel';
+import TabPanel from './components/Navigation/TabPanel';
 import Header from './components/Navigation/Header';
 import {
   BrowserRouter as Router,
@@ -9,8 +16,15 @@ import {
   withRouter,
   Redirect
 } from "react-router-dom";
-import { useHistory } from 'react-router-dom'
-import ProductionSchedule from './components/ProductionSchedule/PS';
+import ProductionSchedule from './components/Tabs/ProductionSchedule/PS';
+import PanelMatrix from './components/Tabs/PanelMatrix/PanelMatrix';
+import AllActivities from './components/Tabs/AllActivities/AllActivities';
+import GlassGasket from './components/Tabs/GlassGasket/GlassGasket';
+import ShopDrawings from './components/Tabs/ShopDrawings/ShopDrawings';
+import TakeoffMatrix from './components/Tabs/TakeoffMatrix/TakeoffMatrix';
+import FabMatrix from './components/Tabs/FabMatrix/FabMatrix';
+import Metal from './components/Tabs/Metal/Metal';
+import Field from './components/Tabs/Field/Field';
 
 const tabs = [
     // {
@@ -29,49 +43,49 @@ const tabs = [
         'ID': 2,
         'name': 'Shop Drawings',
         'link': '/shop-drawings',
-        'component': <div>shop drawings</div>
+        'component': <ShopDrawings />
     }, 
     {
         'ID': 3,
         'name': 'Takeoff Matrix',
         'link': '/takeoff-matrix',
-        'component': <div>takeoff matrix</div>
+        'component': <TakeoffMatrix />
     }, 
     {
         'ID': 4,
         'name': 'Panel Matrix',
         'link': '/panel-matrix',
-        'component': <div>panel matrix</div>
+        'component': <PanelMatrix />
     },
     {
         'ID': 5,
         'name': 'Fab Matrix',
         'link': '/fab-matrix',
-        'component': <div>fab matrix</div>
+        'component': <FabMatrix />
     }, 
     {
         'ID': 6,
         'name': 'All Activities',
         'link': '/all-activities',
-        'component': <div>all activities</div>
+        'component': <AllActivities />
     }, 
     {
         'ID': 7,
         'name': 'Glass & Gasket',
         'link': '/glass-and-gasket',
-        'component': <div>glass and gasket</div>
+        'component': <GlassGasket />
     }, 
     {
         'ID': 8,
         'name': 'Metal',
         'link': '/metal',
-        'component': <div>metal</div>
+        'component': <Metal />
     },
     {
         'ID': 9,
         'name': 'Field',
         'link': '/field',
-        'component': <div>field</div>
+        'component': <Field />
     }, 
     {
         'ID': 10,
@@ -94,13 +108,6 @@ const tabs = [
 ]
 
 const App = (props) => {
-  const [ tabIndex, setTabIndex ] = useState(0);
-  const history = useHistory();
-  const [ pathname, setPathname ] = useState("/production-schedule");
-
-  useEffect(() => {
-    
-  }, [ ]) 
 
   const routes = tabs.map(tab => 
     <Route exact path={tab.link} component={props => tab.component}>
@@ -113,7 +120,9 @@ const App = (props) => {
 
           <Switch key="components">
             <Redirect exact from="/" to="/production-schedule" />  
-            {routes}
+            <div style={{margin: '3vw'}}>
+                {routes}
+            </div>
           </Switch>
 
       </div>

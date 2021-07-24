@@ -4,7 +4,7 @@ import Switch from '@material-ui/core/Switch';
 import FormGroup from '@material-ui/core/FormGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Paper from '@material-ui/core/Paper';
-import Spinner from '../Spinner';
+import Spinner from '../../UI/Spinner';
 import Grid from '@material-ui/core/Grid';
 
 import {
@@ -21,7 +21,7 @@ import {
   Format
 } from 'devextreme-react/chart';
 import axios from 'axios';
-import { Typography } from '../../../node_modules/@material-ui/core';
+import { Typography } from '@material-ui/core';
 
 const sources = [
   { value: 'units', name: 'Units' },
