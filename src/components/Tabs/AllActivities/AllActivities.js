@@ -58,7 +58,7 @@ const AllActivities = (props) => {
     const renderRow = (row) => {
       if (row.rowType === "data") {
         if (!row.data.booked) {
-          row.rowElement.style.backgroundColor = "#b6cdd1";
+          row.rowElement.style.backgroundColor = "cyan";
         } else if (row.data.header) {
           row.rowElement.style.backgroundColor = "#a8a8a8";
         }
@@ -106,6 +106,7 @@ const AllActivities = (props) => {
           <DataGrid
             dataSource={data}
             showBorders
+            showRowLines
             allowColumnResizing
             columnAutoWidth
             highlightChanges
@@ -133,34 +134,44 @@ const AllActivities = (props) => {
             <Sorting mode="multiple" />
 
             <Editing
-              mode="batch"
+              mode="cell"
               allowUpdating
               allowDeleting
-              allowAdding
               useIcons
               allowSorting
             />
 
-            <Column type="buttons">
+            {/* <Column type="buttons">
                 <Button name="edit" />
                 <Button name="delete" />
-            </Column>
+            </Column> */}
 
             <Column
                 dataField="jobNumber" 
                 dataType="string"
                 caption="Job Number" 
                 alignment="center" 
+                allowEditing={false}
             >
-                <RequiredRule />
             </Column>
 
             <Column 
                 dataField="jobName" 
                 dataType="string"
                 caption="Job Name" 
-                alignment="left">
-                    <RequiredRule />
+                alignment="left"
+                allowEditing={false}
+            >
+            </Column>
+
+            <Column
+                dataField="PM"
+                dataType="string"
+                caption="PM"
+                alignment="center"
+                minWidth={200}
+            >
+                {/* <RequiredRule /> */}
             </Column>
 
             <Column
@@ -168,6 +179,7 @@ const AllActivities = (props) => {
                 dataType="date"
                 caption="Start Shop Drawings"
                 alignment="center"
+                allowEditing={false}
             >
                  
             </Column>
@@ -177,8 +189,8 @@ const AllActivities = (props) => {
                 dataType="date"
                 caption="Start Metal and Misc Takeoff"
                 alignment="center"
+                allowEditing={false}
             >
-                <RequiredRule />
             </Column>
 
             <Column
@@ -186,8 +198,8 @@ const AllActivities = (props) => {
                 dataType="date"
                 caption="Start Glass Takeoff"
                 alignment="center"
+                allowEditing={false}
             >
-                <RequiredRule />
             </Column>
 
             <Column
@@ -195,8 +207,8 @@ const AllActivities = (props) => {
                 dataType="date"
                 caption="Start Door Schedule"
                 alignment="center"
+                allowEditing={false}
             >
-                <RequiredRule />
             </Column>
 
             <Column
@@ -204,8 +216,8 @@ const AllActivities = (props) => {
                 dataType="date"
                 caption="Start Shop Use Brake Shapes"
                 alignment="center"
+                allowEditing={false}
             >
-                <RequiredRule />
             </Column>
 
             <Column
@@ -213,8 +225,8 @@ const AllActivities = (props) => {
                 dataType="date"
                 caption="Panel Fabs"
                 alignment="center"
+                allowEditing={false}
             >
-                <RequiredRule />
             </Column>
 
             <Column
@@ -222,8 +234,8 @@ const AllActivities = (props) => {
                 dataType="date"
                 caption="Panel Release"
                 alignment="center"
+                allowEditing={false}
             >
-                <RequiredRule />
             </Column>
 
             <Column
@@ -231,8 +243,8 @@ const AllActivities = (props) => {
                 dataType="date"
                 caption="Fab Drawings"
                 alignment="center"
+                allowEditing={false}
             >
-                <RequiredRule />
             </Column>
 
             <Column
@@ -240,8 +252,8 @@ const AllActivities = (props) => {
                 dataType="date"
                 caption="Shop Start"
                 alignment="center"
+                allowEditing={false}
             >
-                <RequiredRule />
             </Column>
 
             <Column
@@ -249,8 +261,8 @@ const AllActivities = (props) => {
                 dataType="date"
                 caption="Field Start"
                 alignment="center"
+                allowEditing={false}
             >
-                <RequiredRule />
             </Column>
           </DataGrid>
         </div>

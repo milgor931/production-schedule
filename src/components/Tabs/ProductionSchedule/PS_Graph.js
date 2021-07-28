@@ -6,6 +6,7 @@ import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Paper from '@material-ui/core/Paper';
 import Spinner from '../../UI/Spinner';
 import Grid from '@material-ui/core/Grid';
+import Hidden from '@material-ui/core/Hidden';
 
 import {
   Chart,
@@ -32,7 +33,7 @@ const Graph = (props) => {
   const { data, handleUpdate } = props;
   const [ state, setState ] = React.useState({});
   const [ jobs, setJobs ] = useState([]);
-  const [ shops, setShops ] = useState(["Shop A", "Shop B"]);
+  const [ shops, setShops ] = useState([]);
   const [ loaded, setLoaded ] = useState(false);
 
   useEffect(() => {
@@ -49,8 +50,7 @@ const Graph = (props) => {
   }, [ state ])
 
   const findShopDups = () => {
-    const unique = [...new Set(data.map(item => item.shop))];
-    return unique;
+    return [...new Set(data.map(item => item.shop))];
   }
 
   const calculateForOffSets = () => {
@@ -77,6 +77,7 @@ const Graph = (props) => {
       new_data.push({ offset: i, units: total_units, emps: total_emps})
     }
     setJobs(new_data);
+    console.dir(new_data)
   }
 
   const handleChange = (event) => {
@@ -119,19 +120,18 @@ const Graph = (props) => {
   return (
     <div>
       <Grid container direction="row" style={{width: '100%'}}>
-        <Grid item style={{width: '10vw'}}>
-          {/* <Paper elevation={10}> */}
-            <FormGroup column style={{marginTop: '50px', padding: '10px'}}>
-              <Typography>
-                SHOPS
-              </Typography> 
-              {shopSwitches}
-            </FormGroup>
-          {/* </Paper> */}
-        </Grid>
-        <Grid item style={{width: '80vw'}}>
+        <Hidden mdDown>
+          <Grid item style={{width: '10vw'}} >
+              <FormGroup column style={{marginTop: '50px', padding: '10px'}}>
+                <Typography>
+                  SHOPS
+                </Typography> 
+                {shopSwitches}
+              </FormGroup>
+          </Grid>
+        </Hidden>
+        <Grid item style={{width: "80vw", marginTop: "20px"}}>
           <Chart
-            // palette=""
             dataSource={jobs}
             title="Units and Employees Over Time"
           >

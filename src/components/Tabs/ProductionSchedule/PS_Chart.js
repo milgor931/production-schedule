@@ -5,8 +5,6 @@ import DataGrid, {
   Column,
   Grouping,
   GroupPanel,
-  Pager,
-  Paging,
   RowDragging,
   SearchPanel,
   Editing,
@@ -14,37 +12,40 @@ import DataGrid, {
   Sorting,
   RequiredRule,
   TotalItem,
-  MasterDetail,
   GroupItem,
   Button,
-  FilterRow, 
-  RemoteOperations
+  SortByGroupSummaryInfo
 } from 'devextreme-react/data-grid';
-import { makeStyles } from '@material-ui/core/styles';
 import CheckBox from 'devextreme-react/check-box';
 import TextField from '@material-ui/core/TextField';
-import { Typography } from '@material-ui/core';
-
-
-const useStyles = makeStyles((theme) => ({
-  formControl: {
-    margin: theme.spacing(1),
-    minWidth: 120,
-  },
-  selectEmpty: {
-    marginTop: theme.spacing(2),
-  },
-}));
+import ColorBox from 'devextreme-react/color-box';
+import axios from 'axios';
+import Accordion from '@material-ui/core/Accordion';
+import AccordionSummary from '@material-ui/core/AccordionSummary';
+import AccordionDetails from '@material-ui/core/AccordionDetails';
+import Typography from '@material-ui/core/Typography';
+import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
+import Grid from '@material-ui/core/Grid';
 
 const ProductionScheduleChart = (props) => {
-    const { data, handleUpdate, rowAdded, rowRemoved, onRowInit } = props;
+    const { data, shopInfo, handleShopUpdate, handleUpdate, rowRemoved, onRowInit } = props;
     const [ loaded, setLoaded ] = useState(false);
     const [ expanded, setExpanded ] = useState(true);
-    const classes = useStyles();
+    const [ index, setIndex ] = useState(0);
+    const [ shops, setShops ] = useState(shopInfo);
 
     useEffect(() => {
+      // let s = findShopDups().map((shop, index) => 
+      //   ({ orderNumber: index, shop: shop, colorkey: ""})
+      // );
+
+      // setShops(s);
       data && setLoaded(true);
     }, [ data ])
+
+    const findShopDups = () => {
+      return [...new Set(data.map(item => item.shop))];
+    }
 
     const onReorder = (e) => {
       const visibleRows = e.component.getVisibleRows();
@@ -83,11 +84,16 @@ const ProductionScheduleChart = (props) => {
     const renderRow = (row) => {
       if (row.rowType === "data") {
         if (!row.data.booked) {
-          row.rowElement.style.backgroundColor = "#b6cdd1";
+          row.rowElement.style.backgroundColor = "cyan";
         } else if (row.data.header) {
           row.rowElement.style.backgroundColor = "#a8a8a8";
-        }
-      } 
+        } 
+      } else if (row.rowType === "group" && shops[0]) {
+        let color = shops.find(shop => shop.shop === row.data.key).colorkey;
+        row.rowElement.style.backgroundColor = color;
+      } else if (row.rowType === "total") {
+        row.rowElement.style.backgroundColor = "";
+      }
     }
 
     const jobNumberRender = (row) => {
@@ -102,22 +108,135 @@ const ProductionScheduleChart = (props) => {
     }
 
     const cellPrepared = (cell) => {
-      if (cell.column.dataField === "weeks" || cell.column.dataField === "offset" || cell.column.dataField === "end") {
+      if (cell.rowType === "data" && (cell.column.dataField === "weeks" || cell.column.dataField === "offset" || cell.column.dataField === "end")) {
         cell.cellElement.style.backgroundColor = "#c2c4c4";
       }
     }
+
+    const onShopReorder = (e) => {
+      const itemData = e.itemData;
+      const from = e.fromIndex;
+      const to = e.toIndex;
+
+      const newShops = [...shops];
+
+      newShops.splice(from, 1);
+      newShops.splice(to, 0, itemData);
+
+      setShops(newShops)
+    }
+
+    const calculateCustomSummary = (options) => {
+      let i = 0;
+      if (options.name === "shopIndex") {
+        switch(options.summaryProcess) {
+          case "start":
+            i+= 1
+            // initalize
+            break;
+          case "calculate":
+            // modify
+            break;
+          case "finalize":
+            // end
+            options.totalValue = i;
+            break;
+        }
+      }
+     }
 
     return (
     <div>
       {loaded 
         ? <div>
-          <CheckBox 
-              text="Expand Rows"
-              value={expanded}
-              onValueChanged={() => setExpanded(!expanded)} 
-            />
+          <Accordion>
+            <AccordionSummary
+              expandIcon={<ExpandMoreIcon />}
+              aria-controls="panel1a-content"
+              id="panel1a-header"
+            >
+              <Typography>Adjust Shop Settings</Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Grid container direction="column">
+                <Grid item>
+                  <CheckBox 
+                    text="Expand Rows"
+                    value={expanded}
+                    onValueChanged={() => setExpanded(!expanded)} 
+                    style={{marginBottom: '20px'}}
+                  />
+                </Grid>
+                <Grid item>
+                  <DataGrid
+                    dataSource={shops}
+                    showRowLines
+                    showBorders
+                    allowColumnResizing
+                    columnAutoWidth
+                    highlightChanges
+                    repaintChangesOnly
+                    twoWayBindingEnabled
+                    columnResizingMode="nextColumn"
+                    wordWrapEnabled
+                    autoExpandAll
+                    highlightChanges
+                    cellHintEnabled
+                    onRowUpdated={row => {
+                      alert(row)
+                    }}
+                    >
+                    <Editing
+                      mode="cell"
+                      allowUpdating
+                    />
+
+                    <RowDragging
+                      allowReordering
+                      onReorder={onShopReorder}
+                      showDragIcons
+                    />
+                    <Column
+                      dataField="shop"
+                      caption="Shop"
+                    />
+                    <Column
+                      dataField="colorkey"
+                      caption="Colorkey for Shop"
+                      cellRender={cell => {
+                        return ( <ColorBox
+                          applyValueMode="instantly"
+                          defaultValue={cell.data.colorkey}
+                          readOnly
+                        /> )
+                      }}
+                      editCellRender={cell => {
+                        return <ColorBox
+                          // applyValueMode="instantly"
+                          defaultValue={cell.data.colorkey}
+                          onValueChange={color => {
+                            cell.data.colorkey = color;
+                            axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/shops.json`, shops)
+                            .then(response => {
+                              let mode = expanded;
+                              setExpanded(!mode);
+                              setExpanded(mode);
+                            }) 
+                            .catch(error => alert(error))
+                          }}
+                        /> 
+                      }}
+                    />
+                  </DataGrid>
+                </Grid>
+              </Grid>
+            </AccordionDetails>
+          </Accordion>
+
+          
           <DataGrid
             dataSource={data}
+            showRowLines
             showBorders
             allowColumnResizing
             columnAutoWidth
@@ -130,23 +249,20 @@ const ProductionScheduleChart = (props) => {
             autoExpandAll
             highlightChanges
             onInitNewRow={onRowInit}
-            // onInitialized={onRowInit}
             onRowUpdated={handleUpdate}
             onRowInserted={handleUpdate}
             onRowRemoved={rowRemoved}
             onCellPrepared={cellPrepared}
             cellHintEnabled
-
           >
 
             <GroupPanel visible autoExpandAll/>
             <SearchPanel visible highlightCaseSensitive={false} />
             <Grouping autoExpandAll={expanded} />
-            {/* <FilterRow visible={true} /> */}
-            <Sorting mode="multiple" />
+            <Sorting mode="single" />
 
             <Editing
-              mode="batch"
+              mode="cell"
               allowUpdating
               allowDeleting
               allowAdding
@@ -164,6 +280,7 @@ const ProductionScheduleChart = (props) => {
               <Button name="edit" />
               <Button name="delete" />
             </Column>
+
             <Column 
               dataField="shopName" 
               groupIndex={0} 
@@ -176,8 +293,15 @@ const ProductionScheduleChart = (props) => {
             <Column
               dataField="booked" 
               alignment="center"
-            >
-              {/* <RequiredRule /> */}
+            />
+            <Column
+              dataField="jobNumber" 
+              dataType="string"
+              caption="Job Number" 
+              alignment="center" 
+              defaultSortOrder="asc"
+              cellRender={jobNumberRender} >
+              <RequiredRule />
             </Column>
             <Column 
               dataField="jobName" 
@@ -189,18 +313,10 @@ const ProductionScheduleChart = (props) => {
               <RequiredRule />
             </Column>
             <Column
-             dataField="jobNumber" 
-             dataType="string"
-             caption="Job Number" 
-             alignment="center" 
-             cellRender={jobNumberRender} >
-              <RequiredRule />
-            </Column>
-            <Column
-             dataField="customer" 
-             dataType="string"
-             caption="Customer" 
-             alignment="center" >
+              dataField="customer" 
+              dataType="string"
+              caption="Customer" 
+              alignment="center" >
               <RequiredRule />
             </Column>
             <Column 
@@ -211,15 +327,22 @@ const ProductionScheduleChart = (props) => {
               <RequiredRule />
             </Column>
             <Column
-             allowSorting 
-             dataField="start" 
-             dataType="date"
-             caption="Shop Start Date" 
-             alignment="center">
+              allowSorting 
+              dataField="start" 
+              dataType="date"
+              caption="Shop Start Date" 
+              alignment="center">
+              <RequiredRule />
+            </Column>
+            <Column
+              allowSorting 
+              dataField="weeksToGoBack" 
+              dataType="number"
+              caption="Weeks To Go Back" 
+              alignment="center">
               <RequiredRule />
             </Column>
             <Column dataField="end" caption="End Date" alignment="center" allowEditing={false} allowEditing={false} >
-              {/* <RequiredRule /> */}
             </Column>
             <Column
              dataField="fieldStart" 
@@ -243,30 +366,55 @@ const ProductionScheduleChart = (props) => {
               <RequiredRule />
             </Column>
             
-            <Column dataField="weeks" caption="Weeks" alignment="center" allowEditing={false}>
-              {/* <RequiredRule /> */}
-            </Column>
-            <Column dataField="offset" caption="Offset" allowEditing={false} alignment="center">
-              {/* <RequiredRule /> */}
-            </Column>
+            <Column dataField="weeks" caption="Weeks" alignment="center" allowEditing={false}></Column>
+            <Column dataField="offset" caption="Offset" allowEditing={false} alignment="center"></Column>
             
-            <Summary recalculateWhileEditing>
+            <Summary recalculateWhileEditing calculateCustomSummary={calculateCustomSummary}>
+              <GroupItem
+                column="shop"
+                summaryType="custom"
+                name="shopIndex"
+                customizeText={data => `Shop: ` + data.value}
+              />
               <GroupItem
                 column="units"
                 summaryType="sum"
+                name="shopUnits"
                 customizeText={data => `Total Units: ` + data.value}
               />
               <GroupItem
                 column="emps"
                 summaryType="sum"
+                name="shopEmps"
                 customizeText={data => `Total Emps: ` + data.value}
               />
               <GroupItem
                 column="unitsPerWeek"
                 summaryType="sum"
+                name="shopUnitsPerWeek"
                 customizeText={data => `Total Units/Week: ` + data.value}
               />
+
+              <TotalItem
+                column="units"
+                summaryType="sum"
+                customizeText={data => `Total Units: ` + data.value.toLocaleString()}
+              />
+              <TotalItem
+                column="unitsPerWeek"
+                summaryType="sum"
+                customizeText={data => `Total Units/Week: ` + data.value.toLocaleString()}
+              />
+              <TotalItem
+                column="emps"
+                summaryType="sum"
+                customizeText={data => `Total Emps: ` + data.value.toLocaleString()}
+              />
             </Summary>
+
+            <SortByGroupSummaryInfo 
+                summaryItem="shopIndex"
+            />
           </DataGrid>
         </div>
       : <Spinner />

@@ -27,6 +27,7 @@ const ProductionSchedule = (props) => {
     const [ selectedIndex, setSelectedIndex ] = useState(0);
     const [ startDate, setStartDate ] = useState();
     const [value, setValue] = React.useState(0);
+    const [ shopInfo, setShops ] = useState([]);
 
     const handleChange = (event, newValue) => {
         setValue(newValue);
@@ -40,12 +41,13 @@ const ProductionSchedule = (props) => {
         .catch(error => {
             alert(error);
         })
-    }, [])
 
-    const getTotals = () => {
-        let total_units = data.reduce(( total, job ) => total + job.units)
-        
-    }
+        axios.get(`https://ww-production-schedule-default-rtdb.firebaseio.com/shops.json`)
+        .then(response => {
+            response.data && setShops(Object.values(response.data));
+        })
+        .catch(error => alert(error))
+    }, [])
 
     useEffect(() => {
         if (data) {
@@ -62,6 +64,7 @@ const ProductionSchedule = (props) => {
                 'name': 'Gantt',
                 'component': <DG_Grantt
                                 data={data} 
+                                shopInfo={shopInfo}
                                 handleUpdate={handleUpdate}
                                 getStartDateIndex={getStartDateIndex}
                                 getEndDateIndex={getEndDateIndex}
@@ -72,6 +75,7 @@ const ProductionSchedule = (props) => {
                 'name': 'Production Schedule',
                 'component': <ProductionScheduleChart 
                                 data={data} 
+                                shopInfo={shopInfo}
                                 handleUpdate={handleUpdate}
                                 rowAdded={handleUpdate}
                                 rowRemoved={rowRemoved}
@@ -85,15 +89,7 @@ const ProductionSchedule = (props) => {
                                 data={data} 
                                 handleUpdate={handleUpdate}
                              />
-            },
-            {
-                'ID': 3,
-                'name': 'Gantt Chart',
-                'component': <ProductionScheduleGantt 
-                                data={data} 
-                                handleUpdate={handleUpdate}
-                             />
-            },
+            }
         ])
 
         setLoaded(true);

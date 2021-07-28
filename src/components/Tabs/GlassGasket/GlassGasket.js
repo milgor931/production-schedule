@@ -58,7 +58,7 @@ const GlassGasket = (props) => {
     const renderRow = (row) => {
       if (row.rowType === "data") {
         if (!row.data.booked) {
-          row.rowElement.style.backgroundColor = "#b6cdd1";
+          row.rowElement.style.backgroundColor = "cyan";
         } else if (row.data.header) {
           row.rowElement.style.backgroundColor = "#a8a8a8";
         }
@@ -79,7 +79,6 @@ const GlassGasket = (props) => {
     }
 
     const rowRemoved = (row) => {
-        // setData([ Object.assign(data, row.data) ])
         axios.delete(`https://ww-production-schedule-default-rtdb.firebaseio.com/jobs/${row.data.id}.json`)
         .then(response => {
             // setData([ ...data ])
@@ -106,6 +105,7 @@ const GlassGasket = (props) => {
           <DataGrid
             dataSource={data}
             showBorders
+            showRowLines
             allowColumnResizing
             columnAutoWidth
             highlightChanges
@@ -135,16 +135,13 @@ const GlassGasket = (props) => {
             <Editing
               mode="batch"
               allowUpdating
-              allowDeleting
-              allowAdding
               useIcons
               allowSorting
             />
 
-            <Column type="buttons">
-                <Button name="edit" />
+            {/* <Column type="buttons">
                 <Button name="delete" />
-            </Column>
+            </Column> */}
 
             <Column
                 dataField="jobNumber" 
@@ -178,7 +175,7 @@ const GlassGasket = (props) => {
             <Column
                 dataField="glassRequired"
                 dataType="date"
-                caption="glassRequired"
+                caption="Glass Required"
                 alignment="center"
             >
                 <RequiredRule />

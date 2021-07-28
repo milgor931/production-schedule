@@ -117,6 +117,7 @@ const FabMatrix = (props) => {
           <DataGrid
             dataSource={data}
             showBorders
+            showRowLines
             allowColumnResizing
             columnAutoWidth
             highlightChanges

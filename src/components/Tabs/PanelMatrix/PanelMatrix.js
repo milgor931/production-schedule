@@ -58,7 +58,7 @@ const PanelMatrix = (props) => {
     const renderRow = (row) => {
       if (row.rowType === "data") {
         if (!row.data.booked) {
-          row.rowElement.style.backgroundColor = "#b6cdd1";
+          row.rowElement.style.backgroundColor = "cyan";
         } else if (row.data.header) {
           row.rowElement.style.backgroundColor = "#a8a8a8";
         }
@@ -106,6 +106,7 @@ const PanelMatrix = (props) => {
           <DataGrid
             dataSource={data}
             showBorders
+            showRowLines
             allowColumnResizing
             columnAutoWidth
             highlightChanges
@@ -135,16 +136,14 @@ const PanelMatrix = (props) => {
             <Editing
               mode="batch"
               allowUpdating
-              allowDeleting
               allowAdding
               useIcons
               allowSorting
             />
 
-            <Column type="buttons">
-                <Button name="edit" />
-                <Button name="delete" />
-            </Column>
+            {/* // <Column type="buttons">
+            //     <Button name="edit" />
+            // </Column> */}
 
             <Column
                 dataField="jobNumber" 
@@ -347,14 +346,6 @@ const PanelMatrix = (props) => {
                 dataField="shopUseSteel"
                 dataType="date"
                 caption="Shop Use Steel Release"
-                alignment="center"
-            >
-            </Column>
-
-            <Column
-                dataField="deliveryStartDateShop"
-                dataType="date"
-                caption="Delivery Start Date Shop"
                 alignment="center"
             >
             </Column>

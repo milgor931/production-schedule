@@ -36,7 +36,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const ProductionScheduleChart = (props) => {
-    const { data, getStartDateIndex, getEndDateIndex} = props;
+    const { data, shops, getStartDateIndex, getEndDateIndex} = props;
     const [ loaded, setLoaded ] = useState(false);
     const [ jobs, setJobs ] = useState(null);
     const [ columns, setColumns ] = useState(null);
@@ -95,7 +95,6 @@ const ProductionScheduleChart = (props) => {
                 caption={convertToDate(row)}
                 minWidth={50}
                 type="date"
-                // cssClass={classes.dateColumn}
             />
         ))    
     }
@@ -118,26 +117,29 @@ const ProductionScheduleChart = (props) => {
       )
     }
 
-    const renderRow = (row) => {
-      if (row.rowType === "data") {
-        if (!row.data.booked) {
-          row.rowElement.style.backgroundColor = "#9cf5ff";
-        } else if (row.data.header) {
-          row.rowElement.style.backgroundColor = "#a8a8a8";
-        }
-      } 
-    }
-
     const cellPrepared = (cell) => {
        if (cell.data && cell.data.offsets) {
           if (cell.data.offsets.includes(cell.column.dataField) && cell.column.type === "date") {
             cell.cellElement.style.backgroundColor = "#3f50b5";
           }
           else if (!cell.data.booked) {
-            cell.cellElement.style.backgroundColor = "#b6cdd1";
+            cell.cellElement.style.backgroundColor = "cyan";
           }
        }
        
+    }
+
+    const renderRow = (row) => {
+      if (row.rowType === "data") {
+        if (!row.data.booked) {
+          row.rowElement.style.backgroundColor = "cyan";
+        } else if (row.data.header) {
+          row.rowElement.style.backgroundColor = "#a8a8a8";
+        } 
+      } else if (row.rowType === "group" && shops.length > 0) {
+        let color = shops.find(shop => shop.shop === row.data.key).colorkey;
+        row.rowElement.style.backgroundColor = color;
+      }
     }
 
     return (
@@ -151,11 +153,11 @@ const ProductionScheduleChart = (props) => {
           /> */}
           <DataGrid
             dataSource={data}
+            showRowLines
             columnAutoWidth
             autoExpandAll
             highlightChanges
             repaintChangesOnly
-            onRowPrepared={renderRow}
             twoWayBindingEnabled
             columnResizingMode="nextColumn"
             wordWrapEnabled
@@ -164,6 +166,7 @@ const ProductionScheduleChart = (props) => {
             onCellPrepared={cellPrepared}
             hoverStateEnabled
             hint={hint}
+            // onRowPrepared={renderRow}
             onCellHoverChanged={row => {
               row.rowType === "data" && setHint(`${row.data.jobName} ${row.data.start.toLocaleDateString()} - ${row.data.end.toLocaleDateString()}`);
             }}
@@ -175,11 +178,33 @@ const ProductionScheduleChart = (props) => {
             <Sorting mode="multiple" />
             {/* <FilterRow visible={true} /> */}
 
-            <Column dataField="shop" groupIndex={0} />
-            <Column fixed minWidth={'10vw'} dataField="jobName" caption="Job Name & Wall Type" cellRender={jobWallCell} alignment="left"/>
-            <Column allowSorting dataField="jobNumber" caption="Job Number" alignment="center"/>
-            <Column allowSorting dataField="start" caption="Shop Start Date" alignment="center"/>
-            <Column dataField="end" caption="End Date" alignment="center"/>
+            <Column 
+              dataField="shop" 
+              groupIndex={0} 
+            />
+            <Column fixed allowSorting 
+              dataField="jobNumber" 
+              caption="Job Number" 
+              alignment="center"
+            />
+            <Column fixed 
+              minWidth={'10vw'} 
+              dataField="jobName" 
+              caption="Job Name & Wall Type" 
+              cellRender={jobWallCell} 
+              alignment="left"
+            />
+            <Column fixed allowSorting 
+              dataField="start" 
+              caption="Shop Start Date" 
+              alignment="center"
+              defaultSortOrder="asc"
+            />
+            <Column fixed 
+              dataField="end" 
+              caption="End Date" 
+              alignment="center"
+            />
             
             {columns}
 
@@ -205,6 +230,19 @@ const ProductionScheduleChart = (props) => {
                   return `Total Units/Week: ` + data.value;
                 }}
               />
+
+              <TotalItem
+                column="units"
+                summaryType="sum"
+              />
+              <TotalItem
+                column="unitsPerWeek"
+                summaryType="sum"
+              />
+              <TotalItem
+                column="employees"
+                summaryType="sum"
+              />
             </Summary>
 
           </DataGrid>
@@ -214,13 +252,13 @@ const ProductionScheduleChart = (props) => {
               <b>TOTALS</b>
             </Typography>
             <Typography color="primary">
-              Total Units For All Shops: <b>{totalUnits}</b>
+              Total Units For All Shops: <b>{totalUnits.toLocaleString()}</b>
             </Typography>
             <Typography color="primary">
-              Total Units/Week For All Shops: <b>{totalUnitsPerWeek}</b>
+              Total Units/Week For All Shops: <b>{totalUnitsPerWeek.toLocaleString()}</b>
             </Typography>
             <Typography color="primary">
-              Total Employees For All Shops: <b>{totalEmps}</b>
+              Total Employees For All Shops: <b>{totalEmps.toLocaleString()}</b>
             </Typography>
           </Paper>
         </div>

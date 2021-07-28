@@ -21,6 +21,7 @@ import DataGrid, {
 import { makeStyles } from '@material-ui/core/styles';
 import Paper from '@material-ui/core/Paper';
 import { Typography } from '@material-ui/core';
+import axios from 'axios';
 
 const useStyles = makeStyles((theme) => ({
   formControl: {
@@ -36,7 +37,6 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const Field = (props) => {
-    const { data, getStartDateIndex, getEndDateIndex} = props;
     const [ loaded, setLoaded ] = useState(false);
     const [ jobs, setJobs ] = useState(null);
     const [ columns, setColumns ] = useState(null);
@@ -45,7 +45,17 @@ const Field = (props) => {
     const [ totalUnits, setTotalUnits ] = useState(0);
     const [ totalEmps, setTotalEmps ] = useState(0);
     const [ totalUnitsPerWeek, setTotalUnitsPerWeek ] = useState(0);
-    const classes = useStyles();
+    const [ data, setData ] = useState(null);
+
+    useEffect(() => {
+      axios.get("https://ww-production-schedule-default-rtdb.firebaseio.com/jobs.json")
+      .then(response => {
+          response.data ? setData(Object.values(response.data)) : setData([]);
+      })
+      .catch(error => {
+          alert(error);
+      })
+  }, [])
 
     useEffect(() => {
         if (data) {
@@ -54,12 +64,6 @@ const Field = (props) => {
         }
     }, [ data ])
 
-    const convertToDate = (value) => {
-      let date = (value * 7) + convertMillisecondsToDays(new Date('7/1/2021').getTime());
-      date = new Date(convertDaysToMilliseconds(date));
-      return date.toLocaleDateString();
-    }
-
     const convertDaysToMilliseconds = (days) => {
       return days * 24 * 60 * 60 * 1000;
     }
@@ -67,46 +71,116 @@ const Field = (props) => {
     const convertMillisecondsToDays = (ms) => {
       return Math.ceil( ms / (24 * 60 * 60 * 1000) );
     }
-  
+
+    const convertToDate = (value) => {
+      let date = (value * 7) + convertMillisecondsToDays(new Date('7/1/2021').getTime());
+      date = new Date(convertDaysToMilliseconds(date));
+    }
 
     const calculateForOffSets = () => {
-        let cols = [];
-        let start = data[getStartDateIndex()].start;
-        let end = data[getEndDateIndex()];
+      let cols = [];
+      let start = data[getStartDateIndex()].start;
+      let end = data[getEndDateIndex()];
 
-        for (let i = 0; i <= end.offset + end.weeks; i++) {
-            cols.push(i);
-        }
+      for (let i = 0; i <= end.offset + end.weeks; i++) {
+          cols.push(i);
+      }
 
-        data.forEach(job => {
-            setTotalUnits(total => total + parseInt(job.units));
-            setTotalEmps(total => total + parseInt(job.emps));
-            setTotalUnitsPerWeek(total => total + parseInt(job.unitsPerWeek));
-            job.offsets = [];
-            for (let w = 1; w <= job.weeks; w++) {
-                job.offsets.push(job.offset + w);
-            }
-        })
+      data.forEach(job => {
+          setTotalUnits(total => total + parseInt(job.units));
+          setTotalEmps(total => total + parseInt(job.emps));
+          setTotalUnitsPerWeek(total => total + parseInt(job.unitsPerWeek));
+          job.offsets = [];
+          for (let w = 1; w <= job.weeks; w++) {
+              job.offsets.push(job.offset + w);
+          }
+      })
 
-        setColumns(cols.map((row, index) => 
-            <Column
-                key={index}
-                dataField={row}
-                caption={convertToDate(row)}
-                minWidth={50}
-                type="date"
-                // cssClass={classes.dateColumn}
-            />
-        ))    
-    }
+      setColumns(cols.map((row, index) => 
+          <Column
+              key={index}
+              dataField={row}
+              caption={convertToDate(row)}
+              minWidth={50}
+              type="date"
+              // cssClass={classes.dateColumn}
+          />
+      ))    
+  }
 
-    const toMS = (days) => {
-        return days * 24 * 60 * 60 * 1000;
-    }
+    const convertDate = (row) => {
+      row.start = new Date(row.start);
+      row.fieldStart = new Date(row.fieldStart);
+      let start = row.start.getTime();
+      let weeks = Math.ceil(row.units/row.unitsPerWeek);
+      row.weeks = weeks;
+      let time = weeks * 7 * 24 * 60 * 60 * 1000;
+      time = start + time;
+      row.end = new Date(time);
+  }
+  
+  const getStartDateIndex = () => {
+      let s = convertMillisecondsToDays(new Date(data[0].start).getTime());
+      let jobIndex = 0;
+      data.forEach((job, index) => {
+          if (convertMillisecondsToDays(new Date(job.start).getTime()) < s) {
+              jobIndex = index;
+              s = convertMillisecondsToDays(new Date(job.start).getTime());
+          } 
+      })
+      return jobIndex;
+  }
 
-    const toDays = (ms) => {
-        return Math.ceil(ms / (24 * 60 * 60 * 1000));
-    }
+  const getEndDateIndex = () => {
+      let s = convertMillisecondsToDays(new Date(data[0].start).getTime());
+      let jobIndex = 0;
+      data.forEach((job, index) => {
+          if (convertMillisecondsToDays(new Date(job.start).getTime()) > s) {
+              jobIndex = index;
+              s = convertMillisecondsToDays(new Date(job.start).getTime());
+          } 
+      })
+      return jobIndex;
+  }
+
+  const getOffset = (row, start) => {
+      let days = convertMillisecondsToDays(new Date(row.start).getTime());
+      row.offset = Math.ceil((days - convertMillisecondsToDays(new Date(start).getTime()))/7);
+  }
+
+  const handleUpdate = (row) => {
+      if (row.data) {
+          row = row.data;
+      }
+      row.shopName = row.shop;
+      row.title = row.jobName;
+      axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/jobs/${row.id}.json`, row)
+      .then(response => {
+          setData([ ...data ])
+      })
+      .catch(error => alert(error))
+  }
+
+  const rowRemoved = (row) => {
+      // setData([ Object.assign(data, row.data) ])
+      axios.delete(`https://ww-production-schedule-default-rtdb.firebaseio.com/jobs/${row.data.id}.json`)
+      .then(response => {
+          // setData([ ...data ])
+      })
+      .catch(error => alert(error))
+  }
+
+  const onRowInit = (row) => {
+      row.data.booked = false;
+      row.data.shop = "";
+      row.data.shopName = "";
+      row.data.jobName = "job name";
+      row.data.title = "job name";
+      row.data.wallType = "wall type";
+      row.data.start = new Date();
+      row.data.fieldStart = new Date();
+      row.data.id = row.data.__KEY__;
+  }
 
     const jobWallCell = (data) => {
       return (
@@ -118,23 +192,13 @@ const Field = (props) => {
       )
     }
 
-    const renderRow = (row) => {
-      if (row.rowType === "data") {
-        if (!row.data.booked) {
-          row.rowElement.style.backgroundColor = "#9cf5ff";
-        } else if (row.data.header) {
-          row.rowElement.style.backgroundColor = "#a8a8a8";
-        }
-      } 
-    }
-
     const cellPrepared = (cell) => {
        if (cell.data && cell.data.offsets) {
           if (cell.data.offsets.includes(cell.column.dataField) && cell.column.type === "date") {
             cell.cellElement.style.backgroundColor = "#3f50b5";
           }
           else if (!cell.data.booked) {
-            cell.cellElement.style.backgroundColor = "#b6cdd1";
+            cell.cellElement.style.backgroundColor = "cyan";
           }
        }
        
@@ -153,9 +217,9 @@ const Field = (props) => {
             dataSource={data}
             columnAutoWidth
             autoExpandAll
+            showRowLines
             highlightChanges
             repaintChangesOnly
-            onRowPrepared={renderRow}
             twoWayBindingEnabled
             columnResizingMode="nextColumn"
             wordWrapEnabled
@@ -163,23 +227,19 @@ const Field = (props) => {
             showColumnLines={true}
             onCellPrepared={cellPrepared}
             hoverStateEnabled
-            hint={hint}
-            onCellHoverChanged={row => {
-              row.rowType === "data" && setHint(`${row.data.jobName} ${row.data.start.toLocaleDateString()} - ${row.data.end.toLocaleDateString()}`);
-            }}
+            
           >
 
             <GroupPanel visible autoExpandAll/>
             <SearchPanel visible highlightCaseSensitive={false} />
             <Grouping autoExpandAll={expanded} />
             <Sorting mode="multiple" />
-            {/* <FilterRow visible={true} /> */}
 
             <Column dataField="shop" groupIndex={0} />
+            <Column fixed allowSorting dataField="jobNumber" caption="Job Number" alignment="center"/>
             <Column fixed minWidth={'10vw'} dataField="jobName" caption="Job Name & Wall Type" cellRender={jobWallCell} alignment="left"/>
-            <Column allowSorting dataField="jobNumber" caption="Job Number" alignment="center"/>
-            <Column allowSorting dataField="start" caption="Shop Start Date" alignment="center"/>
-            <Column dataField="end" caption="End Date" alignment="center"/>
+            <Column fixed allowSorting dataField="start" dataType="date" caption="Shop Start Date" alignment="center"/>
+            <Column fixed dataField="end" caption="End Date" dataType="date" alignment="center"/>
             
             {columns}
 

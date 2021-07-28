@@ -1,9 +1,21 @@
 // colorful blue #00c7d9
 // dark blue #3f50b5
 
+// best way to edit and add?
+// where can you delete
+
+// organize colorkey for shops (header and bars!)
+// not booked cyan color takes priority
+// pick sort order for shops with data entry field
+
+// fix employees in line graph!
+
+// takeoff matrix
+// data entry for min number of how many weeks back to go... if job already in that week, go to first open week before that date
 
 
-
+// change font color of groups so that they dont blend into header
+// use min, give each row item custom index and sort groups by min index value
 
 import React, { useState, useEffect } from 'react';
 import TabPanel from './components/Navigation/TabPanel';
@@ -27,12 +39,6 @@ import Metal from './components/Tabs/Metal/Metal';
 import Field from './components/Tabs/Field/Field';
 
 const tabs = [
-    // {
-    //     'ID': 0,
-    //     'name': 'Home',
-    //     'link': '/',
-    //     'component': <div>Home</div>
-    // },
     {
         'ID': 1,
         'name': 'Production Schedule',
@@ -86,24 +92,6 @@ const tabs = [
         'name': 'Field',
         'link': '/field',
         'component': <Field />
-    }, 
-    {
-        'ID': 10,
-        'name': 'Shop Drawing Activity',
-        'link': '/shop-drawing-activity',
-        'component': <div>shop drawing activity</div>
-    },
-    {
-        'ID': 11,
-        'name': 'Sales Model Matrix',
-        'link': '/sales-model-matrix',
-        'component': <div>sales model matrix</div>
-    }, 
-    {
-        'ID': 12,
-        'name': 'VSM',
-        'link': '/VSM',
-        'component': <div>vsm</div>
     }
 ]
 

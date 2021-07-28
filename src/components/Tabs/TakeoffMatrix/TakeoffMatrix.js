@@ -37,14 +37,13 @@ const useStyles = makeStyles((theme) => ({
 const TakeoffMatrix = (props) => {
     const [ data, setData] = useState([]);
     const [ loaded, setLoaded ] = useState(false);
-    const classes = useStyles();
+    const [ headers, setHeaders ] = useState(["Id's Drafting", "Pallet Schedule", "Metal Takeoff", "Glass Takeoff", "Door Schedule", "Shop Use Brakes and Steel", "Mock Ups", "Mock-Up Overflow"])
 
     useEffect(() => {
-        createRows();
-        
         axios.get("https://ww-production-schedule-default-rtdb.firebaseio.com/shopdrawings.json")
         .then(response => {
-            // response.data ? setData(Object.values(response.data)) : setData([]);
+            response.data ? setData(Object.values(response.data)) : setData([]);
+            createRows();
             setLoaded(true);
         })
         .catch(error => {
@@ -56,12 +55,16 @@ const TakeoffMatrix = (props) => {
         let rows = [];
         for (let i = 0; i < 100; i++) {
             let date = new Date().getTime() + toMilliseconds(i*7);
-            rows.push({date: new Date(date).toLocaleDateString()});
+            date = new Date(date).toLocaleDateString();
+
+            data.forEach(job => {
+                rows.push({date: date, start: job.start});
+            })
         }
         setData(rows);
     }
 
-    const columns = ["Yana", "Mila", "Steve"].map(date => 
+    const columns = headers.map(date => 
         <Column
             dataField="employee"
             caption={date}
@@ -81,34 +84,13 @@ const TakeoffMatrix = (props) => {
         .catch(error => alert(error))
     }
 
-    const rowRemoved = (row) => {
-        // setData([ Object.assign(data, row.data) ])
-        axios.delete(`https://ww-production-schedule-default-rtdb.firebaseio.com/jobs/${row.data.id}.json`)
-        .then(response => {
-            // setData([ ...data ])
-        })
-        .catch(error => alert(error))
-    }
-
-    const onRowInit = (row) => {
-        row.data.booked = false;
-        row.data.shop = "";
-        row.data.shopName = "";
-        row.data.jobName = "job name";
-        row.data.title = "job name";
-        row.data.wallType = "wall type";
-        row.data.start = new Date();
-        row.data.fieldStart = new Date();
-        row.data.id = row.data.__KEY__;
-    }
-
     const toMilliseconds = (days) => {
         return days * 24 * 60 * 60 * 1000;
-      }
-    
-      const toDays = (ms) => {
+    }
+
+    const toDays = (ms) => {
         return Math.ceil( ms / (24 * 60 * 60 * 1000) );
-      }
+    }
 
     return (
     <div>
@@ -117,6 +99,7 @@ const TakeoffMatrix = (props) => {
           <DataGrid
             dataSource={data}
             showBorders
+            showRowLines
             allowColumnResizing
             columnAutoWidth
             highlightChanges
@@ -126,11 +109,8 @@ const TakeoffMatrix = (props) => {
             wordWrapEnabled
             autoExpandAll
             highlightChanges
-            onInitNewRow={onRowInit}
             // onInitialized={onRowInit}
             onRowUpdated={handleUpdate}
-            onRowInserted={handleUpdate}
-            onRowRemoved={rowRemoved}
             // onCellPrepared={cellPrepared}
             cellHintEnabled
 
@@ -139,11 +119,10 @@ const TakeoffMatrix = (props) => {
             <GroupPanel visible={false} autoExpandAll/>
             <SearchPanel visible highlightCaseSensitive={false} />
             <Grouping autoExpandAll />
-            {/* <FilterRow visible={true} /> */}
             <Sorting mode="multiple" />
 
             <Editing
-              mode="batch"
+              mode="row"
               allowUpdating
               allowDeleting
               allowAdding
@@ -153,7 +132,6 @@ const TakeoffMatrix = (props) => {
 
             <Column type="buttons">
                 <Button name="edit" />
-                <Button name="delete" />
             </Column>
 
             <Column

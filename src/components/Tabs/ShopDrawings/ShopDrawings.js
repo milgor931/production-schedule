@@ -117,6 +117,7 @@ const ShopDrawings = (props) => {
           <DataGrid
             dataSource={data}
             showBorders
+            showRowLines
             allowColumnResizing
             columnAutoWidth
             highlightChanges
@@ -143,7 +144,7 @@ const ShopDrawings = (props) => {
             {/* <Sorting mode="multiple" /> */}
 
             <Editing
-              mode="batch"
+              mode="row"
               allowUpdating
               allowDeleting
               allowAdding
