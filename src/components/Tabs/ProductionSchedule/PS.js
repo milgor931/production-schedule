@@ -1,7 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
 import ProductionScheduleChart from './PS_Chart.js';
-import ProductionScheduleGantt from './PS_Gantt.js';
 import Graph from './PS_Graph.js';
 import { makeStyles } from '@material-ui/core/styles';
 import axios from "axios";
@@ -10,41 +9,23 @@ import DG_Grantt from './PS_DG_Gantt';
 import Grid from '@material-ui/core/Grid';
 import Radio from '@material-ui/core/Radio';
 
-const useStyles = makeStyles({
-    root: {
-      width: 500,
-    },
-    radio: {
-
-    }
-  });
-
 const ProductionSchedule = (props) => {
-    const classes = useStyles();
     const [ tabs, setTabs ] = useState([]);
     const [ data, setData ] = useState(null);
     const [ loaded, setLoaded ] = useState(false);
     const [ selectedIndex, setSelectedIndex ] = useState(0);
     const [ startDate, setStartDate ] = useState();
-    const [value, setValue] = React.useState(0);
     const [ shopInfo, setShops ] = useState([]);
-
-    const handleChange = (event, newValue) => {
-        setValue(newValue);
-    };
 
     useEffect(() => {
         axios.get("https://ww-production-schedule-default-rtdb.firebaseio.com/jobs.json")
-        .then(response => {
-            response.data ? setData(Object.values(response.data)) : setData([]);
-        })
-        .catch(error => {
-            alert(error);
-        })
+        .then(response => response.data ? setData(Object.values(response.data)) : setData([]))
+        .catch(error => console.log(error))
 
         axios.get(`https://ww-production-schedule-default-rtdb.firebaseio.com/shops.json`)
         .then(response => {
-            response.data && setShops(Object.values(response.data));
+            response.data && setShops(Object.values(response.data))
+            console.log("got shops")
         })
         .catch(error => alert(error))
     }, [])
@@ -154,11 +135,8 @@ const ProductionSchedule = (props) => {
     }
 
     const rowRemoved = (row) => {
-        // setData([ Object.assign(data, row.data) ])
         axios.delete(`https://ww-production-schedule-default-rtdb.firebaseio.com/jobs/${row.data.id}.json`)
-        .then(response => {
-            // setData([ ...data ])
-        })
+        .then(response => {})
         .catch(error => alert(error))
     }
 
@@ -190,21 +168,18 @@ const ProductionSchedule = (props) => {
 
     return (
       <div>
-          { loaded
+        { loaded
             ? 
             <div style={{alignItems: 'center', justifyContent: 'center'}}>
                 <Grid container style={{marginTop: '20px'}} direction="row" alignItems="center" justifyContent="center">
                     {inputs}
                 </Grid>
 
-                <div>
-                    {data && tabs[selectedIndex].component}
-                </div>
+                <div> {data && tabs[selectedIndex].component} </div>
             </div>
             : 
             <Spinner />
-          }
-        
+        }
       </div>
     );
 }

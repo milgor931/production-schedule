@@ -14,7 +14,8 @@ import DataGrid, {
   TotalItem,
   GroupItem,
   Button,
-  SortByGroupSummaryInfo
+  SortByGroupSummaryInfo,
+  LoadPanel
 } from 'devextreme-react/data-grid';
 import CheckBox from 'devextreme-react/check-box';
 import TextField from '@material-ui/core/TextField';
@@ -28,24 +29,14 @@ import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import Grid from '@material-ui/core/Grid';
 
 const ProductionScheduleChart = (props) => {
-    const { data, shopInfo, handleShopUpdate, handleUpdate, rowRemoved, onRowInit } = props;
+    const { data, shopInfo, handleUpdate, rowRemoved, onRowInit } = props;
     const [ loaded, setLoaded ] = useState(false);
     const [ expanded, setExpanded ] = useState(true);
-    const [ index, setIndex ] = useState(0);
     const [ shops, setShops ] = useState(shopInfo);
 
     useEffect(() => {
-      // let s = findShopDups().map((shop, index) => 
-      //   ({ orderNumber: index, shop: shop, colorkey: ""})
-      // );
-
-      // setShops(s);
       data && setLoaded(true);
     }, [ data ])
-
-    const findShopDups = () => {
-      return [...new Set(data.map(item => item.shop))];
-    }
 
     const onReorder = (e) => {
       const visibleRows = e.component.getVisibleRows();
@@ -88,10 +79,13 @@ const ProductionScheduleChart = (props) => {
         } else if (row.data.header) {
           row.rowElement.style.backgroundColor = "#a8a8a8";
         } 
-      } else if (row.rowType === "group" && shops[0]) {
-        let color = shops.find(shop => shop.shop === row.data.key).colorkey;
-        row.rowElement.style.backgroundColor = color;
-      } else if (row.rowType === "total") {
+      } 
+      else if (row.rowType === "group" && shops[0]) {
+        let shopStyling = shops.find(shop => shop.shop === row.data.key);
+        row.rowElement.style.backgroundColor = shopStyling.colorkey;
+        row.rowElement.style.color = shopStyling.fontColor;
+      } 
+      else if (row.rowType === "total") {
         row.rowElement.style.backgroundColor = "";
       }
     }
@@ -123,27 +117,18 @@ const ProductionScheduleChart = (props) => {
       newShops.splice(from, 1);
       newShops.splice(to, 0, itemData);
 
-      setShops(newShops)
-    }
+      setShops(newShops);
 
-    const calculateCustomSummary = (options) => {
-      let i = 0;
-      if (options.name === "shopIndex") {
-        switch(options.summaryProcess) {
-          case "start":
-            i+= 1
-            // initalize
-            break;
-          case "calculate":
-            // modify
-            break;
-          case "finalize":
-            // end
-            options.totalValue = i;
-            break;
-        }
-      }
-     }
+      axios.put("https://ww-production-schedule-default-rtdb.firebaseio.com/shops.json", newShops)
+      .then(response => {})
+      .catch(error => console.log(error))
+
+      data.forEach(job => {
+        job.groupIndex = newShops.findIndex(shop => shop.shop === job.shopName);
+        handleUpdate(job);
+      });
+
+    }
 
     return (
     <div>
@@ -182,9 +167,6 @@ const ProductionScheduleChart = (props) => {
                     autoExpandAll
                     highlightChanges
                     cellHintEnabled
-                    onRowUpdated={row => {
-                      alert(row)
-                    }}
                     >
                     <Editing
                       mode="cell"
@@ -212,10 +194,35 @@ const ProductionScheduleChart = (props) => {
                       }}
                       editCellRender={cell => {
                         return <ColorBox
-                          // applyValueMode="instantly"
                           defaultValue={cell.data.colorkey}
                           onValueChange={color => {
                             cell.data.colorkey = color;
+                            axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/shops.json`, shops)
+                            .then(response => {
+                              let mode = expanded;
+                              setExpanded(!mode);
+                              setExpanded(mode);
+                            }) 
+                            .catch(error => alert(error))
+                          }}
+                        /> 
+                      }}
+                    />
+                    <Column
+                      dataField="fontColor"
+                      caption="Font Color for Shop"
+                      cellRender={cell => {
+                        return ( <ColorBox
+                          applyValueMode="instantly"
+                          defaultValue={cell.data.fontColor}
+                          readOnly
+                        /> )
+                      }}
+                      editCellRender={cell => {
+                        return <ColorBox
+                          defaultValue={cell.data.fontColor}
+                          onValueChange={color => {
+                            cell.data.fontColor = color;
                             axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/shops.json`, shops)
                             .then(response => {
                               let mode = expanded;
@@ -260,6 +267,7 @@ const ProductionScheduleChart = (props) => {
             <SearchPanel visible highlightCaseSensitive={false} />
             <Grouping autoExpandAll={expanded} />
             <Sorting mode="single" />
+            <LoadPanel enabled />
 
             <Editing
               mode="cell"
@@ -369,13 +377,7 @@ const ProductionScheduleChart = (props) => {
             <Column dataField="weeks" caption="Weeks" alignment="center" allowEditing={false}></Column>
             <Column dataField="offset" caption="Offset" allowEditing={false} alignment="center"></Column>
             
-            <Summary recalculateWhileEditing calculateCustomSummary={calculateCustomSummary}>
-              <GroupItem
-                column="shop"
-                summaryType="custom"
-                name="shopIndex"
-                customizeText={data => `Shop: ` + data.value}
-              />
+            <Summary recalculateWhileEditing>
               <GroupItem
                 column="units"
                 summaryType="sum"
@@ -393,6 +395,12 @@ const ProductionScheduleChart = (props) => {
                 summaryType="sum"
                 name="shopUnitsPerWeek"
                 customizeText={data => `Total Units/Week: ` + data.value}
+              />
+              <GroupItem
+                column="groupIndex"
+                summaryType="avg"
+                name="groupIndex"
+                customizeText={data => data.value}
               />
 
               <TotalItem
@@ -413,7 +421,7 @@ const ProductionScheduleChart = (props) => {
             </Summary>
 
             <SortByGroupSummaryInfo 
-                summaryItem="shopIndex"
+                summaryItem="groupIndex"
             />
           </DataGrid>
         </div>

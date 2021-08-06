@@ -1,21 +1,10 @@
 // colorful blue #00c7d9
 // dark blue #3f50b5
 
-// best way to edit and add?
-// where can you delete
+// database call --> passes props down through app ( only 1 database call at the start )
+// pass down handlers
+// fix takeoff matrix
 
-// organize colorkey for shops (header and bars!)
-// not booked cyan color takes priority
-// pick sort order for shops with data entry field
-
-// fix employees in line graph!
-
-// takeoff matrix
-// data entry for min number of how many weeks back to go... if job already in that week, go to first open week before that date
-
-
-// change font color of groups so that they dont blend into header
-// use min, give each row item custom index and sort groups by min index value
 
 import React, { useState, useEffect } from 'react';
 import TabPanel from './components/Navigation/TabPanel';
@@ -24,7 +13,6 @@ import {
   BrowserRouter as Router,
   Switch,
   Route,
-  Link,
   withRouter,
   Redirect
 } from "react-router-dom";

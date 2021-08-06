@@ -6,21 +6,14 @@ import DataGrid, {
   Column,
   Grouping,
   GroupPanel,
-  Pager,
-  Paging,
+  LoadPanel,
   SearchPanel,
-  Editing,
   Summary, 
   TotalItem,
-  MasterDetail,
   GroupItem,
-  Sorting,
-  RemoteOperations,
-  FilterRow
+  Sorting
 } from 'devextreme-react/data-grid';
 import { makeStyles } from '@material-ui/core/styles';
-import Paper from '@material-ui/core/Paper';
-import { Typography } from '@material-ui/core';
 
 const useStyles = makeStyles((theme) => ({
   formControl: {
@@ -36,7 +29,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const ProductionScheduleChart = (props) => {
-    const { data, shops, getStartDateIndex, getEndDateIndex} = props;
+    const { data, shopInfo, getStartDateIndex, getEndDateIndex} = props;
     const [ loaded, setLoaded ] = useState(false);
     const [ jobs, setJobs ] = useState(null);
     const [ columns, setColumns ] = useState(null);
@@ -45,12 +38,11 @@ const ProductionScheduleChart = (props) => {
     const [ totalUnits, setTotalUnits ] = useState(0);
     const [ totalEmps, setTotalEmps ] = useState(0);
     const [ totalUnitsPerWeek, setTotalUnitsPerWeek ] = useState(0);
-    const classes = useStyles();
 
     useEffect(() => {
         if (data) {
-            calculateForOffSets();
-            setLoaded(true);
+          calculateForOffSets();
+          setLoaded(true);
         }
     }, [ data ])
 
@@ -68,10 +60,8 @@ const ProductionScheduleChart = (props) => {
       return Math.ceil( ms / (24 * 60 * 60 * 1000) );
     }
   
-
     const calculateForOffSets = () => {
         let cols = [];
-        let start = data[getStartDateIndex()].start;
         let end = data[getEndDateIndex()];
 
         for (let i = 0; i <= end.offset + end.weeks; i++) {
@@ -89,22 +79,22 @@ const ProductionScheduleChart = (props) => {
         })
 
         setColumns(cols.map((row, index) => 
-            <Column
-                key={index}
-                dataField={row}
-                caption={convertToDate(row)}
-                minWidth={50}
-                type="date"
-            />
+          <Column
+            key={index}
+            dataField={row}
+            caption={convertToDate(row)}
+            minWidth={50}
+            type="date"
+          />
         ))    
     }
 
     const toMS = (days) => {
-        return days * 24 * 60 * 60 * 1000;
+      return days * 24 * 60 * 60 * 1000;
     }
 
     const toDays = (ms) => {
-        return Math.ceil(ms / (24 * 60 * 60 * 1000));
+      return Math.ceil(ms / (24 * 60 * 60 * 1000));
     }
 
     const jobWallCell = (data) => {
@@ -136,9 +126,11 @@ const ProductionScheduleChart = (props) => {
         } else if (row.data.header) {
           row.rowElement.style.backgroundColor = "#a8a8a8";
         } 
-      } else if (row.rowType === "group" && shops.length > 0) {
-        let color = shops.find(shop => shop.shop === row.data.key).colorkey;
-        row.rowElement.style.backgroundColor = color;
+      } 
+      else if (row.rowType === "group" && shopInfo[0]) {
+        let shopStyling = shopInfo.find(shop => shop.shop === row.data.key);
+        row.rowElement.style.backgroundColor = shopStyling.colorkey;
+        row.rowElement.style.color = shopStyling.fontColor;
       }
     }
 
@@ -146,11 +138,6 @@ const ProductionScheduleChart = (props) => {
     <div>
       {loaded 
         ? <div>
-          {/* <CheckBox 
-              text="Expand Rows"
-              value={expanded}
-              onValueChanged={setExpanded(!expanded)} 
-          /> */}
           <DataGrid
             dataSource={data}
             showRowLines
@@ -161,22 +148,16 @@ const ProductionScheduleChart = (props) => {
             twoWayBindingEnabled
             columnResizingMode="nextColumn"
             wordWrapEnabled
-            highlightChanges
             showColumnLines={true}
             onCellPrepared={cellPrepared}
-            hoverStateEnabled
-            hint={hint}
-            // onRowPrepared={renderRow}
-            onCellHoverChanged={row => {
-              row.rowType === "data" && setHint(`${row.data.jobName} ${row.data.start.toLocaleDateString()} - ${row.data.end.toLocaleDateString()}`);
-            }}
+            onRowPrepared={renderRow}
           >
 
             <GroupPanel visible autoExpandAll/>
             <SearchPanel visible highlightCaseSensitive={false} />
             <Grouping autoExpandAll={expanded} />
             <Sorting mode="multiple" />
-            {/* <FilterRow visible={true} /> */}
+            <LoadPanel enabled showIndicator  />
 
             <Column 
               dataField="shop" 
@@ -244,23 +225,7 @@ const ProductionScheduleChart = (props) => {
                 summaryType="sum"
               />
             </Summary>
-
           </DataGrid>
-
-          <Paper style={{marginTop: '50px', width: '100%', padding: '10px'}}>
-            <Typography color="primary">
-              <b>TOTALS</b>
-            </Typography>
-            <Typography color="primary">
-              Total Units For All Shops: <b>{totalUnits.toLocaleString()}</b>
-            </Typography>
-            <Typography color="primary">
-              Total Units/Week For All Shops: <b>{totalUnitsPerWeek.toLocaleString()}</b>
-            </Typography>
-            <Typography color="primary">
-              Total Employees For All Shops: <b>{totalEmps.toLocaleString()}</b>
-            </Typography>
-          </Paper>
         </div>
       : <Spinner />
       }

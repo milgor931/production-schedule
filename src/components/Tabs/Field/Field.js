@@ -1,22 +1,17 @@
 
-import React, { useState, createRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import Spinner from '../../UI/Spinner';
-import CheckBox from "devextreme/ui/check_box";
 import DataGrid, {
   Column,
   Grouping,
   GroupPanel,
-  Pager,
-  Paging,
   SearchPanel,
   Editing,
   Summary, 
   TotalItem,
-  MasterDetail,
   GroupItem,
   Sorting,
-  RemoteOperations,
-  FilterRow
+  LoadPanel
 } from 'devextreme-react/data-grid';
 import { makeStyles } from '@material-ui/core/styles';
 import Paper from '@material-ui/core/Paper';
@@ -72,14 +67,8 @@ const Field = (props) => {
       return Math.ceil( ms / (24 * 60 * 60 * 1000) );
     }
 
-    const convertToDate = (value) => {
-      let date = (value * 7) + convertMillisecondsToDays(new Date('7/1/2021').getTime());
-      date = new Date(convertDaysToMilliseconds(date));
-    }
-
     const calculateForOffSets = () => {
       let cols = [];
-      let start = data[getStartDateIndex()].start;
       let end = data[getEndDateIndex()];
 
       for (let i = 0; i <= end.offset + end.weeks; i++) {
@@ -103,20 +92,14 @@ const Field = (props) => {
               caption={convertToDate(row)}
               minWidth={50}
               type="date"
-              // cssClass={classes.dateColumn}
           />
       ))    
   }
 
-    const convertDate = (row) => {
-      row.start = new Date(row.start);
-      row.fieldStart = new Date(row.fieldStart);
-      let start = row.start.getTime();
-      let weeks = Math.ceil(row.units/row.unitsPerWeek);
-      row.weeks = weeks;
-      let time = weeks * 7 * 24 * 60 * 60 * 1000;
-      time = start + time;
-      row.end = new Date(time);
+  const convertToDate = (value) => {
+    let date = (value * 7) + convertMillisecondsToDays(new Date('7/1/2021').getTime());
+    date = new Date(convertDaysToMilliseconds(date));
+    return date.toLocaleDateString();
   }
   
   const getStartDateIndex = () => {
@@ -161,27 +144,6 @@ const Field = (props) => {
       .catch(error => alert(error))
   }
 
-  const rowRemoved = (row) => {
-      // setData([ Object.assign(data, row.data) ])
-      axios.delete(`https://ww-production-schedule-default-rtdb.firebaseio.com/jobs/${row.data.id}.json`)
-      .then(response => {
-          // setData([ ...data ])
-      })
-      .catch(error => alert(error))
-  }
-
-  const onRowInit = (row) => {
-      row.data.booked = false;
-      row.data.shop = "";
-      row.data.shopName = "";
-      row.data.jobName = "job name";
-      row.data.title = "job name";
-      row.data.wallType = "wall type";
-      row.data.start = new Date();
-      row.data.fieldStart = new Date();
-      row.data.id = row.data.__KEY__;
-  }
-
     const jobWallCell = (data) => {
       return (
         <div>
@@ -208,11 +170,6 @@ const Field = (props) => {
     <div>
       {loaded 
         ? <div>
-          {/* <CheckBox 
-              text="Expand Rows"
-              value={expanded}
-              onValueChanged={setExpanded(!expanded)} 
-          /> */}
           <DataGrid
             dataSource={data}
             columnAutoWidth
@@ -227,19 +184,20 @@ const Field = (props) => {
             showColumnLines={true}
             onCellPrepared={cellPrepared}
             hoverStateEnabled
-            
           >
 
-            <GroupPanel visible autoExpandAll/>
+            {/* <GroupPanel visible autoExpandAll/> */}
             <SearchPanel visible highlightCaseSensitive={false} />
             <Grouping autoExpandAll={expanded} />
             <Sorting mode="multiple" />
+            <LoadPanel enabled />
 
-            <Column dataField="shop" groupIndex={0} />
+            {/* <Column dataField="shop" groupIndex={0} /> */}
             <Column fixed allowSorting dataField="jobNumber" caption="Job Number" alignment="center"/>
             <Column fixed minWidth={'10vw'} dataField="jobName" caption="Job Name & Wall Type" cellRender={jobWallCell} alignment="left"/>
             <Column fixed allowSorting dataField="start" dataType="date" caption="Shop Start Date" alignment="center"/>
-            <Column fixed dataField="end" caption="End Date" dataType="date" alignment="center"/>
+            <Column fixed dataField="fieldStart" caption="Field Start" dataType="date" alignment="center"/>
+            <Column fixed dataField="hourUnits" caption="Hour-UNITS" dataType="number" alignment="center"/>
             
             {columns}
 
@@ -251,38 +209,10 @@ const Field = (props) => {
                   return `Total Units: ` + data.value;
                 }}
               />
-              <GroupItem
-                column="emps"
-                summaryType="sum"
-                customizeText={data => {
-                  return `Total Emps: ` + data.value;
-                }}
-              />
-              <GroupItem
-                column="unitsPerWeek"
-                summaryType="sum"
-                customizeText={data => {
-                  return `Total Units/Week: ` + data.value;
-                }}
-              />
+  
             </Summary>
 
           </DataGrid>
-
-          <Paper style={{marginTop: '50px', width: '100%', padding: '10px'}}>
-            <Typography color="primary">
-              <b>TOTALS</b>
-            </Typography>
-            <Typography color="primary">
-              Total Units For All Shops: <b>{totalUnits}</b>
-            </Typography>
-            <Typography color="primary">
-              Total Units/Week For All Shops: <b>{totalUnitsPerWeek}</b>
-            </Typography>
-            <Typography color="primary">
-              Total Employees For All Shops: <b>{totalEmps}</b>
-            </Typography>
-          </Paper>
         </div>
       : <Spinner />
       }

@@ -1,172 +1,145 @@
 
-import React, { useState, createRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import Spinner from '../../UI/Spinner';
 import DataGrid, {
   Column,
   Grouping,
   GroupPanel,
-  Pager,
-  Paging,
-  RowDragging,
   SearchPanel,
-  Editing,
-  Summary, 
-  Sorting,
-  RequiredRule,
-  TotalItem,
-  MasterDetail,
-  GroupItem,
-  Button,
-  FilterRow, 
-  RemoteOperations
+  Editing
 } from 'devextreme-react/data-grid';
-import { makeStyles } from '@material-ui/core/styles';
+import InputLabel from '@material-ui/core/InputLabel';
+import MenuItem from '@material-ui/core/MenuItem';
+import FormHelperText from '@material-ui/core/FormHelperText';
+import FormControl from '@material-ui/core/FormControl';
+import Select from '@material-ui/core/Select';
 import axios from 'axios';
 
-
-const useStyles = makeStyles((theme) => ({
-  formControl: {
-    margin: theme.spacing(1),
-    minWidth: 120,
-  },
-  selectEmpty: {
-    marginTop: theme.spacing(2),
-  },
-}));
-
 const ShopDrawings = (props) => {
-    const [ data, setData] = useState([]);
+    const [ data, setData ] = useState([]);
     const [ loaded, setLoaded ] = useState(false);
-    const classes = useStyles();
+    const [ headers, setHeaders ] = useState([]);
+    const [ jobs, setJobs ] = useState(null);
 
     useEffect(() => {
-        createRows();
-        
-        axios.get("https://ww-production-schedule-default-rtdb.firebaseio.com/shopdrawings.json")
+        axios.get("https://ww-production-schedule-default-rtdb.firebaseio.com/shopdrawings/headers.json")
         .then(response => {
-            // response.data ? setData(Object.values(response.data)) : setData([]);
+            response.data ? setHeaders(Object.values(response.data)) : setHeaders([]);
             setLoaded(true);
         })
-        .catch(error => {
-            alert(error);
+        .catch(error => console.log(error))
+
+        axios.get(`https://ww-production-schedule-default-rtdb.firebaseio.com/shopdrawings/data.json`) 
+        .then(response => {
+            response.data ? setData(Object.values(response.data)) : createRows();
         })
-    }, [ ])
+        .catch(error => console.log(error))
+
+        axios.get(`https://ww-production-schedule-default-rtdb.firebaseio.com/jobs.json`)
+        .then(response => {
+            response.data ? setJobs(Object.values(response.data).map(job => job.jobName)) : setJobs([]);
+        })
+        .catch(error => console.log(error))
+
+    }, [])
 
     const createRows = () => {
         let rows = [];
-        for (let i = 0; i < 100; i++) {
-            let date = new Date().getTime() + toMilliseconds(i*7);
-            rows.push({date: new Date(date).toLocaleDateString()});
+        let weeks = 100;
+
+        for (let i = 0; i < weeks; i++) {
+            let today = new Date();
+            today = today.getTime() + toMilliseconds( 1 - today.getDay() );
+
+            let date = today + toMilliseconds(i*7);
+
+            date = new Date(date).toLocaleDateString();
+            let obj = {
+                date: date,
+                id: i
+            }
+
+            rows.push(obj);
         }
         setData(rows);
-    }
 
-    const columns = ["Yana", "Mila", "Steve", "Yana", "Mila", "Steve", "Yana", "Mila", "Steve", "Yana", "Mila", "Steve", "Yana", "Mila", "Steve"].map(date => 
-        <Column
-            dataField="employee"
-            caption={date}
-        />
-    )
+        axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/shopdrawings/data.json`, rows) 
+        .then(response => response)
+        .catch(error => console.log(error))
+    }
 
     const handleUpdate = (row) => {
-        if (row.data) {
-            row = row.data;
-        }
-        row.shopName = row.shop;
-        row.title = row.jobName;
-        axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/jobs/${row.id}.json`, row)
-        .then(response => {
-            setData([ ...data ])
-        })
+        axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/shopdrawings/data/${row.data.id}.json`, row.data)
+        .then(response => response.data)
         .catch(error => alert(error))
-    }
-
-    const rowRemoved = (row) => {
-        // setData([ Object.assign(data, row.data) ])
-        axios.delete(`https://ww-production-schedule-default-rtdb.firebaseio.com/jobs/${row.data.id}.json`)
-        .then(response => {
-            // setData([ ...data ])
-        })
-        .catch(error => alert(error))
-    }
-
-    const onRowInit = (row) => {
-        row.data.booked = false;
-        row.data.shop = "";
-        row.data.shopName = "";
-        row.data.jobName = "job name";
-        row.data.title = "job name";
-        row.data.wallType = "wall type";
-        row.data.start = new Date();
-        row.data.fieldStart = new Date();
-        row.data.id = row.data.__KEY__;
     }
 
     const toMilliseconds = (days) => {
         return days * 24 * 60 * 60 * 1000;
-      }
-    
-      const toDays = (ms) => {
-        return Math.ceil( ms / (24 * 60 * 60 * 1000) );
-      }
+    }
 
     return (
     <div>
-      {loaded 
-        ? <div>
-          <DataGrid
-            dataSource={data}
-            showBorders
-            showRowLines
-            allowColumnResizing
-            columnAutoWidth
-            highlightChanges
-            repaintChangesOnly
-            twoWayBindingEnabled
-            columnResizingMode="nextColumn"
-            wordWrapEnabled
-            autoExpandAll
-            highlightChanges
-            onInitNewRow={onRowInit}
-            // onInitialized={onRowInit}
-            onRowUpdated={handleUpdate}
-            onRowInserted={handleUpdate}
-            onRowRemoved={rowRemoved}
-            // onCellPrepared={cellPrepared}
-            cellHintEnabled
-
-          >
+      { loaded 
+        ?   <div>
+            <DataGrid
+                dataSource={data}
+                showBorders
+                showRowLines
+                allowColumnResizing
+                columnAutoWidth
+                highlightChanges
+                repaintChangesOnly
+                twoWayBindingEnabled
+                columnResizingMode="nextColumn"
+                wordWrapEnabled
+                autoExpandAll
+                highlightChanges
+                onRowUpdated={handleUpdate}
+            >
 
             <GroupPanel visible={false} autoExpandAll/>
             <SearchPanel visible highlightCaseSensitive={false} />
             <Grouping autoExpandAll />
-            {/* <FilterRow visible={true} /> */}
-            {/* <Sorting mode="multiple" /> */}
 
             <Editing
-              mode="row"
+              mode="batch"
               allowUpdating
-              allowDeleting
-              allowAdding
               useIcons
               allowSorting={false}
             />
 
-            <Column type="buttons">
-                <Button name="edit" />
-                <Button name="delete" />
-            </Column>
-
             <Column
                 dataField="date"
                 fixedPosition="left"
-                caption=""
+                caption="Date"
                 alignment="left"
                 width={"auto"}
                 allowEditing={false}
             />
 
-            {columns}
+            {headers.map((header, index) => 
+                <Column
+                    key={index}
+                    dataField={header.employee}
+                    caption={header.employee}
+                    // editCellRender={ cell => {
+                    //     <FormControl variant="outlined">
+                    //         <InputLabel id="demo-simple-select-outlined-label">Job Name</InputLabel>
+                    //         <Select
+                    //             labelId="demo-simple-select-outlined-label"
+                    //             id="demo-simple-select-outlined"
+                    //             value={cell.data.header}
+                    //             onChange={e => cell.data.header = e.target.value}
+                    //             label="Job"
+                    //         >
+                    //             { jobs.map(job => <MenuItem key={job.jobName} value={job.jobName}> {job.jobName} </MenuItem>) }
+                    //         </Select>
+                    //     </FormControl>
+                    //     }
+                    // }
+                />
+            )}
         
           </DataGrid>
         </div>

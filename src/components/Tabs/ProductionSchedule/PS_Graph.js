@@ -7,6 +7,7 @@ import Paper from '@material-ui/core/Paper';
 import Spinner from '../../UI/Spinner';
 import Grid from '@material-ui/core/Grid';
 import Hidden from '@material-ui/core/Hidden';
+import { LoadIndicator } from 'devextreme-react/load-indicator';
 
 import {
   Chart,
@@ -33,7 +34,7 @@ const Graph = (props) => {
   const { data, handleUpdate } = props;
   const [ state, setState ] = React.useState({});
   const [ jobs, setJobs ] = useState([]);
-  const [ shops, setShops ] = useState([]);
+  const [ shops, setShops ] = useState(["La Verne"]);
   const [ loaded, setLoaded ] = useState(false);
 
   useEffect(() => {
@@ -77,7 +78,6 @@ const Graph = (props) => {
       new_data.push({ offset: i, units: total_units, emps: total_emps})
     }
     setJobs(new_data);
-    console.dir(new_data)
   }
 
   const handleChange = (event) => {
@@ -107,7 +107,6 @@ const Graph = (props) => {
               name={shop} 
               id={shop}
               color="primary"
-              // size="small"
               checked={state[shop]} 
               onChange={handleChange} 
             />

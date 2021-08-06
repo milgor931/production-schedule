@@ -141,10 +141,6 @@ const PanelMatrix = (props) => {
               allowSorting
             />
 
-            {/* // <Column type="buttons">
-            //     <Button name="edit" />
-            // </Column> */}
-
             <Column
                 dataField="jobNumber" 
                 dataType="string"
@@ -163,7 +159,7 @@ const PanelMatrix = (props) => {
             </Column>
 
             <Column
-                dataField="metalTakeoff"
+                dataField="start"
                 dataType="date"
                 caption="Metal Takeoff"
                 alignment="center"

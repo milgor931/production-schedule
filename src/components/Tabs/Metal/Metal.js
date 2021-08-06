@@ -72,11 +72,6 @@ const Metal = (props) => {
       return Math.ceil( ms / (24 * 60 * 60 * 1000) );
     }
 
-    const convertToDate = (value) => {
-      let date = (value * 7) + convertMillisecondsToDays(new Date('7/1/2021').getTime());
-      date = new Date(convertDaysToMilliseconds(date));
-    }
-
     const calculateForOffSets = () => {
       let cols = [];
       let start = data[getStartDateIndex()].start;
@@ -108,39 +103,35 @@ const Metal = (props) => {
       ))    
   }
 
-    const convertDate = (row) => {
-      row.start = new Date(row.start);
-      row.fieldStart = new Date(row.fieldStart);
-      let start = row.start.getTime();
-      let weeks = Math.ceil(row.units/row.unitsPerWeek);
-      row.weeks = weeks;
-      let time = weeks * 7 * 24 * 60 * 60 * 1000;
-      time = start + time;
-      row.end = new Date(time);
+  const convertToDate = (value) => {
+    let date = (value * 7) + convertMillisecondsToDays(new Date('7/1/2021').getTime());
+    date = new Date(convertDaysToMilliseconds(date));
+    return date.toLocaleDateString();
   }
+
   
   const getStartDateIndex = () => {
-      let s = convertMillisecondsToDays(new Date(data[0].start).getTime());
-      let jobIndex = 0;
-      data.forEach((job, index) => {
-          if (convertMillisecondsToDays(new Date(job.start).getTime()) < s) {
-              jobIndex = index;
-              s = convertMillisecondsToDays(new Date(job.start).getTime());
-          } 
-      })
+    let s = convertMillisecondsToDays(new Date(data[0].start).getTime());
+    let jobIndex = 0;
+    data.forEach((job, index) => {
+        if (convertMillisecondsToDays(new Date(job.start).getTime()) < s) {
+            jobIndex = index;
+            s = convertMillisecondsToDays(new Date(job.start).getTime());
+        } 
+    })
       return jobIndex;
   }
 
   const getEndDateIndex = () => {
-      let s = convertMillisecondsToDays(new Date(data[0].start).getTime());
-      let jobIndex = 0;
-      data.forEach((job, index) => {
-          if (convertMillisecondsToDays(new Date(job.start).getTime()) > s) {
-              jobIndex = index;
-              s = convertMillisecondsToDays(new Date(job.start).getTime());
-          } 
-      })
-      return jobIndex;
+    let s = convertMillisecondsToDays(new Date(data[0].start).getTime());
+    let jobIndex = 0;
+    data.forEach((job, index) => {
+        if (convertMillisecondsToDays(new Date(job.start).getTime()) > s) {
+            jobIndex = index;
+            s = convertMillisecondsToDays(new Date(job.start).getTime());
+        } 
+    })
+    return jobIndex;
   }
 
   const getOffset = (row, start) => {
@@ -229,60 +220,20 @@ const Metal = (props) => {
             hoverStateEnabled
           >
 
-            <GroupPanel visible autoExpandAll/>
             <SearchPanel visible highlightCaseSensitive={false} />
             <Grouping autoExpandAll={expanded} />
             <Sorting mode="multiple" />
-            {/* <FilterRow visible={true} /> */}
 
-            <Column dataField="shop" groupIndex={0} />
+            {/* <Column dataField="shop" groupIndex={0} /> */}
             <Column fixed allowSorting dataField="jobNumber" caption="Job Number" alignment="center"/>
             <Column fixed minWidth={'10vw'} dataField="jobName" caption="Job Name & Wall Type" cellRender={jobWallCell} alignment="left"/>
             <Column fixed allowSorting dataField="start" dataType="date" caption="Shop Start Date" alignment="center"/>
-            <Column fixed dataField="end" caption="End Date" dataType="date" alignment="center"/>
+            <Column fixed dataField="fieldStart" caption="Field Start" dataType="date" alignment="center"/>
+            <Column fixed dataField="menUnits" caption="Men-UNITS (lbs)" dataType="number" alignment="center"/>
             
             {columns}
 
-            <Summary recalculateWhileEditing>
-              <GroupItem
-                column="units"
-                summaryType="sum"
-                customizeText={data => {
-                  return `Total Units: ` + data.value;
-                }}
-              />
-              <GroupItem
-                column="emps"
-                summaryType="sum"
-                customizeText={data => {
-                  return `Total Emps: ` + data.value;
-                }}
-              />
-              <GroupItem
-                column="unitsPerWeek"
-                summaryType="sum"
-                customizeText={data => {
-                  return `Total Units/Week: ` + data.value;
-                }}
-              />
-            </Summary>
-
           </DataGrid>
-
-          <Paper style={{marginTop: '50px', width: '100%', padding: '10px'}}>
-            <Typography color="primary">
-              <b>TOTALS</b>
-            </Typography>
-            <Typography color="primary">
-              Total Units For All Shops: <b>{totalUnits}</b>
-            </Typography>
-            <Typography color="primary">
-              Total Units/Week For All Shops: <b>{totalUnitsPerWeek}</b>
-            </Typography>
-            <Typography color="primary">
-              Total Employees For All Shops: <b>{totalEmps}</b>
-            </Typography>
-          </Paper>
         </div>
       : <Spinner />
       }

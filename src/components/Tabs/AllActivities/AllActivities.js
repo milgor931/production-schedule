@@ -194,7 +194,7 @@ const AllActivities = (props) => {
             </Column>
 
             <Column
-                dataField="startGlassTakeoff"
+                dataField="glassTakeoff"
                 dataType="date"
                 caption="Start Glass Takeoff"
                 alignment="center"
@@ -203,7 +203,7 @@ const AllActivities = (props) => {
             </Column>
 
             <Column
-                dataField="startDoorSchedule"
+                dataField="doorSchedule"
                 dataType="date"
                 caption="Start Door Schedule"
                 alignment="center"
