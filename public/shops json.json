@@ -1,0 +1,14 @@
+{
+  "0" : {
+    "colorkey" : "#2fd6a7",
+    "fontColor" : "black",
+    "index" : 0,
+    "shop" : "LaVerne"
+  },
+  "1" : {
+    "colorkey" : "#ffc400",
+    "fontColor" : "black",
+    "index" : 1,
+    "shop" : "Shop B"
+  }
+}

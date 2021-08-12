@@ -5,6 +5,8 @@
 // pass down handlers
 // fix takeoff matrix
 
+// add shop ---> default colorkey error 
+
 
 import React, { useState, useEffect } from 'react';
 import TabPanel from './components/Navigation/TabPanel';
@@ -25,6 +27,9 @@ import TakeoffMatrix from './components/Tabs/TakeoffMatrix/TakeoffMatrix';
 import FabMatrix from './components/Tabs/FabMatrix/FabMatrix';
 import Metal from './components/Tabs/Metal/Metal';
 import Field from './components/Tabs/Field/Field';
+import { makeStyles } from '@material-ui/core/styles';
+import LinearProgress from '@material-ui/core/LinearProgress';
+import axios from 'axios';
 
 const tabs = [
     {
@@ -83,26 +88,233 @@ const tabs = [
     }
 ]
 
-const App = (props) => {
+const useStyles = makeStyles({
+    root: {
+        width: '100%',
+        height: '100px'
+    },
+});
 
-  const routes = tabs.map(tab => 
-    <Route exact path={tab.link} component={props => tab.component}>
-    </Route>
-  )
-  return (
-      <div className="App">
-          <Header tabs={tabs} />
-          <TabPanel tabs={tabs}/>
+const App = () => {
+    const classes = useStyles();
+    const [ progress, setProgress ] = useState(0);
+    const [ loaded, setLoaded ] = useState(false);
+    const [ jobs, setJobs ] = useState([]);
+    const [ shops, setShops ] = useState([]);
+    const [ shopDrawingHeaders, setShopDrawingHeaders ] = useState([]);
+    const [ fabHeaders, setFabHeaders ] = useState([]);
+    const [ dateRows, setDateRows ] = useState([]);
+    const [ takeoffHeaders, setTakeoffHeaders ] = useState([]);
 
-          <Switch key="components">
-            <Redirect exact from="/" to="/production-schedule" />  
-            <div style={{margin: '3vw'}}>
-                {routes}
-            </div>
-          </Switch>
+    useEffect(() => {
 
-      </div>
-  );
+        axios.get(`https://ww-production-schedule-default-rtdb.firebaseio.com/data.json`)
+        .then(response => {
+            if (response.data) {
+                response.data.shops && setShops(Object.values(response.data.shops));
+                convertDates(Object.values(response.data.jobs));
+                setShopDrawingHeaders(Object.values(response.data.shopdrawings.headers));
+                setFabHeaders(Object.values(response.data.fabmatrix.headers));
+                createRows();
+                setTakeoffHeaders(Object.values(response.data.takeoffmatrix.headers));
+
+                setProgress(100);
+            }
+        })
+        .catch(error => console.log(error))
+
+    }, [])
+
+    useEffect(() => {
+        progress >= 100 && setLoaded(true);
+    }, [ progress ])
+
+    const toMS = (days) => {
+        return days * 24 * 60 * 60 * 1000;
+    }
+
+    const toDays = (ms) => {
+        return Math.ceil( ms / (24 * 60 * 60 * 1000) );
+    }
+
+    const convertDates = (updatedJobs) => {
+        updatedJobs.forEach(job => {
+            job.start = new Date(job.start);
+            job.fieldStart = new Date(job.fieldStart);
+            let start = job.start.getTime();
+
+            if (!job.stickwall) {
+                let weeks = Math.ceil(job.units/job.unitsPerWeek);
+                job.weeks = weeks;
+            }
+
+            let time = job.weeks * 7 * 24 * 60 * 60 * 1000;
+            time = start + time;
+            job.end = new Date(time);
+        })
+
+        updatedJobs.sort(function(a,b) {
+            return a.start.getTime() - b.start.getTime();
+        })
+
+        updatedJobs.forEach(job => getOffset(job, updatedJobs[0]));
+
+        setJobs(updatedJobs);
+
+        return updatedJobs;
+    }
+  
+    const getOffset = (job, firstJob) => {
+        let days = toDays(job.start.getTime());
+        job.offset = Math.ceil((days - toDays(firstJob.start.getTime()))/7);
+    }
+
+    const handleUpdate = (row) => {
+        console.log("chart update")
+        row = row.data ? row.data : row;
+        row.shopName = row.shop;
+        axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/jobs/${row.id}.json`, row)
+        .then(response => setJobs([ ...jobs ]))
+        .catch(error => alert(error))
+    }
+
+    const handleShopUpdate = (row) => {
+        axios.post(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/shops.json`, row.data)
+        .then(response => setShops([ ...shops ]))
+    }
+
+    const handleShopDelete = (row) => {
+        axios.delete(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/shops/${row.data.id}.json`)
+        .then(response => {})
+        .catch(error => console.log(error))
+    }
+
+    const rowRemoved = (row) => {
+        axios.delete(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/jobs/${row.data.id}.json`)
+        .then(response => {})
+        .catch(error => console.log(error))
+    }
+
+    const onRowInit = (row) => {
+        row.data.groupIndex = shops.length;
+        row.data.booked = false;
+        row.data.shop = "";
+        row.data.shopName = "";
+        row.data.jobName = "job name";
+        row.data.wallType = "wall type";
+        row.data.weeks = 0;
+        row.data.start = new Date();
+        row.data.fieldStart = new Date();
+        row.data.id = row.data.__KEY__;
+    }
+
+    const createRows = () => {
+        let rows = [];
+        let weeks = 100;
+
+        for (let i = 0; i < weeks; i++) {
+            let today = new Date();
+            today = today.getTime() + toMS( 1 - today.getDay() );
+
+            let date = today + toMS(i*7);
+
+            date = new Date(date).toLocaleDateString();
+            let obj = {  date: date, id: i }
+            rows.push(obj);
+        }
+        setDateRows(rows);
+    }
+
+    return (
+        <div className="App">
+            
+            {   loaded ?
+                <div>
+                    <Header tabs={tabs} />
+                    <TabPanel tabs={tabs}/>
+
+                    <Switch key="components">
+                        <Redirect exact from="/" to="/production-schedule" />  
+
+                            <Route path="/production-schedule">
+                                <ProductionSchedule 
+                                    jobs={jobs}
+                                    shops={shops}
+                                    handleUpdate={handleUpdate} 
+                                    handleShopUpdate={handleShopUpdate}
+                                    handleShopDelete={handleShopDelete}
+                                    rowRemoved={rowRemoved}
+                                    onRowInit={onRowInit} 
+                                    toMS={toMS}
+                                    toDays={toDays}
+                                />
+                            </Route>
+                            <Route path="/shop-drawings">
+                                <ShopDrawings 
+                                    headers={shopDrawingHeaders}
+                                    rows={dateRows}
+                                />
+                            </Route>
+                            <Route path="/takeoff-matrix">
+                                <TakeoffMatrix 
+                                    jobs={jobs}
+                                    rows={dateRows}
+                                    toMS={toMS}
+                                    toDays={toDays}
+                                    handleUpdate={handleUpdate}
+                                    headers={takeoffHeaders}
+                                />
+                            </Route>
+                            <Route path="/panel-matrix">
+                                <PanelMatrix 
+                                    data={jobs}
+                                    handleUpdate={handleUpdate}
+                                    rowRemoved={rowRemoved}
+                                    onRowInit={onRowInit}
+                                />
+                            </Route>
+                            <Route path="/fab-matrix">
+                                <FabMatrix 
+                                    headers={fabHeaders}
+                                    rows={dateRows}
+                                />
+                            </Route>
+                            <Route path="/all-activities">
+                                <AllActivities 
+                                    data={jobs}
+                                />
+                            </Route>
+                            <Route path="/glass-and-gasket">
+                                <GlassGasket 
+                                    data={jobs}
+                                    handleUpdate={handleUpdate}
+                                    rowRemoved={rowRemoved}
+                                    onRowInit={onRowInit}
+                                />
+                            </Route>
+                            <Route path="/metal">
+                                <Metal 
+                                    data={jobs}
+                                    toMS={toMS}
+                                    toDays={toDays}
+                                />
+                            </Route>
+                            <Route path="/field">
+                                <Field 
+                                    data={jobs}
+                                    toMS={toMS}
+                                    toDays={toDays}
+                                />
+                            </Route>
+                    </Switch>
+                </div>
+                :
+                <div className={classes.root}>
+                    <LinearProgress variant="determinate" value={progress} />
+                </div>
+            }
+        </div>
+    );
 }
 
 export default withRouter(App);

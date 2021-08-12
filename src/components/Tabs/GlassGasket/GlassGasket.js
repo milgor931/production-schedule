@@ -39,21 +39,9 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const GlassGasket = (props) => {
-    const [ data, setData] = useState([]);
-    const [ loaded, setLoaded ] = useState(false);
+    const { data, handleUpdate, rowRemoved, onRowInit } = props;
+    const [ loaded, setLoaded ] = useState(true);
     const classes = useStyles();
-
-    useEffect(() => {
-        axios.get("https://ww-production-schedule-default-rtdb.firebaseio.com/jobs.json")
-        .then(response => {
-            response.data ? setData(Object.values(response.data)) : setData([]);
-            setLoaded(true);
-        })
-        .catch(error => {
-            alert(error);
-        })
-    }, [ ])
-
 
     const renderRow = (row) => {
       if (row.rowType === "data") {
@@ -65,41 +53,8 @@ const GlassGasket = (props) => {
       } 
     }
 
-    const handleUpdate = (row) => {
-        if (row.data) {
-            row = row.data;
-        }
-        row.shopName = row.shop;
-        row.title = row.jobName;
-        axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/jobs/${row.id}.json`, row)
-        .then(response => {
-            setData([ ...data ])
-        })
-        .catch(error => alert(error))
-    }
-
-    const rowRemoved = (row) => {
-        axios.delete(`https://ww-production-schedule-default-rtdb.firebaseio.com/jobs/${row.data.id}.json`)
-        .then(response => {
-            // setData([ ...data ])
-        })
-        .catch(error => alert(error))
-    }
-
-    const onRowInit = (row) => {
-        row.data.booked = false;
-        row.data.shop = "";
-        row.data.shopName = "";
-        row.data.jobName = "job name";
-        row.data.title = "job name";
-        row.data.wallType = "wall type";
-        row.data.start = new Date();
-        row.data.fieldStart = new Date();
-        row.data.id = row.data.__KEY__;
-    }
-
     return (
-    <div>
+    <div style={{margin: '3vw'}}>
       {loaded 
         ? <div>
           <DataGrid

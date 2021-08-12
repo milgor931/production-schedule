@@ -31,7 +31,7 @@ const sources = [
 ];
 
 const Graph = (props) => {
-  const { data, handleUpdate } = props;
+  const { data, toMS, toDays } = props;
   const [ state, setState ] = React.useState({});
   const [ jobs, setJobs ] = useState([]);
   const [ shops, setShops ] = useState(["La Verne"]);
@@ -51,7 +51,7 @@ const Graph = (props) => {
   }, [ state ])
 
   const findShopDups = () => {
-    return [...new Set(data.map(item => item.shop))];
+    return [ ...new Set(data.map(item => item.shop)) ];
   }
 
   const calculateForOffSets = () => {
@@ -84,17 +84,9 @@ const Graph = (props) => {
     setState({ ...state, [event.target.name]: event.target.checked });
   };
 
-  const convertDaysToMilliseconds = (days) => {
-    return days * 24 * 60 * 60 * 1000;
-  }
-
-  const convertMillisecondsToDays = (ms) => {
-    return Math.ceil( ms / (24 * 60 * 60 * 1000) );
-  }
-
   const convertToDate = (value) => {
-    let date = (value * 7) + convertMillisecondsToDays(new Date('7/1/2021').getTime());
-    date = new Date(convertDaysToMilliseconds(date));
+    let date = (value * 7) + toDays(new Date().getTime());
+    date = new Date(toMS(date));
     return date.toLocaleDateString();
   }
 

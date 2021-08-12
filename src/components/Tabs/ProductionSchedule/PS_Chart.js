@@ -15,7 +15,8 @@ import DataGrid, {
   GroupItem,
   Button,
   SortByGroupSummaryInfo,
-  LoadPanel
+  LoadPanel,
+  Lookup
 } from 'devextreme-react/data-grid';
 import CheckBox from 'devextreme-react/check-box';
 import TextField from '@material-ui/core/TextField';
@@ -29,38 +30,40 @@ import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import Grid from '@material-ui/core/Grid';
 
 const ProductionScheduleChart = (props) => {
-    const { data, shopInfo, handleUpdate, rowRemoved, onRowInit } = props;
+    const { data, shopInfo, handleUpdate, handleShopUpdate, handleShopDelete, rowRemoved, onRowInit } = props;
     const [ loaded, setLoaded ] = useState(false);
     const [ expanded, setExpanded ] = useState(true);
     const [ shops, setShops ] = useState(shopInfo);
-
+    
     useEffect(() => {
-      data && setLoaded(true);
+        data && setLoaded(true);
     }, [ data ])
 
     const onReorder = (e) => {
-      const visibleRows = e.component.getVisibleRows();
-      const newTasks = [...data];
-      const toIndex = newTasks.indexOf(visibleRows[e.toIndex].data);
-      const fromIndex = newTasks.indexOf(e.itemData);
+        const visibleRows = e.component.getVisibleRows();
+        const newTasks = [...data];
+        const toIndex = newTasks.indexOf(visibleRows[e.toIndex].data);
+        const fromIndex = newTasks.indexOf(e.itemData);
 
-      newTasks.splice(fromIndex, 1);
-      newTasks.splice(toIndex, 0, e.itemData);
+        newTasks.splice(fromIndex, 1);
+        newTasks.splice(toIndex, 0, e.itemData);
 
-      let shop = data[toIndex].shop;
-      e.itemData.shop = shop;
+        let shop = data[toIndex];
 
-      handleUpdate(e.itemData);
+        // e.itemData.shop = shop.shop;
+        e.itemData.groupIndex = shop.groupIndex;
+
+        handleUpdate(e.itemData);
     }
 
     const jobWallCell = (data) => {
-      return (
-        <div>
-          <span>{data.data.jobName}</span>
-          <br></br>
-          <span style={{color: "#5a87d1"}}>{data.data.wallType}</span>
-        </div>
-      )
+        return (
+          <div>
+            <span>{data.data.jobName}</span>
+            <br></br>
+            <span style={{color: "#5a87d1"}}>{data.data.wallType}</span>
+          </div>
+        )
     }
 
     const editJobWallCell = (data) => {
@@ -80,10 +83,10 @@ const ProductionScheduleChart = (props) => {
           row.rowElement.style.backgroundColor = "#a8a8a8";
         } 
       } 
-      else if (row.rowType === "group" && shops[0]) {
-        let shopStyling = shops.find(shop => shop.shop === row.data.key);
-        row.rowElement.style.backgroundColor = shopStyling.colorkey;
-        row.rowElement.style.color = shopStyling.fontColor;
+      else if (row.rowType === "group") {
+          let colorEntry = shopInfo.find(shop => shop.shop === row.data.key);
+          row.rowElement.style.backgroundColor = colorEntry ? colorEntry.colorkey : "white";
+          row.rowElement.style.color = colorEntry ? colorEntry.fontColor : "black";
       } 
       else if (row.rowType === "total") {
         row.rowElement.style.backgroundColor = "";
@@ -102,8 +105,22 @@ const ProductionScheduleChart = (props) => {
     }
 
     const cellPrepared = (cell) => {
-      if (cell.rowType === "data" && (cell.column.dataField === "weeks" || cell.column.dataField === "offset" || cell.column.dataField === "end")) {
+      if ((cell.rowType === "data" && !cell.data.stickwall && (cell.column.dataField === "weeks" || cell.column.dataField === "offset" || cell.column.dataField === "end"))) {
         cell.cellElement.style.backgroundColor = "#c2c4c4";
+      }
+      else if (cell.rowType === "data" && cell.data.stickwall && ["end", "offset", "units", "unitsPerWeek"].includes(cell.column.dataField)) {
+        cell.cellElement.style.backgroundColor = "#c2c4c4";
+        cell.text = "";
+      }
+    }
+
+    const editingStart = (cell) => {
+      if (cell.data.stickwall && ["end", "offset", "units", "unitsPerWeek"].includes(cell.column.dataField)) {
+        cell.cancel = true;
+      } else if (!cell.data.stickwall && ["end", "offset", "weeks"].includes(cell.column.dataField)){
+        cell.cancel = true;
+      } else {
+        cell.cancel = false;
       }
     }
 
@@ -119,7 +136,7 @@ const ProductionScheduleChart = (props) => {
 
       setShops(newShops);
 
-      axios.put("https://ww-production-schedule-default-rtdb.firebaseio.com/shops.json", newShops)
+      axios.put("https://ww-production-schedule-default-rtdb.firebaseio.com/data/shops.json", newShops)
       .then(response => {})
       .catch(error => console.log(error))
 
@@ -128,6 +145,14 @@ const ProductionScheduleChart = (props) => {
         handleUpdate(job);
       });
 
+    }
+
+    const onShopRowInit = (row) => {
+      row.data.shop = "";
+      row.data.fontColor = "#000";
+      row.data.colorkey = "#fff";
+      row.data.id = row.data.__KEY__;
+      row.data.index = shops.length;
     }
 
     return (
@@ -149,7 +174,7 @@ const ProductionScheduleChart = (props) => {
                     text="Expand Rows"
                     value={expanded}
                     onValueChanged={() => setExpanded(!expanded)} 
-                    style={{marginBottom: '20px'}}
+                    style={{ marginBottom: '20px' }}
                   />
                 </Grid>
                 <Grid item>
@@ -167,10 +192,18 @@ const ProductionScheduleChart = (props) => {
                     autoExpandAll
                     highlightChanges
                     cellHintEnabled
-                    >
+                    onRowInserted={handleShopUpdate}
+                    onRowUpdated={handleShopUpdate}
+                    onRowDeleted={handleShopDelete}
+                    onInitNewRow={onShopRowInit}
+
+                  >
                     <Editing
                       mode="cell"
                       allowUpdating
+                      allowAdding
+                      allowDeleting
+                      useIcons
                     />
 
                     <RowDragging
@@ -178,6 +211,11 @@ const ProductionScheduleChart = (props) => {
                       onReorder={onShopReorder}
                       showDragIcons
                     />
+
+                    <Column type="buttons">
+                      <Button name="delete" />
+                    </Column>
+
                     <Column
                       dataField="shop"
                       caption="Shop"
@@ -197,7 +235,7 @@ const ProductionScheduleChart = (props) => {
                           defaultValue={cell.data.colorkey}
                           onValueChange={color => {
                             cell.data.colorkey = color;
-                            axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/shops.json`, shops)
+                            axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/shops.json`, shops)
                             .then(response => {
                               let mode = expanded;
                               setExpanded(!mode);
@@ -223,7 +261,7 @@ const ProductionScheduleChart = (props) => {
                           defaultValue={cell.data.fontColor}
                           onValueChange={color => {
                             cell.data.fontColor = color;
-                            axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/shops.json`, shops)
+                            axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/shops.json`, shops)
                             .then(response => {
                               let mode = expanded;
                               setExpanded(!mode);
@@ -260,14 +298,13 @@ const ProductionScheduleChart = (props) => {
             onRowInserted={handleUpdate}
             onRowRemoved={rowRemoved}
             onCellPrepared={cellPrepared}
-            cellHintEnabled
+            onEditingStart={editingStart}
           >
 
-            <GroupPanel visible autoExpandAll/>
             <SearchPanel visible highlightCaseSensitive={false} />
             <Grouping autoExpandAll={expanded} />
-            <Sorting mode="single" />
             <LoadPanel enabled />
+            <GroupPanel visible />
 
             <Editing
               mode="cell"
@@ -278,11 +315,11 @@ const ProductionScheduleChart = (props) => {
               allowSorting
             />
 
-            <RowDragging
-              allowReordering
-              onReorder={onReorder}
+            {/* <RowDragging
+              // allowReordering
+              // onReorder={onReorder}
               showDragIcons
-            />
+            /> */}
 
             <Column type="buttons">
               <Button name="edit" />
@@ -292,16 +329,33 @@ const ProductionScheduleChart = (props) => {
             <Column 
               dataField="shopName" 
               groupIndex={0} 
-              dataType="string"
+              // dataType="string"
+              allowSorting={false}
+              calculateGroupValue={row => {
+                return row.shop;
+              }}
             />
-            <Column dataField="shop" caption="Shop">
-              <RequiredRule />
+
+            <Column dataField="shop" caption="Shop" minWidth={100}>
+              <Lookup 
+                dataSource={shops} 
+                displayExpr="shop" 
+                valueExpr="shop"
+              />
             </Column>
 
             <Column
               dataField="booked" 
               alignment="center"
+              dataType="boolean"
             />
+
+            <Column
+              dataField="stickwall" 
+              alignment="center"
+              dataType="boolean"
+            />
+
             <Column
               dataField="jobNumber" 
               dataType="string"
@@ -309,7 +363,7 @@ const ProductionScheduleChart = (props) => {
               alignment="center" 
               defaultSortOrder="asc"
               cellRender={jobNumberRender} >
-              <RequiredRule />
+              {/* <RequiredRule /> */}
             </Column>
             <Column 
               dataField="jobName" 
@@ -318,21 +372,23 @@ const ProductionScheduleChart = (props) => {
               cellRender={jobWallCell} 
               editCellRender={editJobWallCell} 
               alignment="left">
-              <RequiredRule />
+              {/* <RequiredRule /> */}
             </Column>
             <Column
               dataField="customer" 
               dataType="string"
               caption="Customer" 
               alignment="center" >
-              <RequiredRule />
+              {/* <RequiredRule /> */}
             </Column>
             <Column 
               dataField="unitsPerWeek" 
               dataType="number"
               caption="Units/Week" 
-              alignment="center" >
-              <RequiredRule />
+              alignment="center" 
+              calculateCellValue={row => row.stickwall ? "" : row.unitsPerWeek}
+            >
+              {/* <RequiredRule /> */}
             </Column>
             <Column
               allowSorting 
@@ -340,7 +396,7 @@ const ProductionScheduleChart = (props) => {
               dataType="date"
               caption="Shop Start Date" 
               alignment="center">
-              <RequiredRule />
+              {/* <RequiredRule /> */}
             </Column>
             <Column
               allowSorting 
@@ -348,34 +404,55 @@ const ProductionScheduleChart = (props) => {
               dataType="number"
               caption="Weeks To Go Back" 
               alignment="center">
-              <RequiredRule />
+              {/* <RequiredRule /> */}
             </Column>
-            <Column dataField="end" caption="End Date" alignment="center" allowEditing={false} allowEditing={false} >
+            <Column 
+              dataField="end" 
+              caption="End Date" 
+              alignment="center" 
+              allowEditing={false}
+              calculateCellValue={row => {
+                let time = row.weeks * 7 * 24 * 60 * 60 * 1000;
+                time = row.start && row.start.getTime() + time;
+                row.end = new Date(time);
+                return row.end; 
+              }} 
+            >
             </Column>
             <Column
              dataField="fieldStart" 
              dataType="date"
              cption="Field Start Date" 
              alignment="center" >
-              <RequiredRule />
+              {/* <RequiredRule /> */}
             </Column>
             <Column 
               dataField="units" 
               dataType="number"
               caption="Units" 
-              alignment="center">
-              <RequiredRule />
+              alignment="center"
+              calculateCellValue={row => row.stickwall ? "" : row.units}
+            >
+              {/* <RequiredRule /> */}
             </Column>
             <Column 
               dataField="emps" 
               dataType="number"
               caption="Emps" 
               alignment="center">
-              <RequiredRule />
+              {/* <RequiredRule /> */}
             </Column>
             
-            <Column dataField="weeks" caption="Weeks" alignment="center" allowEditing={false}></Column>
-            <Column dataField="offset" caption="Offset" allowEditing={false} alignment="center"></Column>
+            <Column 
+              dataField="weeks" 
+              caption="Weeks" 
+              alignment="center"
+            ></Column>
+            <Column 
+              dataField="offset" 
+              caption="Offset" 
+              alignment="center"
+            ></Column>
             
             <Summary recalculateWhileEditing>
               <GroupItem
@@ -420,9 +497,9 @@ const ProductionScheduleChart = (props) => {
               />
             </Summary>
 
-            <SortByGroupSummaryInfo 
+            {/* <SortByGroupSummaryInfo 
                 summaryItem="groupIndex"
-            />
+            /> */}
           </DataGrid>
         </div>
       : <Spinner />

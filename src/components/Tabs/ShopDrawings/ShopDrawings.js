@@ -8,82 +8,18 @@ import DataGrid, {
   SearchPanel,
   Editing
 } from 'devextreme-react/data-grid';
-import InputLabel from '@material-ui/core/InputLabel';
-import MenuItem from '@material-ui/core/MenuItem';
-import FormHelperText from '@material-ui/core/FormHelperText';
-import FormControl from '@material-ui/core/FormControl';
-import Select from '@material-ui/core/Select';
 import axios from 'axios';
 
 const ShopDrawings = (props) => {
-    const [ data, setData ] = useState([]);
-    const [ loaded, setLoaded ] = useState(false);
-    const [ headers, setHeaders ] = useState([]);
-    const [ jobs, setJobs ] = useState(null);
-
-    useEffect(() => {
-        axios.get("https://ww-production-schedule-default-rtdb.firebaseio.com/shopdrawings/headers.json")
-        .then(response => {
-            response.data ? setHeaders(Object.values(response.data)) : setHeaders([]);
-            setLoaded(true);
-        })
-        .catch(error => console.log(error))
-
-        axios.get(`https://ww-production-schedule-default-rtdb.firebaseio.com/shopdrawings/data.json`) 
-        .then(response => {
-            response.data ? setData(Object.values(response.data)) : createRows();
-        })
-        .catch(error => console.log(error))
-
-        axios.get(`https://ww-production-schedule-default-rtdb.firebaseio.com/jobs.json`)
-        .then(response => {
-            response.data ? setJobs(Object.values(response.data).map(job => job.jobName)) : setJobs([]);
-        })
-        .catch(error => console.log(error))
-
-    }, [])
-
-    const createRows = () => {
-        let rows = [];
-        let weeks = 100;
-
-        for (let i = 0; i < weeks; i++) {
-            let today = new Date();
-            today = today.getTime() + toMilliseconds( 1 - today.getDay() );
-
-            let date = today + toMilliseconds(i*7);
-
-            date = new Date(date).toLocaleDateString();
-            let obj = {
-                date: date,
-                id: i
-            }
-
-            rows.push(obj);
-        }
-        setData(rows);
-
-        axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/shopdrawings/data.json`, rows) 
-        .then(response => response)
-        .catch(error => console.log(error))
-    }
-
-    const handleUpdate = (row) => {
-        axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/shopdrawings/data/${row.data.id}.json`, row.data)
-        .then(response => response.data)
-        .catch(error => alert(error))
-    }
-
-    const toMilliseconds = (days) => {
-        return days * 24 * 60 * 60 * 1000;
-    }
+    const { rows, headers } = props;
+    const [ loaded, setLoaded ] = useState(true);
 
     return (
     <div>
       { loaded 
-        ?   <div>
+        ?   <div style={{margin: '3vw'}}>
             <DataGrid
-                dataSource={data}
+                dataSource={rows}
                 showBorders
                 showRowLines
                 allowColumnResizing
@@ -95,7 +31,7 @@ const ShopDrawings = (props) => {
                 wordWrapEnabled
                 autoExpandAll
                 highlightChanges
-                onRowUpdated={handleUpdate}
+                // onRowUpdated={handleUpdate}
             >
 
             <GroupPanel visible={false} autoExpandAll/>

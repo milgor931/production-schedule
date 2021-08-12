@@ -1,0 +1,11 @@
+const [ headers, setHeaders ] = useState([
+        { header: "Id's Drafting", offset: -7 }, 
+        { header: "Check Model", offset: -3}, 
+        { header: "Pallet Schedule", offset: -1 }, 
+        { header: "Metal Takeoff", offset: 0 }, 
+        { header: "Glass Takeoff", offset: 1 }, 
+        { header: "Door Schedule", offset: 1 }, 
+        { header: "Shop Use Brakes and Steel", offset: 2 }, 
+        { header: "Mock Ups", offset: 0 }, 
+        { header: "Mock-Up Overflow", offset: 0 }
+    ])

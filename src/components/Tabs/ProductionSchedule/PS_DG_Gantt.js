@@ -11,7 +11,8 @@ import DataGrid, {
   Summary, 
   TotalItem,
   GroupItem,
-  Sorting
+  Sorting,
+  SortByGroupSummaryInfo
 } from 'devextreme-react/data-grid';
 import { makeStyles } from '@material-ui/core/styles';
 
@@ -29,49 +30,30 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const ProductionScheduleChart = (props) => {
-    const { data, shopInfo, getStartDateIndex, getEndDateIndex} = props;
+    const { data, shopInfo, toMS, toDays } = props;
     const [ loaded, setLoaded ] = useState(false);
-    const [ jobs, setJobs ] = useState(null);
     const [ columns, setColumns ] = useState(null);
     const [ expanded, setExpanded ] = useState(true);
-    const [ hint, setHint ] = useState("");
-    const [ totalUnits, setTotalUnits ] = useState(0);
-    const [ totalEmps, setTotalEmps ] = useState(0);
-    const [ totalUnitsPerWeek, setTotalUnitsPerWeek ] = useState(0);
 
     useEffect(() => {
-        if (data) {
-          calculateForOffSets();
-          setLoaded(true);
-        }
+      calculateForOffSets();
+      setLoaded(true);
     }, [ data ])
 
     const convertToDate = (value) => {
-      let date = (value * 7) + convertMillisecondsToDays(new Date('7/1/2021').getTime());
-      date = new Date(convertDaysToMilliseconds(date));
+      let date = (value * 7) + toDays(new Date().getTime());
+      date = new Date(toMS(date));
       return date.toLocaleDateString();
-    }
-
-    const convertDaysToMilliseconds = (days) => {
-      return days * 24 * 60 * 60 * 1000;
-    }
-  
-    const convertMillisecondsToDays = (ms) => {
-      return Math.ceil( ms / (24 * 60 * 60 * 1000) );
     }
   
     const calculateForOffSets = () => {
         let cols = [];
-        let end = data[getEndDateIndex()];
-
+        let end = data[data.length - 1];
         for (let i = 0; i <= end.offset + end.weeks; i++) {
             cols.push(i);
         }
 
         data.forEach(job => {
-            setTotalUnits(total => total + parseInt(job.units));
-            setTotalEmps(total => total + parseInt(job.emps));
-            setTotalUnitsPerWeek(total => total + parseInt(job.unitsPerWeek));
             job.offsets = [];
             for (let w = 1; w <= job.weeks; w++) {
                 job.offsets.push(job.offset + w);
@@ -89,14 +71,6 @@ const ProductionScheduleChart = (props) => {
         ))    
     }
 
-    const toMS = (days) => {
-      return days * 24 * 60 * 60 * 1000;
-    }
-
-    const toDays = (ms) => {
-      return Math.ceil(ms / (24 * 60 * 60 * 1000));
-    }
-
     const jobWallCell = (data) => {
       return (
         <div>
@@ -108,30 +82,30 @@ const ProductionScheduleChart = (props) => {
     }
 
     const cellPrepared = (cell) => {
-       if (cell.data && cell.data.offsets) {
-          if (cell.data.offsets.includes(cell.column.dataField) && cell.column.type === "date") {
-            cell.cellElement.style.backgroundColor = "#3f50b5";
-          }
-          else if (!cell.data.booked) {
-            cell.cellElement.style.backgroundColor = "cyan";
-          }
-       }
+      let colorEntry = cell.rowType === "data" ? shopInfo.find(shop => shop.shop === cell.data.shopName) : "";
+      let headerColor = cell.rowType === "data" && colorEntry ? colorEntry.colorkey : "white";
+
+      if (cell.data && cell.data.offsets) {
+        let isDate = cell.data.offsets.includes(cell.column.dataField);
+        if (isDate && cell.column.type === "date") {
+          cell.cellElement.style.backgroundColor = headerColor;
+        }
+        if (!cell.data.booked && (cell.columnIndex <= 4 || isDate)) {
+          cell.cellElement.style.backgroundColor = "cyan";
+        }
+        if (cell.column.caption === cell.data.fieldStart.toLocaleDateString()) {
+          cell.cellElement.style.backgroundColor = "red";
+        }
+      }
        
     }
 
     const renderRow = (row) => {
-      if (row.rowType === "data") {
-        if (!row.data.booked) {
-          row.rowElement.style.backgroundColor = "cyan";
-        } else if (row.data.header) {
-          row.rowElement.style.backgroundColor = "#a8a8a8";
-        } 
+      if (row.rowType === "group") {
+          let colorEntry = shopInfo.find(shop => shop.shop === row.data.key);
+          row.rowElement.style.backgroundColor = colorEntry ? colorEntry.colorkey : "white";
+          row.rowElement.style.color = colorEntry ? colorEntry.fontColor : "black";
       } 
-      else if (row.rowType === "group" && shopInfo[0]) {
-        let shopStyling = shopInfo.find(shop => shop.shop === row.data.key);
-        row.rowElement.style.backgroundColor = shopStyling.colorkey;
-        row.rowElement.style.color = shopStyling.fontColor;
-      }
     }
 
     return (
@@ -212,6 +186,13 @@ const ProductionScheduleChart = (props) => {
                 }}
               />
 
+              <GroupItem
+                column="groupIndex"
+                summaryType="avg"
+                name="groupIndex"
+                customizeText={data => data.value}
+              />
+
               <TotalItem
                 column="units"
                 summaryType="sum"
@@ -225,6 +206,9 @@ const ProductionScheduleChart = (props) => {
                 summaryType="sum"
               />
             </Summary>
+            <SortByGroupSummaryInfo 
+                summaryItem="groupIndex"
+            />
           </DataGrid>
         </div>
       : <Spinner />

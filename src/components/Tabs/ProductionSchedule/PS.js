@@ -10,57 +10,40 @@ import Grid from '@material-ui/core/Grid';
 import Radio from '@material-ui/core/Radio';
 
 const ProductionSchedule = (props) => {
+    const { state, shops, jobs, handleUpdate, handleShopUpdate, handleShopDelete, rowRemoved, onRowInit, toMS, toDays } = props;
     const [ tabs, setTabs ] = useState([]);
-    const [ data, setData ] = useState(null);
+    const [ data, setData ] = useState(jobs);
     const [ loaded, setLoaded ] = useState(false);
     const [ selectedIndex, setSelectedIndex ] = useState(0);
-    const [ startDate, setStartDate ] = useState();
-    const [ shopInfo, setShops ] = useState([]);
 
     useEffect(() => {
-        axios.get("https://ww-production-schedule-default-rtdb.firebaseio.com/jobs.json")
-        .then(response => response.data ? setData(Object.values(response.data)) : setData([]))
-        .catch(error => console.log(error))
 
-        axios.get(`https://ww-production-schedule-default-rtdb.firebaseio.com/shops.json`)
-        .then(response => {
-            response.data && setShops(Object.values(response.data))
-            console.log("got shops")
-        })
-        .catch(error => alert(error))
-    }, [])
-
-    useEffect(() => {
-        if (data) {
-            data.forEach(row => {
-                convertDate(row)
-                getOffset(row, data[getStartDateIndex()].start);
-            })
-            
-            data.length > 0 && setStartDate(data[getStartDateIndex()].start);
-        } 
         setTabs([
             {
                 'ID': 0,
                 'name': 'Gantt',
                 'component': <DG_Grantt
                                 data={data} 
-                                shopInfo={shopInfo}
+                                shopInfo={shops}
                                 handleUpdate={handleUpdate}
-                                getStartDateIndex={getStartDateIndex}
-                                getEndDateIndex={getEndDateIndex}
-                             />
+                                toMS={toMS}
+                                toDays={toDays}
+                            />
             },
             {
                 'ID': 1,
                 'name': 'Production Schedule',
                 'component': <ProductionScheduleChart 
                                 data={data} 
-                                shopInfo={shopInfo}
+                                shopInfo={shops}
                                 handleUpdate={handleUpdate}
+                                handleShopUpdate={handleShopUpdate}
+                                handleShopDelete={handleShopDelete}
                                 rowAdded={handleUpdate}
                                 rowRemoved={rowRemoved}
                                 onRowInit={onRowInit}
+                                toMS={toMS}
+                                toDays={toDays}
                             />
             }, 
             {
@@ -69,91 +52,18 @@ const ProductionSchedule = (props) => {
                 'component': <Graph 
                                 data={data} 
                                 handleUpdate={handleUpdate}
-                             />
+                                toMS={toMS}
+                                toDays={toDays}
+                            />
             }
         ])
 
         setLoaded(true);
 
     }, [ data ])
-
-    const convertDate = (row) => {
-        row.start = new Date(row.start);
-        row.fieldStart = new Date(row.fieldStart);
-        let start = row.start.getTime();
-        let weeks = Math.ceil(row.units/row.unitsPerWeek);
-        row.weeks = weeks;
-        let time = weeks * 7 * 24 * 60 * 60 * 1000;
-        time = start + time;
-        row.end = new Date(time);
-    }
     
-    const getStartDateIndex = () => {
-        let s = convertMillisecondsToDays(new Date(data[0].start).getTime());
-        let jobIndex = 0;
-        data.forEach((job, index) => {
-            if (convertMillisecondsToDays(new Date(job.start).getTime()) < s) {
-                jobIndex = index;
-                s = convertMillisecondsToDays(new Date(job.start).getTime());
-            } 
-        })
-        return jobIndex;
-    }
-
-    const getEndDateIndex = () => {
-        let s = convertMillisecondsToDays(new Date(data[0].start).getTime());
-        let jobIndex = 0;
-        data.forEach((job, index) => {
-            if (convertMillisecondsToDays(new Date(job.start).getTime()) > s) {
-                jobIndex = index;
-                s = convertMillisecondsToDays(new Date(job.start).getTime());
-            } 
-        })
-        return jobIndex;
-    }
-  
-    const getOffset = (row, start) => {
-        let days = convertMillisecondsToDays(new Date(row.start).getTime());
-        row.offset = Math.ceil((days - convertMillisecondsToDays(new Date(start).getTime()))/7);
-    }
-
-    const convertMillisecondsToDays = (ms) => {
-        return Math.ceil(ms / (24 * 60 * 60 * 1000));
-    }
-
-    const handleUpdate = (row) => {
-        if (row.data) {
-            row = row.data;
-        }
-        row.shopName = row.shop;
-        row.title = row.jobName;
-        axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/jobs/${row.id}.json`, row)
-        .then(response => {
-            setData([ ...data ])
-        })
-        .catch(error => alert(error))
-    }
-
-    const rowRemoved = (row) => {
-        axios.delete(`https://ww-production-schedule-default-rtdb.firebaseio.com/jobs/${row.data.id}.json`)
-        .then(response => {})
-        .catch(error => alert(error))
-    }
-
-    const onRowInit = (row) => {
-        row.data.booked = false;
-        row.data.shop = "";
-        row.data.shopName = "";
-        row.data.jobName = "job name";
-        row.data.title = "job name";
-        row.data.wallType = "wall type";
-        row.data.start = new Date();
-        row.data.fieldStart = new Date();
-        row.data.id = row.data.__KEY__;
-    }
-
     const inputs = ["gantt", "chart", "graph"].map((value, index) => 
-        <Grid item>
+        <Grid item key={index}>
             <Radio
                 checked={selectedIndex === index}
                 onChange={e => setSelectedIndex(index)}
@@ -167,7 +77,7 @@ const ProductionSchedule = (props) => {
     )
 
     return (
-      <div>
+        <div style={{margin: '3vw'}}>
         { loaded
             ? 
             <div style={{alignItems: 'center', justifyContent: 'center'}}>
@@ -180,10 +90,8 @@ const ProductionSchedule = (props) => {
             : 
             <Spinner />
         }
-      </div>
+        </div>
     );
 }
-
-
 
 export default ProductionSchedule;

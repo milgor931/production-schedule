@@ -32,25 +32,11 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const Field = (props) => {
-    const [ loaded, setLoaded ] = useState(false);
-    const [ jobs, setJobs ] = useState(null);
+    const { data, toMS, toDays } = props;
+    const [ loaded, setLoaded ] = useState(true);
     const [ columns, setColumns ] = useState(null);
     const [ expanded, setExpanded ] = useState(true);
-    const [ hint, setHint ] = useState("");
-    const [ totalUnits, setTotalUnits ] = useState(0);
-    const [ totalEmps, setTotalEmps ] = useState(0);
-    const [ totalUnitsPerWeek, setTotalUnitsPerWeek ] = useState(0);
-    const [ data, setData ] = useState(null);
 
-    useEffect(() => {
-      axios.get("https://ww-production-schedule-default-rtdb.firebaseio.com/jobs.json")
-      .then(response => {
-          response.data ? setData(Object.values(response.data)) : setData([]);
-      })
-      .catch(error => {
-          alert(error);
-      })
-  }, [])
 
     useEffect(() => {
         if (data) {
@@ -59,26 +45,15 @@ const Field = (props) => {
         }
     }, [ data ])
 
-    const convertDaysToMilliseconds = (days) => {
-      return days * 24 * 60 * 60 * 1000;
-    }
-  
-    const convertMillisecondsToDays = (ms) => {
-      return Math.ceil( ms / (24 * 60 * 60 * 1000) );
-    }
-
     const calculateForOffSets = () => {
       let cols = [];
-      let end = data[getEndDateIndex()];
+      let end = data[data.length - 1];
 
       for (let i = 0; i <= end.offset + end.weeks; i++) {
           cols.push(i);
       }
 
       data.forEach(job => {
-          setTotalUnits(total => total + parseInt(job.units));
-          setTotalEmps(total => total + parseInt(job.emps));
-          setTotalUnitsPerWeek(total => total + parseInt(job.unitsPerWeek));
           job.offsets = [];
           for (let w = 1; w <= job.weeks; w++) {
               job.offsets.push(job.offset + w);
@@ -94,64 +69,22 @@ const Field = (props) => {
               type="date"
           />
       ))    
-  }
+    }
 
-  const convertToDate = (value) => {
-    let date = (value * 7) + convertMillisecondsToDays(new Date('7/1/2021').getTime());
-    date = new Date(convertDaysToMilliseconds(date));
-    return date.toLocaleDateString();
-  }
-  
-  const getStartDateIndex = () => {
-      let s = convertMillisecondsToDays(new Date(data[0].start).getTime());
-      let jobIndex = 0;
-      data.forEach((job, index) => {
-          if (convertMillisecondsToDays(new Date(job.start).getTime()) < s) {
-              jobIndex = index;
-              s = convertMillisecondsToDays(new Date(job.start).getTime());
-          } 
-      })
-      return jobIndex;
-  }
-
-  const getEndDateIndex = () => {
-      let s = convertMillisecondsToDays(new Date(data[0].start).getTime());
-      let jobIndex = 0;
-      data.forEach((job, index) => {
-          if (convertMillisecondsToDays(new Date(job.start).getTime()) > s) {
-              jobIndex = index;
-              s = convertMillisecondsToDays(new Date(job.start).getTime());
-          } 
-      })
-      return jobIndex;
-  }
-
-  const getOffset = (row, start) => {
-      let days = convertMillisecondsToDays(new Date(row.start).getTime());
-      row.offset = Math.ceil((days - convertMillisecondsToDays(new Date(start).getTime()))/7);
-  }
-
-  const handleUpdate = (row) => {
-      if (row.data) {
-          row = row.data;
-      }
-      row.shopName = row.shop;
-      row.title = row.jobName;
-      axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/jobs/${row.id}.json`, row)
-      .then(response => {
-          setData([ ...data ])
-      })
-      .catch(error => alert(error))
-  }
+    const convertToDate = (value) => {
+      let date = (value * 7) + toDays(new Date().getTime());
+      date = new Date(toMS(date));
+      return date.toLocaleDateString();
+    }
 
     const jobWallCell = (data) => {
-      return (
-        <div>
-          <span>{data.data.jobName}</span>
-          <br></br>
-          <span style={{color: "#5a87d1"}}>{data.data.wallType}</span>
-        </div>
-      )
+        return (
+          <div>
+            <span>{data.data.jobName}</span>
+            <br></br>
+            <span style={{color: "#5a87d1"}}>{data.data.wallType}</span>
+          </div>
+        )
     }
 
     const cellPrepared = (cell) => {
@@ -167,7 +100,7 @@ const Field = (props) => {
     }
 
     return (
-    <div>
+    <div style={{margin: '3vw'}}>
       {loaded 
         ? <div>
           <DataGrid
