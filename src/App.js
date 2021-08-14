@@ -173,8 +173,12 @@ const App = () => {
         console.log("chart update")
         row = row.data ? row.data : row;
         row.shopName = row.shop;
+
+        let copy = [...jobs]
+        // copy[copy.indexOf(row)].shopName = row.shop
+
         axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/jobs/${row.id}.json`, row)
-        .then(response => setJobs([ ...jobs ]))
+        .then(response => setJobs( jobs ))
         .catch(error => alert(error))
     }
 
