@@ -327,27 +327,22 @@ const ProductionScheduleChart = (props) => {
             </Column>
 
             <Column 
-              dataField="shopName" 
+              dataField="shop" 
               groupIndex={0} 
-              // dataType="string"
+              dataType="string"
               allowSorting={false}
-              calculateGroupValue={row => {
-                return row.shop;
+              calculateGroupValue="groupKey"
+              groupCellRender={row => {
+                let shop = shops.find(shop => row.value === shop.__KEY__);
+                return <div style={{borderRadius: "10px", backgroundColor: shop.colorkey, padding: "15px", color: shop.fontColor}}><p style={{fontSize: '20px'}}>{shop.shop}</p>  <p style={{fontSize: '15px'}}>Units: {row.summaryItems[0].value} | Units Per Week: {row.summaryItems[1].value} | Employees: {row.summaryItems[2].value}</p></div>
               }}
             />
+
             <Column dataField="groupKey" caption="Shop" minWidth={100} calculateDisplayValue={row => row.shop}>
               <Lookup 
                 dataSource={shops} 
                 displayExpr="shop" 
                 valueExpr="__KEY__"
-              />
-            </Column>
-
-            <Column dataField="shop" caption="Shop" minWidth={100}>
-              <Lookup 
-                dataSource={shops} 
-                displayExpr="shop" 
-                valueExpr="shop"
               />
             </Column>
 
