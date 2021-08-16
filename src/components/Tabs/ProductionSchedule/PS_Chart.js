@@ -335,6 +335,13 @@ const ProductionScheduleChart = (props) => {
                 return row.shop;
               }}
             />
+            <Column dataField="groupKey" caption="Shop" minWidth={100} calculateDisplayValue={row => row.shop}>
+              <Lookup 
+                dataSource={shops} 
+                displayExpr="shop" 
+                valueExpr="__KEY__"
+              />
+            </Column>
 
             <Column dataField="shop" caption="Shop" minWidth={100}>
               <Lookup 
