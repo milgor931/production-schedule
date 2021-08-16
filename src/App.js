@@ -141,6 +141,16 @@ const App = () => {
         updatedJobs.forEach(job => {
             job.start = new Date(job.start);
             job.fieldStart = new Date(job.fieldStart);
+
+            // if (!job.stickwall) {
+            //     job.weeks = Math.ceil(job.units/job.unitsPerWeek);
+            // } else {
+            //     job.weeks = 0;
+            // }
+
+            let time = job.weeks * 7 * 24 * 60 * 60 * 1000;
+            time = job.start.getTime() + time;
+            job.end = new Date(time);
         })
 
         updatedJobs.sort(function(a,b) {
@@ -178,7 +188,7 @@ const App = () => {
         .then(response => setJobs(jobsNotInShop))
         .catch(error => console.log(error))
 
-        axios.delete(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/shops/${row.data.id}.json`)
+        axios.delete(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/shops/${row.data.__KEY__}.json`)
         .then(response => {})
         .catch(error => console.log(error))
     }

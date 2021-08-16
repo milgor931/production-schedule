@@ -194,7 +194,7 @@ const ProductionScheduleChart = (props) => {
                     cellHintEnabled
                     onRowInserted={handleShopUpdate}
                     onRowUpdated={handleShopUpdate}
-                    onRowDeleted={handleShopDelete}
+                    onRowRemoved={handleShopDelete}
                     onInitNewRow={onShopRowInit}
 
                   >
@@ -418,10 +418,12 @@ const ProductionScheduleChart = (props) => {
               alignment="center" 
               allowEditing={false}
               calculateCellValue={row => {
-                let time = row.weeks * 7 * 24 * 60 * 60 * 1000;
-                time = row.start && row.start.getTime() + time;
-                row.end = new Date(time);
-                return row.end; 
+                if (row.weeks) {
+                  let time = row.weeks * 7 * 24 * 60 * 60 * 1000;
+                  time = row.start && row.start.getTime() + time;
+                  row.end = new Date(time);
+                  return row.end; 
+                }
               }} 
             >
             </Column>
@@ -459,7 +461,7 @@ const ProductionScheduleChart = (props) => {
               caption="Weeks" 
               alignment="center"
               calculateCellValue={row => {
-                if (!row.stickwall) {
+                if (!row.stickwall && row.unitsPerWeek > 0) {
                   row.weeks = Math.ceil(row.units/row.unitsPerWeek);
                 }
                 return row.weeks;
