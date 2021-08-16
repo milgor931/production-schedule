@@ -30,7 +30,7 @@ import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import Grid from '@material-ui/core/Grid';
 
 const ProductionScheduleChart = (props) => {
-    const { data, shopInfo, handleUpdate, handleShopUpdate, handleShopDelete, rowRemoved, onRowInit } = props;
+    const { shopInfo, data, handleUpdate, handleShopUpdate, handleShopDelete, rowRemoved, onRowInit, toMS, toDays } = props;
     const [ loaded, setLoaded ] = useState(false);
     const [ expanded, setExpanded ] = useState(true);
     const [ shops, setShops ] = useState(shopInfo);
@@ -38,23 +38,6 @@ const ProductionScheduleChart = (props) => {
     useEffect(() => {
         data && setLoaded(true);
     }, [ data ])
-
-    const onReorder = (e) => {
-        const visibleRows = e.component.getVisibleRows();
-        const newTasks = [...data];
-        const toIndex = newTasks.indexOf(visibleRows[e.toIndex].data);
-        const fromIndex = newTasks.indexOf(e.itemData);
-
-        newTasks.splice(fromIndex, 1);
-        newTasks.splice(toIndex, 0, e.itemData);
-
-        let shop = data[toIndex];
-
-        // e.itemData.shop = shop.shop;
-        e.itemData.groupIndex = shop.groupIndex;
-
-        handleUpdate(e.itemData);
-    }
 
     const jobWallCell = (data) => {
         return (
@@ -129,19 +112,24 @@ const ProductionScheduleChart = (props) => {
       const from = e.fromIndex;
       const to = e.toIndex;
 
-      const newShops = [...shops];
+      const newShops = [ ...shops ];
 
       newShops.splice(from, 1);
       newShops.splice(to, 0, itemData);
 
+      newShops.forEach(shop => shop.index = newShops.indexOf(shop))
+
+      // ensures that data is not pushed to database as an array
+      let newShopsObject = newShops.reduce((acc, cur) => ({ [cur.__KEY__]: cur , ...acc}), {});
+
       setShops(newShops);
 
-      axios.put("https://ww-production-schedule-default-rtdb.firebaseio.com/data/shops.json", newShops)
+      axios.put("https://ww-production-schedule-default-rtdb.firebaseio.com/data/shops.json", newShopsObject)
       .then(response => {})
       .catch(error => console.log(error))
 
       data.forEach(job => {
-        job.groupIndex = newShops.findIndex(shop => shop.shop === job.shopName);
+        job.groupIndex = newShops.findIndex(shop => shop.__KEY__ === job.groupKey);
         handleUpdate(job);
       });
 
@@ -151,7 +139,6 @@ const ProductionScheduleChart = (props) => {
       row.data.shop = "";
       row.data.fontColor = "#000";
       row.data.colorkey = "#fff";
-      row.data.id = row.data.__KEY__;
       row.data.index = shops.length;
     }
 
@@ -283,16 +270,16 @@ const ProductionScheduleChart = (props) => {
             dataSource={data}
             showRowLines
             showBorders
-            allowColumnResizing
             columnAutoWidth
             highlightChanges
             repaintChangesOnly
             onRowPrepared={renderRow}
             twoWayBindingEnabled
-            columnResizingMode="nextColumn"
+            allowColumnResizing
             wordWrapEnabled
             autoExpandAll
             highlightChanges
+            activeStateEnabled
             onInitNewRow={onRowInit}
             onRowUpdated={handleUpdate}
             onRowInserted={handleUpdate}
@@ -334,11 +321,11 @@ const ProductionScheduleChart = (props) => {
               calculateGroupValue="groupKey"
               groupCellRender={row => {
                 let shop = shops.find(shop => row.value === shop.__KEY__);
-                return <div style={{borderRadius: "10px", backgroundColor: shop.colorkey, padding: "15px", color: shop.fontColor}}><p style={{fontSize: '20px'}}>{shop.shop}</p>  <p style={{fontSize: '15px'}}>Units: {row.summaryItems[0].value} | Units Per Week: {row.summaryItems[1].value} | Employees: {row.summaryItems[2].value}</p></div>
+                return shop && <div style={{borderRadius: "10px", backgroundColor: shop.colorkey, padding: "15px", color: shop.fontColor}}><p style={{fontSize: '20px'}}>{shop.shop}</p>  <p style={{fontSize: '15px'}}>Units: {row.summaryItems[0].value} | Units Per Week: {row.summaryItems[1].value} | Employees: {row.summaryItems[2].value}</p></div>
               }}
             />
 
-            <Column dataField="groupKey" caption="Shop" minWidth={100} calculateDisplayValue={row => row.shop}>
+            <Column dataField="groupKey" caption="Shop" minWidth={100}>
               <Lookup 
                 dataSource={shops} 
                 displayExpr="shop" 
@@ -497,7 +484,6 @@ const ProductionScheduleChart = (props) => {
                 column="groupIndex"
                 summaryType="avg"
                 name="groupIndex"
-                customizeText={data => data.value}
               />
 
               <TotalItem
@@ -517,9 +503,9 @@ const ProductionScheduleChart = (props) => {
               />
             </Summary>
 
-            {/* <SortByGroupSummaryInfo 
+            <SortByGroupSummaryInfo 
                 summaryItem="groupIndex"
-            /> */}
+            />
           </DataGrid>
         </div>
       : <Spinner />

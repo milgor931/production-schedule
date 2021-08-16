@@ -142,12 +142,6 @@ const App = () => {
             job.start = new Date(job.start);
             job.fieldStart = new Date(job.fieldStart);
 
-            // if (!job.stickwall) {
-            //     job.weeks = Math.ceil(job.units/job.unitsPerWeek);
-            // } else {
-            //     job.weeks = 0;
-            // }
-
             let time = job.weeks * 7 * 24 * 60 * 60 * 1000;
             time = job.start.getTime() + time;
             job.end = new Date(time);
@@ -172,30 +166,48 @@ const App = () => {
     const handleUpdate = (row) => {
         row = row.data ? row.data : row;
 
+        let copy = [...jobs];
+
+        let index = copy.findIndex(job => job.id === row.id )
+
+        copy[index]= row;
+
         axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/jobs/${row.id}.json`, row)
-        .then(response => setJobs( jobs ))
+        .then(response => {
+            setJobs(copy);
+        })
         .catch(error => alert(error))
     }
 
     const handleShopUpdate = (row) => {
-        axios.post(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/shops.json`, row.data)
-        .then(response => setShops([ ...shops ]))
+
+        let copy = [...jobs];
+        
+        copy.filter(job => job.groupKey === row.data.__KEY__).forEach(job => {
+            job.shop = row.data.shop
+            handleUpdate(job)
+        })
+
+        axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/shops/${row.data.__KEY__}.json`, row.data)
+        .then(response => setShops([...shops]))
     }
 
     const handleShopDelete = (row) => {
         let jobsNotInShop = jobs.filter(job => job.groupKey !== row.data.__KEY__);
-        axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/jobs.json`, jobsNotInShop)
+        // ensures that data is not pushed to database as an array
+        let newJobsObject = jobsNotInShop.reduce((acc, cur) => ({ [cur.__KEY__]: cur , ...acc}), {});
+        axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/jobs.json`, newJobsObject)
         .then(response => setJobs(jobsNotInShop))
         .catch(error => console.log(error))
 
         axios.delete(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/shops/${row.data.__KEY__}.json`)
-        .then(response => {})
+        .then(response => setShops([...shops]))
         .catch(error => console.log(error))
     }
 
     const rowRemoved = (row) => {
         axios.delete(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/jobs/${row.data.id}.json`)
-        .then(response => {})
+        .then(response => setJobs([...jobs]))
         .catch(error => console.log(error))
     }
 
