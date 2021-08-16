@@ -30,7 +30,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const ProductionScheduleChart = (props) => {
-    const { data, shopInfo, toMS, toDays } = props;
+    const { data, shops, toMS, toDays } = props;
     const [ loaded, setLoaded ] = useState(false);
     const [ columns, setColumns ] = useState(null);
     const [ expanded, setExpanded ] = useState(true);
@@ -82,7 +82,7 @@ const ProductionScheduleChart = (props) => {
     }
 
     const cellPrepared = (cell) => {
-      let colorEntry = cell.rowType === "data" ? shopInfo.find(shop => shop.shop === cell.data.shopName) : "";
+      let colorEntry = cell.rowType === "data" ? shops.find(shop => shop.__KEY__ === cell.data.groupKey) : "";
       let headerColor = cell.rowType === "data" && colorEntry ? colorEntry.colorkey : "white";
 
       if (cell.data && cell.data.offsets) {
@@ -102,7 +102,7 @@ const ProductionScheduleChart = (props) => {
 
     const renderRow = (row) => {
       if (row.rowType === "group") {
-          let colorEntry = shopInfo.find(shop => shop.shop === row.data.key);
+          let colorEntry = shops.find(shop => shop.__KEY___=== row.data.key);
           row.rowElement.style.backgroundColor = colorEntry ? colorEntry.colorkey : "white";
           row.rowElement.style.color = colorEntry ? colorEntry.fontColor : "black";
       } 
@@ -136,7 +136,15 @@ const ProductionScheduleChart = (props) => {
             <Column 
               dataField="shop" 
               groupIndex={0} 
+              dataType="string"
+              allowSorting={false}
+              calculateGroupValue="groupKey"
+              groupCellRender={row => {
+                let shop = shops.find(shop => row.value === shop.__KEY__);
+                return shop && <div style={{flexDirection: "row", display: "flex", alignItems: "center", borderRadius: "10px", backgroundColor: shop.colorkey, padding: "10px", color: shop.fontColor}}><b style={{fontSize: '20px'}}> {shop.shop}:  </b> &nbsp; Units: {row.summaryItems[0].value} | Units Per Week: {row.summaryItems[1].value} | Employees: {row.summaryItems[2].value}</div>
+              }}
             />
+
             <Column fixed allowSorting 
               dataField="jobNumber" 
               caption="Job Number" 

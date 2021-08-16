@@ -351,7 +351,13 @@ const ProductionScheduleChart = (props) => {
               caption="Job Number" 
               alignment="center" 
               defaultSortOrder="asc"
-              calculateCellValue={row => row.booked ? row.jobNumber : "Book in 90 Days"} >
+              calculateCellValue={row => {
+                if (!row.booked) {
+                  row.jobNumber = "Book in 90 Days";
+                }
+                return row.jobNumber
+              }}
+            >
             </Column>
             <Column 
               dataField="jobName" 
