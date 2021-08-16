@@ -142,6 +142,10 @@ const App = () => {
             job.start = new Date(job.start);
             job.fieldStart = new Date(job.fieldStart);
 
+            if (!job.stickwall && job.unitsPerWeek > 0) {
+                job.weeks = Math.ceil(job.units/job.unitsPerWeek);
+            }
+
             let time = job.weeks * 7 * 24 * 60 * 60 * 1000;
             time = job.start.getTime() + time;
             job.end = new Date(time);
@@ -161,6 +165,7 @@ const App = () => {
     const getOffset = (job, firstJob) => {
         let days = toDays(job.start.getTime());
         job.offset = Math.ceil((days - toDays(firstJob.start.getTime()))/7);
+        
     }
 
     const handleUpdate = (row) => {

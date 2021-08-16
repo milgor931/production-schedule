@@ -30,7 +30,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const ProductionScheduleChart = (props) => {
-    const { data, shops, toMS, toDays } = props;
+    const { jobs, shops, toMS, toDays } = props;
     const [ loaded, setLoaded ] = useState(false);
     const [ columns, setColumns ] = useState(null);
     const [ expanded, setExpanded ] = useState(true);
@@ -38,7 +38,7 @@ const ProductionScheduleChart = (props) => {
     useEffect(() => {
       calculateForOffSets();
       setLoaded(true);
-    }, [ data ])
+    }, [ jobs ])
 
     const convertToDate = (value) => {
       let date = (value * 7) + toDays(new Date().getTime());
@@ -48,12 +48,13 @@ const ProductionScheduleChart = (props) => {
   
     const calculateForOffSets = () => {
         let cols = [];
-        let end = data[data.length - 1];
+        let end = jobs[jobs.length - 1];
+
         for (let i = 0; i <= end.offset + end.weeks; i++) {
             cols.push(i);
         }
 
-        data.forEach(job => {
+        jobs.forEach(job => {
             job.offsets = [];
             for (let w = 1; w <= job.weeks; w++) {
                 job.offsets.push(job.offset + w);
@@ -71,12 +72,12 @@ const ProductionScheduleChart = (props) => {
         ))    
     }
 
-    const jobWallCell = (data) => {
+    const jobWallCell = (row) => {
       return (
         <div>
-          <span>{data.data.jobName}</span>
+          <span>{row.data.jobName}</span>
           <br></br>
-          <span style={{color: "#5a87d1"}}>{data.data.wallType}</span>
+          <span style={{color: "#5a87d1"}}>{row.data.wallType}</span>
         </div>
       )
     }
@@ -113,7 +114,7 @@ const ProductionScheduleChart = (props) => {
       {loaded 
         ? <div>
           <DataGrid
-            dataSource={data}
+            dataSource={jobs}
             showRowLines
             columnAutoWidth
             autoExpandAll

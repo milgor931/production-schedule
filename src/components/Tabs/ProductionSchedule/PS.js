@@ -20,7 +20,7 @@ const ProductionSchedule = (props) => {
                 'ID': 0,
                 'name': 'Gantt',
                 'component': <DG_Grantt
-                                data={jobs} 
+                                jobs={jobs} 
                                 shops={shops}
                                 handleUpdate={handleUpdate}
                                 toMS={toMS}
