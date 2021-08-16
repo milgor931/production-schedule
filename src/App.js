@@ -111,7 +111,7 @@ const App = () => {
         axios.get(`https://ww-production-schedule-default-rtdb.firebaseio.com/data.json`)
         .then(response => {
             if (response.data) {
-                response.data.shops && setShops(Object.values(response.data.shops));
+                response.data.shops && setShops(Object.values(response.data.shops).sort((x, y) => { return x.index - y.index }));
                 convertDates(Object.values(response.data.jobs));
                 setShopDrawingHeaders(Object.values(response.data.shopdrawings.headers));
                 setFabHeaders(Object.values(response.data.fabmatrix.headers));
@@ -141,16 +141,6 @@ const App = () => {
         updatedJobs.forEach(job => {
             job.start = new Date(job.start);
             job.fieldStart = new Date(job.fieldStart);
-            let start = job.start.getTime();
-
-            if (!job.stickwall) {
-                let weeks = Math.ceil(job.units/job.unitsPerWeek);
-                job.weeks = weeks;
-            }
-
-            let time = job.weeks * 7 * 24 * 60 * 60 * 1000;
-            time = start + time;
-            job.end = new Date(time);
         })
 
         updatedJobs.sort(function(a,b) {
@@ -170,12 +160,7 @@ const App = () => {
     }
 
     const handleUpdate = (row) => {
-        console.log("chart update")
         row = row.data ? row.data : row;
-        row.shopName = row.shop;
-
-        let copy = [...jobs]
-        // copy[copy.indexOf(row)].shopName = row.shop
 
         axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/jobs/${row.id}.json`, row)
         .then(response => setJobs( jobs ))
@@ -188,6 +173,11 @@ const App = () => {
     }
 
     const handleShopDelete = (row) => {
+        let jobsNotInShop = jobs.filter(job => job.groupKey !== row.data.__KEY__);
+        axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/jobs.json`, jobsNotInShop)
+        .then(response => setJobs(jobsNotInShop))
+        .catch(error => console.log(error))
+
         axios.delete(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/shops/${row.data.id}.json`)
         .then(response => {})
         .catch(error => console.log(error))

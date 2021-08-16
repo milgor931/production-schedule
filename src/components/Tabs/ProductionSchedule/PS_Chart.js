@@ -447,7 +447,14 @@ const ProductionScheduleChart = (props) => {
               dataField="weeks" 
               caption="Weeks" 
               alignment="center"
+              calculateCellValue={row => {
+                if (!row.stickwall) {
+                  row.weeks = Math.ceil(row.units/row.unitsPerWeek);
+                }
+                return row.weeks;
+              }}
             ></Column>
+
             <Column 
               dataField="offset" 
               caption="Offset" 
