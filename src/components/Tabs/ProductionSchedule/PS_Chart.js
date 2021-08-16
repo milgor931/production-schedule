@@ -364,8 +364,7 @@ const ProductionScheduleChart = (props) => {
               caption="Job Number" 
               alignment="center" 
               defaultSortOrder="asc"
-              cellRender={jobNumberRender} >
-              {/* <RequiredRule /> */}
+              calculateCellValue={row => row.booked ? row.jobNumber : "Book in 90 Days"} >
             </Column>
             <Column 
               dataField="jobName" 
@@ -388,7 +387,12 @@ const ProductionScheduleChart = (props) => {
               dataType="number"
               caption="Units/Week" 
               alignment="center" 
-              calculateCellValue={row => row.stickwall ? "" : row.unitsPerWeek}
+              calculateCellValue={row => {
+                if (row.stickwall) {
+                  row.unitsPerWeek = 0;
+                }
+                return row.unitsPerWeek;
+              }}
             >
               {/* <RequiredRule /> */}
             </Column>
@@ -433,7 +437,12 @@ const ProductionScheduleChart = (props) => {
               dataType="number"
               caption="Units" 
               alignment="center"
-              calculateCellValue={row => row.stickwall ? "" : row.units}
+              calculateCellValue={row => {
+                if (row.stickwall) {
+                  row.units= 0;
+                }
+                return row.units;
+              }}
             >
               {/* <RequiredRule /> */}
             </Column>
