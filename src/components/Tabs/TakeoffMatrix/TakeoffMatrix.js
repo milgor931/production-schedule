@@ -6,7 +6,8 @@ import DataGrid, {
   Grouping,
   GroupPanel,
   SearchPanel,
-  Editing
+  Editing,
+  Button
 } from 'devextreme-react/data-grid';
 import axios from 'axios';
 import Accordion from '@material-ui/core/Accordion';
@@ -22,6 +23,7 @@ const TakeoffMatrix = (props) => {
     const [ loaded, setLoaded ] = useState(false);
     const [ columns, setColumns ] = useState([]);
     const [ taskHeaders, setHeaders ] = useState(headers);
+    const mainDataGrid = useRef(null);
 
     useEffect(() => {
         updateColumns();
@@ -44,10 +46,6 @@ const TakeoffMatrix = (props) => {
                         }
                     })
                 }
-                
-                // axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/jobs/${job.id}.json`, job) 
-                // .then(response => response.data)
-                // .catch(error => console.log(error))
             })
         }
 
@@ -127,7 +125,11 @@ const TakeoffMatrix = (props) => {
                             allowUpdating
                             allowDeleting
                             allowAdding
+                            useIcons
                         />
+                        <Column type="buttons">
+                            <Button name="delete" />
+                        </Column>
                         <Column
                         dataField="header"
                         caption="Header"
@@ -160,6 +162,7 @@ const TakeoffMatrix = (props) => {
             autoExpandAll
             highlightChanges
             onRowPrepared={rowPrepared}
+            ref={mainDataGrid}
           >
 
             <GroupPanel visible={false} autoExpandAll/>

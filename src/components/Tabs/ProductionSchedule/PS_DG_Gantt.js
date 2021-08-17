@@ -34,9 +34,6 @@ const ProductionScheduleGantt = (props) => {
     const [ loaded, setLoaded ] = useState(true);
     const [ expanded, setExpanded ] = useState(true);
     const [ today, setToday ] = useState(new Date());
-    const [ cols, setCols ] = useState([]);
-    const [ startOffset, setStartOffset ]= useState(0);
-    // const [ columns, setColumns ] = useState([]);
     const datagridRef = useRef(null);
 
     useEffect(() => {
@@ -58,9 +55,8 @@ const ProductionScheduleGantt = (props) => {
     const calculateForOffSets = () => {
         let end = jobs[jobs.length - 1];
 
-        // let thisMonday = new Date(today.getTime() + toMS( 1- today.getDay() ));
-        // let startOffset = toOffset(thisMonday);
-        // setStartOffset(startOffset);
+        let thisMonday = new Date(today.getTime() + toMS( 1- today.getDay() ));
+        let startOffset = toOffset(thisMonday);
 
         let newCols = [];
 
@@ -153,7 +149,7 @@ const ProductionScheduleGantt = (props) => {
               calculateGroupValue="groupKey"
               groupCellRender={row => {
                 let shop = shops.find(shop => row.value === shop.__KEY__);
-                return shop && <div style={{flexDirection: "row", display: "flex", alignItems: "center", borderRadius: "10px", backgroundColor: shop.colorkey, padding: "10px", color: shop.fontColor}}><b style={{fontSize: '20px'}}> {shop.shop}:  </b> &nbsp; Units: {row.summaryItems[0].value} | Units Per Week: {row.summaryItems[1].value} | Employees: {row.summaryItems[2].value}</div>
+                return shop && <div style={{flexDirection: "row", display: "flex", alignItems: "center", borderRadius: "10px", backgroundColor: shop.colorkey, padding: "10px", color: shop.fontColor, fontSize: "15px"}}><b style={{fontSize: '20px'}}> {shop.shop}:  </b> &nbsp; Units: {row.summaryItems[0].value} | Units Per Week: {row.summaryItems[1].value} | Employees: {row.summaryItems[2].value}</div>
               }}
             />
 
