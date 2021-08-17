@@ -105,6 +105,7 @@ const App = () => {
     const [ fabHeaders, setFabHeaders ] = useState([]);
     const [ dateRows, setDateRows ] = useState([]);
     const [ takeoffHeaders, setTakeoffHeaders ] = useState([]);
+    const [ weeks, setWeeks ]= useState(0);
 
     useEffect(() => {
 
@@ -112,22 +113,17 @@ const App = () => {
         .then(response => {
             if (response.data) {
                 response.data.shops && setShops(Object.values(response.data.shops).sort((x, y) => { return x.index - y.index }));
-                convertDates(Object.values(response.data.jobs));
+                setJobs(convertDates(Object.values(response.data.jobs)));
                 setShopDrawingHeaders(Object.values(response.data.shopdrawings.headers));
                 setFabHeaders(Object.values(response.data.fabmatrix.headers));
-                createRows();
                 setTakeoffHeaders(Object.values(response.data.takeoffmatrix.headers));
-
                 setProgress(100);
+                setLoaded(true);
             }
         })
         .catch(error => console.log(error))
 
     }, [])
-
-    useEffect(() => {
-        progress >= 100 && setLoaded(true);
-    }, [ progress ])
 
     const toMS = (days) => {
         return days * 24 * 60 * 60 * 1000;
@@ -157,7 +153,11 @@ const App = () => {
 
         updatedJobs.forEach(job => getOffset(job, updatedJobs[0]));
 
-        setJobs(updatedJobs);
+        let calculatedWeeks = Math.floor(toDays(new Date(updatedJobs[updatedJobs.length - 1].start).getTime() - new Date(updatedJobs[0].start).getTime())/7);
+
+        setWeeks(calculatedWeeks);
+
+        createRows(calculatedWeeks);
 
         return updatedJobs;
     }
@@ -229,11 +229,10 @@ const App = () => {
         row.data.id = row.data.__KEY__;
     }
 
-    const createRows = () => {
+    const createRows = (calculatedWeeks) => {
         let rows = [];
-        let weeks = 100;
 
-        for (let i = 0; i < weeks; i++) {
+        for (let i = 0; i < calculatedWeeks; i++) {
             let today = new Date();
             today = today.getTime() + toMS( 1 - today.getDay() );
 
@@ -243,6 +242,7 @@ const App = () => {
             let obj = {  date: date, id: i }
             rows.push(obj);
         }
+
         setDateRows(rows);
     }
 
@@ -280,6 +280,7 @@ const App = () => {
                                 <TakeoffMatrix 
                                     jobs={jobs}
                                     rows={dateRows}
+                                    weeks={weeks}
                                     toMS={toMS}
                                     toDays={toDays}
                                     handleUpdate={handleUpdate}

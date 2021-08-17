@@ -1,5 +1,5 @@
 
-import React, { useState, createRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Spinner from '../../UI/Spinner';
 import CheckBox from "devextreme/ui/check_box";
 import DataGrid, {
@@ -29,48 +29,58 @@ const useStyles = makeStyles((theme) => ({
   }
 }));
 
-const ProductionScheduleChart = (props) => {
+const ProductionScheduleGantt = (props) => {
     const { jobs, shops, toMS, toDays } = props;
-    const [ loaded, setLoaded ] = useState(false);
-    const [ columns, setColumns ] = useState(null);
+    const [ loaded, setLoaded ] = useState(true);
     const [ expanded, setExpanded ] = useState(true);
+    const [ today, setToday ] = useState(new Date());
+    const [ cols, setCols ] = useState([]);
+    const [ startOffset, setStartOffset ]= useState(0);
+    // const [ columns, setColumns ] = useState([]);
+    const datagridRef = useRef(null);
 
     useEffect(() => {
       calculateForOffSets();
-      setLoaded(true);
-    }, [ jobs ])
+    }, [])
 
     const convertToDate = (value) => {
-      let date = (value * 7) + toDays(new Date().getTime());
-      date = new Date(toMS(date));
+      let thisMonday = today.getTime() + toMS( 1- today.getDay() )
+      let date = (value * 7);
+      date = new Date(toMS(date) + thisMonday);
       return date.toLocaleDateString();
+    }
+
+    const toOffset = (date) => {
+      let days = toDays(date.getTime());
+      return Math.ceil((days - toDays(jobs[0].start.getTime()))/7);
     }
   
     const calculateForOffSets = () => {
-        let cols = [];
         let end = jobs[jobs.length - 1];
 
+        // let thisMonday = new Date(today.getTime() + toMS( 1- today.getDay() ));
+        // let startOffset = toOffset(thisMonday);
+        // setStartOffset(startOffset);
+
+        let newCols = [];
+
+        // push offsets which turn into the dates i <= end.offset + end.weeks
         for (let i = 0; i <= end.offset + end.weeks; i++) {
-            cols.push(i);
+            newCols.push(startOffset + i);
+            if (i < 100) {
+              datagridRef.current.instance.addColumn({dataField: startOffset + i, caption: convertToDate(startOffset + i - startOffset), type: "date"});
+            }
         }
 
-        jobs.forEach(job => {
+        // set up offsets for each job
+         jobs.forEach(job => {
             job.offsets = [];
-            for (let w = 1; w <= job.weeks; w++) {
+            for (let w = 0; w <= job.weeks; w++) {
                 job.offsets.push(job.offset + w);
             }
         })
-
-        setColumns(cols.map((row, index) => 
-          <Column
-            key={index}
-            dataField={row}
-            caption={convertToDate(row)}
-            minWidth={50}
-            type="date"
-          />
-        ))    
     }
+    
 
     const jobWallCell = (row) => {
       return (
@@ -126,6 +136,7 @@ const ProductionScheduleChart = (props) => {
             showColumnLines={true}
             onCellPrepared={cellPrepared}
             onRowPrepared={renderRow}
+            ref={datagridRef}
           >
 
             <GroupPanel visible autoExpandAll/>
@@ -169,8 +180,6 @@ const ProductionScheduleChart = (props) => {
               caption="End Date" 
               alignment="center"
             />
-            
-            {columns}
 
             <Summary recalculateWhileEditing>
               <GroupItem
@@ -226,4 +235,4 @@ const ProductionScheduleChart = (props) => {
     );
 }
 
-export default ProductionScheduleChart;
+export default ProductionScheduleGantt;

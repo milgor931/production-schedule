@@ -17,13 +17,44 @@ import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import Grid from '@material-ui/core/Grid';
 
 const TakeoffMatrix = (props) => {
-    const { rows, jobs, headers, toMS, toDays } = props;
+    const { rows, weeks, jobs, headers, toMS, toDays } = props;
     const [ data, setData] = useState(null);
     const [ loaded, setLoaded ] = useState(false);
     const [ columns, setColumns ] = useState([]);
+    const [ taskHeaders, setHeaders ] = useState(headers);
 
     useEffect(() => {
+        updateColumns();
         createRows();
+        setLoaded(true);
+    }, [ ])
+
+    const createRows = () => {
+        let newRows = [...rows];
+        for (let index = 0; index < weeks; index++) {
+            jobs.forEach(job => {
+                if (job.start.toLocaleDateString() === rows[index].date) {
+                    let i = index - job.weeksToGoBack > 0 ? index - job.weeksToGoBack : 0;
+                    while (newRows[i]["Metal Takeoff"] && i > 0) { i-- }
+                    newRows[i]["Metal Takeoff"] = job.jobName;
+                    headers.forEach(header => {
+                        let newIndex = i + header.offset;
+                        if (newIndex >= 0 && newIndex < weeks ) {
+                            newRows[newIndex][header.header] = job.jobName;
+                        }
+                    })
+                }
+                
+                // axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/jobs/${job.id}.json`, job) 
+                // .then(response => response.data)
+                // .catch(error => console.log(error))
+            })
+        }
+
+        setData(newRows);
+    }
+
+    const updateColumns = () => {
         setColumns(headers.map(header => 
             <Column
                 key={header.header}
@@ -32,49 +63,36 @@ const TakeoffMatrix = (props) => {
                 dataType="string"
             />
         ))
-        setData(data)
-        setLoaded(true);
-    }, [ headers ])
-
-    const findRowIndex = ( rows, job, index ) => {
-        try {
-            let i = index - job.weeksToGoBack;
-            while (rows[i]["Metal Takeoff"]) { i-- }
-            index = i;
-            headers.forEach(header => rows[index + header.offset][header.header] = job.jobName )
-        }
-        catch(error) { console.log(error) }
     }
 
-    const createRows = () => {
-        let weeks = Math.floor(toDays(new Date(jobs[jobs.length - 1].start).getTime() - new Date(jobs[0].start).getTime())/7);
+    const rowInserted = (row) => {
+        updateColumns();
+        createRows();
+        axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/takeoffmatrix/headers.json`, headers)
+        .then(response => setHeaders(response.data))
+    }
 
-        for (let i = 0; i < weeks; i++) {
-            jobs.forEach(job => {
-                job.start.toLocaleDateString() === rows[i].date && findRowIndex(rows, job, i);
+    const rowUpdated = (row) => {
+        updateColumns();
+        createRows();
+        axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/takeoffmatrix/headers.json`, headers)
+        .then(response => setHeaders(response.data))
+    }
 
-                // axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/jobs/${job.id}.json`, job) 
-                // .then(response => response.data)
-                // .catch(error => console.log(error))
-            })
-        }
-
-        setData(rows);
+    const rowRemoved = (row) => {
+        updateColumns();
+        createRows();
+        axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/takeoffmatrix/headers.json`, headers)
+        .then(response => setHeaders(response.data))
     }
 
     const rowPrepared = (row) => {
         row.rowElement.style.backgroundColor = row.rowIndex % 2 ? "#b5bdc9" : "white";
     }
 
-    const handleUpdate = (row) => {
-        // axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/takeoffmatrix/headers.json`, headers)
-        // .then(response =>  ))
-        this.datagrid.instance.refresh();
-    }
-
     return (
     <div>
-      {loaded 
+      { loaded 
         ? <div style={{margin: '3vw'}}>
             <Accordion>
                 <AccordionSummary
@@ -100,11 +118,15 @@ const TakeoffMatrix = (props) => {
                         wordWrapEnabled
                         autoExpandAll
                         highlightChanges
-                        // onRowUpdated={rowUpdated}
+                        onRowUpdated={rowUpdated}
+                        onRowRemoved={rowRemoved}
+                        onRowInserted={rowInserted}
                     >
                         <Editing
-                        mode="cell"
-                        allowUpdating
+                            mode="cell"
+                            allowUpdating
+                            allowDeleting
+                            allowAdding
                         />
                         <Column
                         dataField="header"
@@ -123,6 +145,7 @@ const TakeoffMatrix = (props) => {
                 </Grid>
             </AccordionDetails>
           </Accordion>
+
           <DataGrid
             dataSource={data}
             showBorders
@@ -136,7 +159,6 @@ const TakeoffMatrix = (props) => {
             wordWrapEnabled
             autoExpandAll
             highlightChanges
-            // onRowUpdated={handleUpdate}
             onRowPrepared={rowPrepared}
           >
 
