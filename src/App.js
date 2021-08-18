@@ -113,13 +113,13 @@ const App = () => {
         .then(response => {
             if (response.data) {
                 response.data.shops && setShops(Object.values(response.data.shops).sort((x, y) => { return x.index - y.index }));
-                setJobs(convertDates(Object.values(response.data.jobs)));
-                setShopDrawingHeaders(Object.values(response.data.shopdrawings.headers));
+                response.data.jobs && setJobs(convertDates(Object.values(response.data.jobs)));
+                response.data.shopdrawings.headers && setShopDrawingHeaders(Object.values(response.data.shopdrawings.headers));
                 setFabHeaders(Object.values(response.data.fabmatrix.headers));
                 setTakeoffHeaders(Object.values(response.data.takeoffmatrix.headers));
-                setProgress(100);
-                setLoaded(true);
             }
+            setProgress(100);
+            setLoaded(true);
         })
         .catch(error => console.log(error))
 
@@ -165,7 +165,6 @@ const App = () => {
     const getOffset = (job, firstJob) => {
         let days = toDays(job.start.getTime());
         job.offset = Math.ceil((days - toDays(firstJob.start.getTime()))/7);
-        
     }
 
     const handleUpdate = (row) => {
@@ -272,8 +271,11 @@ const App = () => {
                             </Route>
                             <Route path="/shop-drawings">
                                 <ShopDrawings 
-                                    headers={shopDrawingHeaders}
+                                    activities={shopDrawingHeaders}
                                     rows={dateRows}
+                                    weeks={weeks}
+                                    toDays={toDays}
+                                    toMS={toMS}
                                 />
                             </Route>
                             <Route path="/takeoff-matrix">

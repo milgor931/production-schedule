@@ -19,69 +19,82 @@ import Grid from '@material-ui/core/Grid';
 
 const TakeoffMatrix = (props) => {
     const { rows, weeks, jobs, headers, toMS, toDays } = props;
+    const [ colHeaders, setColHeaders ] = useState(headers);
     const [ data, setData] = useState(null);
-    const [ loaded, setLoaded ] = useState(false);
-    const [ columns, setColumns ] = useState([]);
-    const [ taskHeaders, setHeaders ] = useState(headers);
+    const [ loaded, setLoaded ] = useState(true);
     const mainDataGrid = useRef(null);
 
     useEffect(() => {
-        updateColumns();
+        createColumns();
         createRows();
-        setLoaded(true);
     }, [ ])
 
     const createRows = () => {
-        let newRows = [...rows];
+        let newRows = JSON.parse(JSON.stringify(rows));
+
+        let cols = mainDataGrid.current.instance.option("columns");
+        let columns = [ ...cols ];
+        columns.shift();
+
         for (let index = 0; index < weeks; index++) {
             jobs.forEach(job => {
-                if (job.start.toLocaleDateString() === rows[index].date) {
+                if (job.start.toLocaleDateString() === newRows[index].date) {
                     let i = index - job.weeksToGoBack > 0 ? index - job.weeksToGoBack : 0;
                     while (newRows[i]["Metal Takeoff"] && i > 0) { i-- }
                     newRows[i]["Metal Takeoff"] = job.jobName;
-                    headers.forEach(header => {
-                        let newIndex = i + header.offset;
+                    columns.forEach(col => {
+                        let newIndex = i + col.offset;
                         if (newIndex >= 0 && newIndex < weeks ) {
-                            newRows[newIndex][header.header] = job.jobName;
+                            newRows[newIndex][col.dataField] = job.jobName;
                         }
                     })
                 }
             })
         }
 
+        let c = mainDataGrid.current.instance.getVisibleColumns();
+        let c2 = mainDataGrid.current.instance.option("columns");
+
         setData(newRows);
     }
 
-    const updateColumns = () => {
-        setColumns(headers.map(header => 
-            <Column
-                key={header.header}
-                dataField={header.header}
-                caption={header.header}
-                dataType="string"
-            />
-        ))
+    const createColumns = () => {
+        let cols = mainDataGrid.current.instance.option("columns");
+        headers.sort((x, y) => x.offset - y.offset).forEach(header => {
+            cols.push({dataField: header.header, caption: header.header, offset: header.offset})
+        })
     }
 
     const rowInserted = (row) => {
-        updateColumns();
+        mainDataGrid.current.instance.addColumn({dataField: row.data.header, caption: row.data.header, offset: row.data.offset})
         createRows();
-        axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/takeoffmatrix/headers.json`, headers)
-        .then(response => setHeaders(response.data))
+        axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/takeoffmatrix/headers/${row.data.__KEY__}.json`, row.data)
     }
 
     const rowUpdated = (row) => {
-        updateColumns();
+        let index = row.component.getRowIndexByKey(row.key) + 1;
+
+        // for some reason, I had to do this twice because otherwise the dataField and caption would not update at the same time
+        mainDataGrid.current.instance.columnOption(index, { dataField: row.data.header, name: row.data.header } );
+        mainDataGrid.current.instance.columnOption(index, { caption: row.data.header } );
+
+        let c = mainDataGrid.current.instance.getVisibleColumns();
+        c[index].dataField = row.data.header;
+        c[index].name = row.data.header;
+        c[index].caption = row.data.header;
+
+        mainDataGrid.current.instance.option("columns")[index] = { dataField: row.data.header, caption: row.data.header, offset: row.data.offset, name: row.data.header }
+    
         createRows();
-        axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/takeoffmatrix/headers.json`, headers)
-        .then(response => setHeaders(response.data))
+        axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/takeoffmatrix/headers/${row.data.__KEY__}.json`, row.data)
+        .then(response => {
+        })
     }
 
     const rowRemoved = (row) => {
-        updateColumns();
+        mainDataGrid.current.instance.deleteColumn(row.data.header)
         createRows();
-        axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/takeoffmatrix/headers.json`, headers)
-        .then(response => setHeaders(response.data))
+        axios.delete(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/takeoffmatrix/headers/${row.data.__KEY__}.json`)
     }
 
     const rowPrepared = (row) => {
@@ -104,7 +117,7 @@ const TakeoffMatrix = (props) => {
                 <Grid container direction="column">
                     <Grid item>
                     <DataGrid
-                        dataSource={headers}
+                        dataSource={colHeaders}
                         showRowLines
                         showBorders
                         allowColumnResizing
@@ -131,16 +144,16 @@ const TakeoffMatrix = (props) => {
                             <Button name="delete" />
                         </Column>
                         <Column
-                        dataField="header"
-                        caption="Header"
-                        dataType="string"
-                        alignment="left"
+                            dataField="header"
+                            caption="Header"
+                            dataType="string"
+                            alignment="left"
                         />
                         <Column
-                        dataField="offset"
-                        caption="Offset Amount"
-                        dataType="number"
-                        alignment="left"
+                            dataField="offset"
+                            caption="Offset Amount"
+                            dataType="number"
+                            alignment="left"
                         />
                     </DataGrid>
                     </Grid>
@@ -182,8 +195,6 @@ const TakeoffMatrix = (props) => {
                 width={"auto"}
                 allowEditing={false}
             />
-
-            {columns}
         
           </DataGrid>
         </div>
