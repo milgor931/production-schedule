@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Spinner from '../../UI/Spinner';
 import DataGrid, {
   Column,
@@ -7,21 +7,287 @@ import DataGrid, {
   GroupPanel,
   SearchPanel,
   Editing,
-  Button
+  Button,
+  RequiredRule,
+  Lookup
 } from 'devextreme-react/data-grid';
 import axios from 'axios';
+import Accordion from '@material-ui/core/Accordion';
+import AccordionSummary from '@material-ui/core/AccordionSummary';
+import AccordionDetails from '@material-ui/core/AccordionDetails';
+import Typography from '@material-ui/core/Typography';
+import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
+import CheckBox from 'devextreme-react/check-box';
+import Grid from '@material-ui/core/Grid';
+import DateBox from "devextreme/ui/date_box";
 
 const FabMatrix = (props) => {
-    const { rows, headers } = props;
-    const [ data, setData] = useState([]);
-    const [ loaded, setLoaded ] = useState(true);
+  const { rows, weeks, activities, toDays, jobs, toWeeks, toMS, getOffset } = props;
+  const [data, setData] = useState(null);
+  const [loaded, setLoaded] = useState(true);
+  const [expanded, setExpanded] = useState(true);
+  const mainDataGrid = useRef(null);
 
+  useEffect(() => {
+    activities.forEach(activity => {
+      activity.start = new Date(activity.start);
+      activity.end = new Date(activity.end);
+    })
+    createColumns();
+    createRows();
+  }, [])
+
+  const createRows = () => {
+    let newRows = JSON.parse(JSON.stringify(rows));
+    let cols = mainDataGrid.current.instance.option("columns");
+    let columns = [...cols];
+    columns.shift();
+
+    activities.forEach(activity => {
+      let numWeeksForProject = toWeeks(activity.start, activity.end);
+
+      let activityDates = [];
+
+      for (let i = 0; i <= numWeeksForProject; i++) {
+        let time = activity.start.getTime() + toMS(i * 7);
+        activityDates.push(new Date(time));
+      }
+
+      for (let i = 0; i < weeks; i++) {
+        activityDates.forEach(date => {
+          if (date.toLocaleDateString() === newRows[i].date) {
+            newRows[i][activity.employee] = activity.activity;
+          }
+        })
+      }
+    })
+
+    setData(newRows);
+  }
+
+  const createColumns = () => {
+    let cols = mainDataGrid.current.instance.option("columns");
+    let filteredActivities = [...new Set(activities.map(item => item.employee))];
+    filteredActivities.forEach(header => {
+      cols.push({ dataField: header, caption: header })
+    })
+  }
+
+  const rowInserted = (row) => {
+    let datagrid = mainDataGrid.current.instance;
+    if (datagrid.getVisibleColumns().find(col => col.dataField === row.data.employee) === undefined) {
+      datagrid.addColumn({ dataField: row.data.employee })
+    }
+
+    axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/fabmatrix/headers/${row.data.__KEY__}.json`, row.data)
+      .then(response => createRows())
+      .catch(error => console.log(error))
+  }
+
+  const rowUpdated = (row) => {
+    axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/fabmatrix/headers/${row.data.__KEY__}.json`, row.data)
+      .then(response => createRows())
+      .catch(error => console.log(error))
+  }
+
+  const rowRemoved = (row) => {
+    let datagrid = mainDataGrid.current.instance;
+
+    let isLastOne = activities.filter(activity => activity.employee === row.data.employee).length === 0;
+    isLastOne && datagrid.deleteColumn(row.data.employee);
+
+    axios.delete(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/fabmatrix/headers/${row.data.__KEY__}.json`)
+      .then(response => createRows())
+      .catch(error => console.log(error))
+  }
+
+  const rowPrepared = (row) => {
+    row.rowElement.style.backgroundColor = row.rowIndex % 2 ? "#b5bdc9" : "white";
+  }
+
+  const startDateRender = (row) => {
+    let job = jobs.find(j => j.__KEY__ === row.data.jobKey);
+    row.data.fabOffset = getOffset(job.start, row.data.start);
     return (
-    <div style={{margin: '3vw'}}>
-      {loaded 
-        ? <div>
+      <div>
+        {row.data.start && row.data.start.toLocaleDateString()}
+        <br />
+        {<p style={{ color: "#3f50b5" }}> {row.data.fabOffset} weeks before shop date </p>}
+      </div>
+    )
+  }
+
+  const startDateEdit = (row) => {
+    let link = row.data.linkToShopDate;
+    return (
+      <div>
+        {link
+          ? <input
+            placeholder="weeks before shop start"
+            onChange={e => {
+              let weeks = e.target.value;
+              let job = jobs.find(job => job.__KEY__ === row.data.jobKey);
+              let fabDate = new Date(job.start.getTime() - toMS(weeks * 7));
+              row.setValue(fabDate);
+            }}
+          />
+          : <input
+            type="date"
+            onChange={e => {
+              let d = new Date(e.target.value);
+              d.setTime(d.getTime() + d.getTimezoneOffset() * 60 * 1000);
+              row.setValue(d);
+            }}
+          />
+        }
+      </div>
+    )
+  }
+
+  const rowInit = (row) => {
+    row.data.start = new Date();
+    row.data.weeksBeforeStart = 6;
+  }
+
+  return (
+    <div>
+      {loaded
+        ? <div style={{ margin: '3vw' }}>
+          <Accordion>
+            <AccordionSummary
+              expandIcon={<ExpandMoreIcon />}
+              aria-controls="panel1a-content"
+              id="panel1a-header"
+
+            >
+              <Typography>Adjust Columns</Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Grid container direction="column">
+                <Grid item>
+                  <CheckBox
+                    text="Expand Rows"
+                    value={expanded}
+                    onValueChanged={() => setExpanded(!expanded)}
+                    style={{ marginBottom: '20px' }}
+                  />
+                </Grid>
+                <Grid item>
+                  <DataGrid
+                    dataSource={activities}
+                    showRowLines
+                    showBorders
+                    allowColumnResizing
+                    columnAutoWidth
+                    highlightChanges
+                    repaintChangesOnly
+                    twoWayBindingEnabled
+                    columnResizingMode="widget"
+                    wordWrapEnabled
+                    autoExpandAll
+                    highlightChanges
+                    cellHintEnabled
+                    onRowUpdated={rowUpdated}
+                    onRowRemoved={rowRemoved}
+                    onRowInserted={rowInserted}
+                    onInitNewRow={rowInit}
+                  >
+                    <Editing
+                      mode="cell"
+                      allowUpdating
+                      allowDeleting
+                      allowAdding
+                      useIcons
+                    />
+
+                    <Grouping autoExpandAll={expanded} />
+
+                    <Column type="buttons">
+                      <Button name="delete" />
+                    </Column>
+
+                    <Column
+                      dataField="jobKey"
+                      caption="Job"
+                      alignment="left"
+                      width={250}
+                    >
+                      <Lookup
+                        dataSource={jobs}
+                        displayExpr="jobName"
+                        valueExpr="__KEY__"
+                      />
+                    </Column>
+
+                    <Column
+                      dataField="shopStart"
+                      caption="Shop Start Date"
+                      allowEditing="false"
+                      calculateCellValue={row => {
+                        let job = jobs.find(job => job.__KEY__ === row.jobKey);
+                        return job && job.start;
+                      }}
+                    />
+
+                    <Column
+                      dataField="linkToShopDate"
+                      caption="Link To Shop Date?"
+                      datatype="boolean"
+                      alignment="center"
+                      calculateCellValue={row => row.linkToShopDate ? row.linkToShopDate : false}
+                    />
+
+                    <Column
+                      dataField="employeeName"
+                      groupIndex={0}
+                      calculateGroupValue="employee"
+                      groupCellRender={row => {
+                        return <div style={{ flexDirection: "row", display: "flex", alignItems: "center", fontSize: "15px" }}>{row.value}</div>
+                      }}
+                    />
+                    <Column
+                      dataField="employee"
+                      caption="Employee"
+                      dataType="string"
+                      alignment="left"
+                    >
+                      <RequiredRule />
+                    </Column>
+                    <Column
+                      dataField="start"
+                      caption="Start Date"
+                      dataType="date"
+                      alignment="center"
+                      defaultSortOrder="asc"
+                      minWidth="160"
+                      cellRender={startDateRender}
+                      editCellRender={startDateEdit}
+                    >
+                      <RequiredRule />
+                    </Column>
+                    <Column
+                      dataField="end"
+                      caption="End Date"
+                      dataType="date"
+                      alignment="center"
+                    >
+                      <RequiredRule />
+                    </Column>
+                    <Column
+                      dataField="activity"
+                      caption="Activity"
+                      alignment="left"
+                    >
+                      <RequiredRule />
+                    </Column>
+                  </DataGrid>
+                </Grid>
+              </Grid>
+            </AccordionDetails>
+          </Accordion>
+
           <DataGrid
-            dataSource={rows}
+            dataSource={data}
             showBorders
             showRowLines
             allowColumnResizing
@@ -29,45 +295,38 @@ const FabMatrix = (props) => {
             highlightChanges
             repaintChangesOnly
             twoWayBindingEnabled
-            columnResizingMode="nextColumn"
             wordWrapEnabled
-            // onRowUpdated={handleUpdate}
+            autoExpandAll
+            highlightChanges
+            onRowPrepared={rowPrepared}
+            ref={mainDataGrid}
           >
 
-            <GroupPanel visible={false} autoExpandAll/>
+            <GroupPanel visible={false} autoExpandAll />
             <SearchPanel visible highlightCaseSensitive={false} />
             <Grouping autoExpandAll />
 
             <Editing
-              mode="batch"
-              allowUpdating
+              mode="row"
               useIcons
               allowSorting={false}
             />
 
             <Column
-                dataField="date"
-                fixedPosition="left"
-                caption="Date"
-                alignment="left"
-                width={"auto"}
-                allowEditing={false}
+              dataField="date"
+              caption="Date"
+              alignment="left"
+              width={"auto"}
+              allowEditing={false}
             />
 
-            {headers.map((header, index) => 
-                <Column
-                    key={index}
-                    dataField={header.employee}
-                    caption={header.employee}
-                />
-            )}
-        
           </DataGrid>
         </div>
-      : <Spinner />
+        :
+        <Spinner />
       }
-      </div>
-    );
+    </div>
+  );
 }
 
 export default FabMatrix;

@@ -1,5 +1,5 @@
 
-import React, { useState, createRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import Spinner from '../../UI/Spinner';
 import DataGrid, {
   Column,
@@ -8,9 +8,7 @@ import DataGrid, {
   RowDragging,
   SearchPanel,
   Editing,
-  Summary, 
-  Sorting,
-  RequiredRule,
+  Summary,
   TotalItem,
   GroupItem,
   Button,
@@ -30,121 +28,110 @@ import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import Grid from '@material-ui/core/Grid';
 
 const ProductionScheduleChart = (props) => {
-    const { shopInfo, data, handleUpdate, handleShopUpdate, handleShopDelete, rowRemoved, onRowInit, toMS, toDays } = props;
-    const [ loaded, setLoaded ] = useState(false);
-    const [ expanded, setExpanded ] = useState(true);
-    const [ shops, setShops ] = useState(shopInfo);
-    
-    useEffect(() => {
-        data && setLoaded(true);
-    }, [ data ])
+  const { shopInfo, data, handleUpdate, handleShopUpdate, handleShopDelete, rowRemoved, onRowInit, toMS, toDays } = props;
+  const [loaded, setLoaded] = useState(false);
+  const [expanded, setExpanded] = useState(true);
+  const [shops, setShops] = useState(shopInfo);
 
-    const jobWallCell = (data) => {
-        return (
-          <div>
-            <span>{data.data.jobName}</span>
-            <br></br>
-            <span style={{color: "#5a87d1"}}>{data.data.wallType}</span>
-          </div>
-        )
-    }
+  useEffect(() => {
+    data && setLoaded(true);
+  }, [data])
 
-    const editJobWallCell = (data) => {
-      return (
-        <div style={{padding: '10px'}}>
-          <TextField id="jobName" type="text" size="small" label="Job Name" variant="outlined" onChange={e => data.data.jobName = e.target.value}/>
-          <TextField id="wallType" type="text" size="small" label="Wall Type" variant="outlined" onChange={e => data.data.wallType = e.target.value}/>
-        </div>
-      )
-    }
+  const jobWallCell = (data) => {
+    return (
+      <div>
+        <span>{data.data.jobName}</span>
+        <br></br>
+        <span style={{ color: "#5a87d1" }}>{data.data.wallType}</span>
+      </div>
+    )
+  }
 
-    const renderRow = (row) => {
-      if (row.rowType === "data") {
-        if (!row.data.booked) {
-          row.rowElement.style.backgroundColor = "cyan";
-        } else if (row.data.header) {
-          row.rowElement.style.backgroundColor = "#a8a8a8";
-        } 
-      } 
-      else if (row.rowType === "group") {
-          let colorEntry = shopInfo.find(shop => shop.shop === row.data.key);
-          row.rowElement.style.backgroundColor = colorEntry ? colorEntry.colorkey : "white";
-          row.rowElement.style.color = colorEntry ? colorEntry.fontColor : "black";
-      } 
-      else if (row.rowType === "total") {
-        row.rowElement.style.backgroundColor = "";
-      }
-    }
+  const editJobWallCell = (data) => {
+    return (
+      <div style={{ padding: '10px' }}>
+        <TextField id="jobName" type="text" size="small" label="Job Name" variant="outlined" onChange={e => data.data.jobName = e.target.value} />
+        <TextField id="wallType" type="text" size="small" label="Wall Type" variant="outlined" onChange={e => data.data.wallType = e.target.value} />
+      </div>
+    )
+  }
 
-    const jobNumberRender = (row) => {
+  const renderRow = (row) => {
+    if (row.rowType === "data") {
       if (!row.data.booked) {
-        row.data.jobNumber = "Could book in 90 days";
-        row.column.allowEditing = false;
-      } else if (row.data.booked && row.data.jobNumber === "Could book in 90 days") {
-        row.data.jobNumber = "";
-        row.column.allowEditing = true;
-      }
-      return row.data.jobNumber;
-    }
-
-    const cellPrepared = (cell) => {
-      if ((cell.rowType === "data" && !cell.data.stickwall && (cell.column.dataField === "weeks" || cell.column.dataField === "offset" || cell.column.dataField === "end"))) {
-        cell.cellElement.style.backgroundColor = "#c2c4c4";
-      }
-      else if (cell.rowType === "data" && cell.data.stickwall && ["end", "offset", "units", "unitsPerWeek"].includes(cell.column.dataField)) {
-        cell.cellElement.style.backgroundColor = "#c2c4c4";
-        cell.text = "";
+        row.rowElement.style.backgroundColor = "cyan";
+      } else if (row.data.header) {
+        row.rowElement.style.backgroundColor = "#a8a8a8";
       }
     }
-
-    const editingStart = (cell) => {
-      if (cell.data.stickwall && ["end", "offset", "units", "unitsPerWeek"].includes(cell.column.dataField)) {
-        cell.cancel = true;
-      } else if (!cell.data.stickwall && ["end", "offset", "weeks"].includes(cell.column.dataField)){
-        cell.cancel = true;
-      } else {
-        cell.cancel = false;
-      }
+    else if (row.rowType === "group") {
+      let colorEntry = shopInfo.find(shop => shop.shop === row.data.key);
+      row.rowElement.style.backgroundColor = colorEntry ? colorEntry.colorkey : "white";
+      row.rowElement.style.color = colorEntry ? colorEntry.fontColor : "black";
     }
+    else if (row.rowType === "total") {
+      row.rowElement.style.backgroundColor = "";
+    }
+  }
 
-    const onShopReorder = (e) => {
-      const itemData = e.itemData;
-      const from = e.fromIndex;
-      const to = e.toIndex;
+  const cellPrepared = (cell) => {
+    if ((cell.rowType === "data" && !cell.data.stickwall && (cell.column.dataField === "weeks" || cell.column.dataField === "offset" || cell.column.dataField === "end"))) {
+      cell.cellElement.style.backgroundColor = "#c2c4c4";
+    }
+    else if (cell.rowType === "data" && cell.data.stickwall && ["end", "offset", "units", "unitsPerWeek"].includes(cell.column.dataField)) {
+      cell.cellElement.style.backgroundColor = "#c2c4c4";
+      cell.text = "";
+    }
+  }
 
-      const newShops = [ ...shops ];
+  const editingStart = (cell) => {
+    if (cell.data.stickwall && ["end", "offset", "units", "unitsPerWeek"].includes(cell.column.dataField)) {
+      cell.cancel = true;
+    } else if (!cell.data.stickwall && ["end", "offset", "weeks"].includes(cell.column.dataField)) {
+      cell.cancel = true;
+    } else {
+      cell.cancel = false;
+    }
+  }
 
-      newShops.splice(from, 1);
-      newShops.splice(to, 0, itemData);
+  const onShopReorder = (e) => {
+    const itemData = e.itemData;
+    const from = e.fromIndex;
+    const to = e.toIndex;
 
-      newShops.forEach(shop => shop.index = newShops.indexOf(shop))
+    const newShops = [...shops];
 
-      // ensures that data is not pushed to database as an array
-      let newShopsObject = newShops.reduce((acc, cur) => ({ [cur.__KEY__]: cur , ...acc}), {});
+    newShops.splice(from, 1);
+    newShops.splice(to, 0, itemData);
 
-      setShops(newShops);
+    newShops.forEach(shop => shop.index = newShops.indexOf(shop))
 
-      axios.put("https://ww-production-schedule-default-rtdb.firebaseio.com/data/shops.json", newShopsObject)
-      .then(response => {})
+    // ensures that data is not pushed to database as an array
+    let newShopsObject = newShops.reduce((acc, cur) => ({ [cur.__KEY__]: cur, ...acc }), {});
+
+    setShops(newShops);
+
+    axios.put("https://ww-production-schedule-default-rtdb.firebaseio.com/data/shops.json", newShopsObject)
+      .then(response => { })
       .catch(error => console.log(error))
 
-      data.forEach(job => {
-        job.groupIndex = newShops.findIndex(shop => shop.__KEY__ === job.groupKey);
-        handleUpdate(job);
-      });
+    data.forEach(job => {
+      job.groupIndex = newShops.findIndex(shop => shop.__KEY__ === job.groupKey);
+      handleUpdate(job);
+    });
 
-    }
+  }
 
-    const onShopRowInit = (row) => {
-      row.data.shop = "";
-      row.data.fontColor = "#000";
-      row.data.colorkey = "#fff";
-      row.data.index = shops.length;
-    }
+  const onShopRowInit = (row) => {
+    row.data.shop = "";
+    row.data.fontColor = "#000";
+    row.data.colorkey = "#fff";
+    row.data.index = shops.length;
+  }
 
-    return (
+  return (
     <div>
-      {loaded 
+      {loaded
         ? <div>
           <Accordion>
             <AccordionSummary
@@ -157,10 +144,10 @@ const ProductionScheduleChart = (props) => {
             <AccordionDetails>
               <Grid container direction="column">
                 <Grid item>
-                  <CheckBox 
+                  <CheckBox
                     text="Expand Rows"
                     value={expanded}
-                    onValueChanged={() => setExpanded(!expanded)} 
+                    onValueChanged={() => setExpanded(!expanded)}
                     style={{ marginBottom: '20px' }}
                   />
                 </Grid>
@@ -211,11 +198,11 @@ const ProductionScheduleChart = (props) => {
                       dataField="colorkey"
                       caption="Colorkey for Shop"
                       cellRender={cell => {
-                        return ( <ColorBox
+                        return (<ColorBox
                           applyValueMode="instantly"
                           defaultValue={cell.data.colorkey}
                           readOnly
-                        /> )
+                        />)
                       }}
                       editCellRender={cell => {
                         return <ColorBox
@@ -223,25 +210,25 @@ const ProductionScheduleChart = (props) => {
                           onValueChange={color => {
                             cell.data.colorkey = color;
                             axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/shops.json`, shops)
-                            .then(response => {
-                              let mode = expanded;
-                              setExpanded(!mode);
-                              setExpanded(mode);
-                            }) 
-                            .catch(error => alert(error))
+                              .then(response => {
+                                let mode = expanded;
+                                setExpanded(!mode);
+                                setExpanded(mode);
+                              })
+                              .catch(error => alert(error))
                           }}
-                        /> 
+                        />
                       }}
                     />
                     <Column
                       dataField="fontColor"
                       caption="Font Color for Shop"
                       cellRender={cell => {
-                        return ( <ColorBox
+                        return (<ColorBox
                           applyValueMode="instantly"
                           defaultValue={cell.data.fontColor}
                           readOnly
-                        /> )
+                        />)
                       }}
                       editCellRender={cell => {
                         return <ColorBox
@@ -249,14 +236,14 @@ const ProductionScheduleChart = (props) => {
                           onValueChange={color => {
                             cell.data.fontColor = color;
                             axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/shops.json`, shops)
-                            .then(response => {
-                              let mode = expanded;
-                              setExpanded(!mode);
-                              setExpanded(mode);
-                            }) 
-                            .catch(error => alert(error))
+                              .then(response => {
+                                let mode = expanded;
+                                setExpanded(!mode);
+                                setExpanded(mode);
+                              })
+                              .catch(error => alert(error))
                           }}
-                        /> 
+                        />
                       }}
                     />
                   </DataGrid>
@@ -265,7 +252,7 @@ const ProductionScheduleChart = (props) => {
             </AccordionDetails>
           </Accordion>
 
-          
+
           <DataGrid
             dataSource={data}
             showRowLines
@@ -313,44 +300,43 @@ const ProductionScheduleChart = (props) => {
               <Button name="delete" />
             </Column>
 
-            <Column 
-              dataField="shop" 
-              groupIndex={0} 
+            <Column
+              dataField="shop"
+              groupIndex={0}
               dataType="string"
               allowSorting={false}
               calculateGroupValue="groupKey"
               groupCellRender={row => {
                 let shop = shops.find(shop => row.value === shop.__KEY__);
-                return shop && <div style={{borderRadius: "10px", backgroundColor: shop.colorkey, padding: "15px", color: shop.fontColor}}><p style={{fontSize: '20px'}}>{shop.shop}</p>  <p style={{fontSize: '15px'}}>Units: {row.summaryItems[0].value} | Units Per Week: {row.summaryItems[1].value} | Employees: {row.summaryItems[2].value}</p></div>
+                return shop && <div style={{ borderRadius: "10px", backgroundColor: shop.colorkey, padding: "15px", color: shop.fontColor }}><p style={{ fontSize: '20px' }}>{shop.shop}</p>  <p style={{ fontSize: '15px' }}>Units: {row.summaryItems[0].value} | Units Per Week: {row.summaryItems[1].value} | Employees: {row.summaryItems[2].value}</p></div>
               }}
             />
 
             <Column dataField="groupKey" caption="Shop" minWidth={100}>
-              <Lookup 
-                dataSource={shops} 
-                displayExpr="shop" 
+              <Lookup
+                dataSource={shops}
+                displayExpr="shop"
                 valueExpr="__KEY__"
               />
             </Column>
 
             <Column
-              dataField="booked" 
+              dataField="booked"
               alignment="center"
               dataType="boolean"
             />
 
             <Column
-              dataField="stickwall" 
+              dataField="stickwall"
               alignment="center"
               dataType="boolean"
             />
 
             <Column
-              dataField="jobNumber" 
+              dataField="jobNumber"
               dataType="string"
-              caption="Job Number" 
-              alignment="center" 
-              defaultSortOrder="asc"
+              caption="Job Number"
+              alignment="center"
               calculateCellValue={row => {
                 if (!row.booked) {
                   row.jobNumber = "Book in 90 Days";
@@ -359,27 +345,27 @@ const ProductionScheduleChart = (props) => {
               }}
             >
             </Column>
-            <Column 
-              dataField="jobName" 
+            <Column
+              dataField="jobName"
               dataType="string"
-              caption="Job Name & Wall Type" 
-              cellRender={jobWallCell} 
-              editCellRender={editJobWallCell} 
+              caption="Job Name & Wall Type"
+              cellRender={jobWallCell}
+              editCellRender={editJobWallCell}
               alignment="left">
               {/* <RequiredRule /> */}
             </Column>
             <Column
-              dataField="customer" 
+              dataField="customer"
               dataType="string"
-              caption="Customer" 
+              caption="Customer"
               alignment="center" >
               {/* <RequiredRule /> */}
             </Column>
-            <Column 
-              dataField="unitsPerWeek" 
+            <Column
+              dataField="unitsPerWeek"
               dataType="number"
-              caption="Units/Week" 
-              alignment="center" 
+              caption="Units/Week"
+              alignment="center"
               calculateCellValue={row => {
                 if (row.stickwall) {
                   row.unitsPerWeek = 0;
@@ -390,83 +376,84 @@ const ProductionScheduleChart = (props) => {
               {/* <RequiredRule /> */}
             </Column>
             <Column
-              allowSorting 
-              dataField="start" 
+              allowSorting
+              dataField="start"
               dataType="date"
-              caption="Shop Start Date" 
+              caption="Shop Start Date"
+              defaultSortOrder="asc"
               alignment="center">
               {/* <RequiredRule /> */}
             </Column>
             <Column
-              allowSorting 
-              dataField="weeksToGoBack" 
+              allowSorting
+              dataField="weeksToGoBack"
               dataType="number"
-              caption="Weeks To Go Back" 
+              caption="Weeks To Go Back"
               alignment="center">
               {/* <RequiredRule /> */}
             </Column>
-            <Column 
-              dataField="end" 
-              caption="End Date" 
-              alignment="center" 
+            <Column
+              dataField="end"
+              caption="End Date"
+              alignment="center"
               allowEditing={false}
               calculateCellValue={row => {
                 if (row.weeks) {
                   let time = row.weeks * 7 * 24 * 60 * 60 * 1000;
                   time = row.start && row.start.getTime() + time;
                   row.end = new Date(time);
-                  return row.end; 
+                  return row.end;
                 }
-              }} 
+              }}
             >
             </Column>
             <Column
-             dataField="fieldStart" 
-             dataType="date"
-             cption="Field Start Date" 
-             alignment="center" >
+              dataField="fieldStart"
+              dataType="date"
+              cption="Field Start Date"
+              alignment="center" >
               {/* <RequiredRule /> */}
             </Column>
-            <Column 
-              dataField="units" 
+            <Column
+              dataField="units"
               dataType="number"
-              caption="Units" 
+              caption="Units"
               alignment="center"
               calculateCellValue={row => {
                 if (row.stickwall) {
-                  row.units= 0;
+                  row.units = 0;
                 }
                 return row.units;
               }}
             >
               {/* <RequiredRule /> */}
             </Column>
-            <Column 
-              dataField="emps" 
+            <Column
+              dataField="emps"
               dataType="number"
-              caption="Emps" 
+              caption="Emps"
               alignment="center">
               {/* <RequiredRule /> */}
             </Column>
-            
-            <Column 
-              dataField="weeks" 
-              caption="Weeks" 
+
+            <Column
+              dataField="weeks"
+              caption="Weeks"
               alignment="center"
               calculateCellValue={row => {
                 if (!row.stickwall && row.unitsPerWeek > 0) {
-                  row.weeks = Math.ceil(row.units/row.unitsPerWeek);
+                  row.weeks = Math.ceil(row.units / row.unitsPerWeek);
                 }
                 return row.weeks;
               }}
             ></Column>
 
-            <Column 
-              dataField="offset" 
-              caption="Offset" 
+            <Column
+              dataField="offset"
+              caption="Offset"
               alignment="center"
             ></Column>
-            
+
             <Summary recalculateWhileEditing>
               <GroupItem
                 column="units"
@@ -509,15 +496,15 @@ const ProductionScheduleChart = (props) => {
               />
             </Summary>
 
-            <SortByGroupSummaryInfo 
-                summaryItem="groupIndex"
+            <SortByGroupSummaryInfo
+              summaryItem="groupIndex"
             />
           </DataGrid>
         </div>
-      : <Spinner />
+        : <Spinner />
       }
-      </div>
-    );
+    </div>
+  );
 }
 
 export default ProductionScheduleChart;

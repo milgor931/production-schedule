@@ -8,7 +8,8 @@ import DataGrid, {
   SearchPanel,
   Editing,
   Button,
-  RequiredRule
+  RequiredRule,
+  Lookup
 } from 'devextreme-react/data-grid';
 import axios from 'axios';
 import Accordion from '@material-ui/core/Accordion';
@@ -20,7 +21,7 @@ import CheckBox from 'devextreme-react/check-box';
 import Grid from '@material-ui/core/Grid';
 
 const ShopDrawings = (props) => {
-    const { rows, weeks, jobs, activities, toMS, toDays } = props;
+    const { rows, weeks, activities, toDays, jobs, toWeeks, toMS } = props;
     const [ data, setData] = useState(null);
     const [ loaded, setLoaded ] = useState(true);
     const [ expanded, setExpanded ] = useState(true);
@@ -42,14 +43,21 @@ const ShopDrawings = (props) => {
         columns.shift();
 
         activities.forEach(activity => {
-            let numWeeksForProject = Math.ceil(toDays(new Date(activity.end).getTime() - new Date(activity.start).getTime())/7);
+            let numWeeksForProject = toWeeks(activity.start, activity.end);
+
+            let activityDates = [];
+    
+            for (let i = 0; i <= numWeeksForProject; i++) {
+                let time = activity.start.getTime() + toMS(i * 7);
+                activityDates.push(new Date(time));
+            }
 
             for (let i = 0; i < weeks; i++) {
-                if (activity.start.toLocaleDateString() === newRows[i].date) {
-                    for (let week = 0; week <= numWeeksForProject; week++) {
-                        newRows[i + week][activity.employee] = activity.activity;
+                activityDates.forEach(date => {
+                    if (date.toLocaleDateString() === newRows[i].date) {
+                        newRows[i][activity.employee] = activity.activity;
                     }
-                }
+                })
             }
         })
 
@@ -59,9 +67,7 @@ const ShopDrawings = (props) => {
     const createColumns = () => {
         let cols = mainDataGrid.current.instance.option("columns");
         let filteredActivities = [ ...new Set(activities.map(item => item.employee )) ];
-        filteredActivities.forEach(header => {
-            cols.push({dataField: header, caption: header})
-        })
+        filteredActivities.forEach(header => cols.push({dataField: header, caption: header}))
     }
 
     const rowInserted = (row) => {
@@ -129,7 +135,6 @@ const ShopDrawings = (props) => {
                         highlightChanges
                         repaintChangesOnly
                         twoWayBindingEnabled
-                        columnResizingMode="nextColumn"
                         wordWrapEnabled
                         autoExpandAll
                         highlightChanges
@@ -191,6 +196,18 @@ const ShopDrawings = (props) => {
                         >
                             <RequiredRule />
                         </Column>
+                        <Column
+                            dataField="jobName"
+                            caption="Job"
+                            alignment="left"
+                            width={300}
+                        >
+                            <Lookup 
+                                dataSource={jobs}
+                                displayExpr="jobName"
+                                valueExpr="jobName"
+                            />
+                        </Column>
                     </DataGrid>
                     </Grid>
                 </Grid>
@@ -206,7 +223,6 @@ const ShopDrawings = (props) => {
             highlightChanges
             repaintChangesOnly
             twoWayBindingEnabled
-            columnResizingMode="nextColumn"
             wordWrapEnabled
             autoExpandAll
             highlightChanges

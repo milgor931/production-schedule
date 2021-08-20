@@ -28,7 +28,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const AllActivities = (props) => {
-    const { data, handleUpdate, rowRemoved, onRowInit } = props;
+    const { data, handleUpdate, rowRemoved, onRowInit, takeoff, shopdrawings, fabmatrix } = props;
     const [ loaded, setLoaded ] = useState(true);
     const classes = useStyles();
 
@@ -63,7 +63,6 @@ const AllActivities = (props) => {
             // onInitialized={onRowInit}
             onRowUpdated={handleUpdate}
             onRowInserted={handleUpdate}
-            onRowRemoved={rowRemoved}
             // onCellPrepared={cellPrepared}
             onRowPrepared={renderRow}
             cellHintEnabled
@@ -73,21 +72,15 @@ const AllActivities = (props) => {
             <GroupPanel visible={false} autoExpandAll/>
             <SearchPanel visible highlightCaseSensitive={false} />
             <Grouping autoExpandAll />
-            {/* <FilterRow visible={true} /> */}
             <Sorting mode="multiple" />
 
             <Editing
               mode="cell"
               allowUpdating
-              allowDeleting
               useIcons
               allowSorting
+              allowDeleting={false}
             />
-
-            {/* <Column type="buttons">
-                <Button name="edit" />
-                <Button name="delete" />
-            </Column> */}
 
             <Column
                 dataField="jobNumber" 
@@ -123,12 +116,16 @@ const AllActivities = (props) => {
                 caption="Start Shop Drawings"
                 alignment="center"
                 allowEditing={false}
+                calculateCellValue={row => {
+                    let date = shopdrawings.find(item => item.jobName === row.jobName);
+                    return date ? new Date(date.start).toLocaleDateString() : "";
+                }}
             >
                  
             </Column>
 
             <Column
-                dataField="startMetalMiscTakeoff"
+                dataField="metalTakeoff"
                 dataType="date"
                 caption="Start Metal and Misc Takeoff"
                 alignment="center"
@@ -155,7 +152,7 @@ const AllActivities = (props) => {
             </Column>
 
             <Column
-                dataField="startShopUseBrakeShapes"
+                dataField="shopUseBrakeShapesAndSteel"
                 dataType="date"
                 caption="Start Shop Use Brake Shapes"
                 alignment="center"
@@ -187,6 +184,11 @@ const AllActivities = (props) => {
                 caption="Fab Drawings"
                 alignment="center"
                 allowEditing={false}
+                calculateCellValue={row => {
+                    let date = fabmatrix.find(item => item.jobName === row.jobName);
+                    row.fabDrawings = date && new Date(date.start);
+                    return date ? new Date(date.start).toLocaleDateString() : "";
+                }}
             >
             </Column>
 
