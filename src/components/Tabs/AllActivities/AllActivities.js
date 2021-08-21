@@ -12,25 +12,9 @@ import DataGrid, {
 import { makeStyles } from '@material-ui/core/styles';
 import axios from 'axios';
 
-
-const useStyles = makeStyles((theme) => ({
-  formControl: {
-    margin: theme.spacing(1),
-    minWidth: 120,
-  },
-  selectEmpty: {
-    marginTop: theme.spacing(2),
-  },
-  blueColumn: {
-      backgroundColor: "#00c7d9",
-      color: 'white'
-  }
-}));
-
 const AllActivities = (props) => {
-    const { data, handleUpdate, rowRemoved, onRowInit, takeoff, shopdrawings, fabmatrix } = props;
+    const { jobs, handleUpdate, onRowInit, shopdrawings, fabmatrix } = props;
     const [ loaded, setLoaded ] = useState(true);
-    const classes = useStyles();
 
     const renderRow = (row) => {
       if (row.rowType === "data") {
@@ -47,7 +31,7 @@ const AllActivities = (props) => {
       {loaded 
         ? <div>
           <DataGrid
-            dataSource={data}
+            dataSource={jobs}
             showBorders
             showRowLines
             allowColumnResizing

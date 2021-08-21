@@ -36,7 +36,7 @@ const Metal = (props) => {
 
   useEffect(() => {
     calculateForOffSets();
-  }, [ metal ])
+  }, [])
 
   const convertToDate = (value) => {
     let thisMonday = today.getTime() + toMS(1 - today.getDay())
@@ -216,9 +216,6 @@ const Metal = (props) => {
                   caption="lbs for Week"
                   dataType="number"
                   alignment="center"
-                  // calculateCellValue={row => {
-                  //   metal.find()
-                  // }}
                 />
               </DataGrid>
             </Grid>
@@ -278,7 +275,7 @@ const Metal = (props) => {
           alignment="center"
         />
         <Column fixed
-          dataField="pounds"
+          dataField="lbs"
           caption="lbs"
           alignment="center"
         />

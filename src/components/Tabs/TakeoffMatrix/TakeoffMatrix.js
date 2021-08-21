@@ -18,101 +18,9 @@ import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import Grid from '@material-ui/core/Grid';
 
 const TakeoffMatrix = (props) => {
-    const { rows, weeks, jobs, headers, handleUpdate, toWeeks, toDays, toMS } = props;
-    const [data, setData] = useState(null);
+    const { rows, weeks, jobs, headers, createRows, takeoff, toWeeks, toDays, toMS, rowInserted, rowUpdated, rowRemoved } = props;
     const [loaded, setLoaded] = useState(true);
     const mainDataGrid = useRef(null);
-
-    useEffect(() => {
-        createColumns();
-        createRows();
-    }, [])
-
-    const checkIfOnSameDate = (date, jobIndex) => {
-        let foundOnSameDate = jobs.find((j, i) => {
-            if (j.metalTakeoff && i != jobIndex) {
-                return j.metalTakeoff.toLocaleDateString() === date.toLocaleDateString()
-            }
-        })
-        return foundOnSameDate ? true : false;
-    }
-
-    const createRows = () => {
-        let newRows = JSON.parse(JSON.stringify(rows));
-        let cols = mainDataGrid.current.instance.option("columns");
-        let columns = [...cols];
-        columns.shift();
-
-        jobs.forEach((job, jobIndex) => {
-            let startOffset = 14;
-            let metalTakeoffDate = new Date(job.start.getTime() + toMS(startOffset * 7));
-
-            while (checkIfOnSameDate(metalTakeoffDate, jobIndex)) {
-                startOffset += 1;
-                metalTakeoffDate = new Date(job.start.getTime() - toMS(startOffset * 7));
-            }
-
-            job.metalTakeoff = metalTakeoffDate;
-
-            columns.forEach(col => {
-                job[col.dataField] = new Date(job.metalTakeoff.getTime() + toMS(col.offset * 7));
-            })
-        })
-
-        for (let i = 0; i < weeks; i++) {
-            jobs.forEach(job => {
-                columns.forEach(col => {
-                    if (job[col.dataField].toLocaleDateString() === newRows[i].date) {
-                        newRows[i][col.dataField] = job.jobName;
-                    }
-                })
-            })
-        }
-        setData(newRows);
-    }
-
-    const createColumns = () => {
-        let cols = mainDataGrid.current.instance.option("columns");
-        headers.sort((x, y) => x.offset - y.offset).forEach(header => {
-            cols.push({ dataField: header.dataField, caption: header.header, offset: header.offset, name: header.header })
-        })
-    }
-
-    const rowInserted = (row) => {
-        mainDataGrid.current.instance.addColumn({ dataField: row.data.header.split(" ").join(""), caption: row.data.header, offset: row.data.offset });
-
-        axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/takeoffmatrix/headers/${row.data.__KEY__}.json`, row.data)
-            .then(response => createRows())
-            .catch(error => console.log(error))
-    }
-
-    const rowUpdated = (row) => {
-        let index = row.component.getRowIndexByKey(row.key) + 1;
-        let datagrid = mainDataGrid.current.instance;
-
-        // for some reason, I had to do this twice because otherwise the dataField and caption would not update at the same time
-        datagrid.columnOption(index, { dataField: row.data.dataField, name: row.data.header });
-        datagrid.columnOption(index, { caption: row.data.header });
-
-        let c = mainDataGrid.current.instance.getVisibleColumns();
-        c[index].dataField = row.data.dataField;
-        c[index].name = row.data.header;
-        c[index].caption = row.data.header;
-        c[index].offset = row.data.offset;
-
-        datagrid.option("columns")[index] = { dataField: row.data.dataField, caption: row.data.header, offset: row.data.offset, name: row.data.header }
-
-        axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/takeoffmatrix/headers/${row.data.__KEY__}.json`, row.data)
-            .then(response => { createRows(); })
-            .catch(error => console.log(error))
-    }
-
-    const rowRemoved = (row) => {
-        mainDataGrid.current.instance.deleteColumn(row.data.header);
-        axios.delete(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/takeoffmatrix/headers/${row.data.__KEY__}.json`)
-            .then(response => createRows())
-            .catch(error => console.log(error))
-    }
 
     const rowPrepared = (row) => {
         row.rowElement.style.backgroundColor = row.rowIndex % 2 ? "#b5bdc9" : "white";
@@ -122,7 +30,6 @@ const TakeoffMatrix = (props) => {
         if (row.row.data.dataField === "metalTakeoff") {
             row.cancel = true;
         }
-        // row.cancel = row.row.data.dataField === "metalTakeoff" ? true : false;
     }
 
     return (
@@ -162,6 +69,7 @@ const TakeoffMatrix = (props) => {
                                             mode="cell"
                                             allowUpdating
                                             allowDeleting
+                                            allowAdding
                                             allowAddingonEditorPrepared
                                             useIcons
                                         />
@@ -193,7 +101,7 @@ const TakeoffMatrix = (props) => {
                     </Accordion>
 
                     <DataGrid
-                        dataSource={data}
+                        dataSource={takeoff}
                         showBorders
                         showRowLines
                         allowColumnResizing
@@ -201,7 +109,7 @@ const TakeoffMatrix = (props) => {
                         highlightChanges
                         repaintChangesOnly
                         twoWayBindingEnabled
-                        columnResizingMode="nextColumn"
+                        columnResizingMode="widget"
                         wordWrapEnabled
                         autoExpandAll
                         highlightChanges
@@ -226,6 +134,17 @@ const TakeoffMatrix = (props) => {
                             width={"auto"}
                             allowEditing={false}
                         />
+
+                        {headers.map(header => {
+                            return (
+                                <Column
+                                    key={header.__KEY__}
+                                    dataField={header.dataField}
+                                    caption={header.header}
+                                />
+                            )
+                            
+                        })}
 
                     </DataGrid>
                 </div>

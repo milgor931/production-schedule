@@ -20,28 +20,10 @@ import DataGrid, {
   FilterRow, 
   RemoteOperations
 } from 'devextreme-react/data-grid';
-import { makeStyles } from '@material-ui/core/styles';
-import axios from 'axios';
-
-
-const useStyles = makeStyles((theme) => ({
-  formControl: {
-    margin: theme.spacing(1),
-    minWidth: 120,
-  },
-  selectEmpty: {
-    marginTop: theme.spacing(2),
-  },
-  blueColumn: {
-      backgroundColor: "#00c7d9",
-      color: 'white'
-  }
-}));
 
 const GlassGasket = (props) => {
-    const { data, handleUpdate, rowRemoved, onRowInit } = props;
+    const { jobs, handleUpdate, toMS, toDays, toWeeks, getOffset } = props;
     const [ loaded, setLoaded ] = useState(true);
-    const classes = useStyles();
 
     const renderRow = (row) => {
       if (row.rowType === "data") {
@@ -53,12 +35,49 @@ const GlassGasket = (props) => {
       } 
     }
 
+    const orderWeekRender = (row) => {
+        row.data.orderWeekOffset = getOffset(row.data.start, row.data.orderWeekOf);
+        return (
+        <div>
+            {row.data.orderWeekOf && row.data.orderWeekOf.toLocaleDateString()}
+            <br />
+            {<p style={{ color: "#3f50b5" }}> {row.data.orderWeekOffset} weeks after shop date </p>}
+        </div>
+        )
+    }
+
+    const orderWeekEdit = (row) => {
+        let link = row.data.orderLinkToShop;
+        return (
+          <div>
+            { link
+              ? <input
+                placeholder="weeks after shop start"
+                onChange={e => {
+                  let weeks = e.target.value;
+                  let date = new Date(row.data.start.getTime() + toMS(weeks * 7));
+                  row.setValue(date);
+                }}
+              />
+              : <input
+                type="date"
+                onChange={e => {
+                  let d = new Date(e.target.value);
+                  d.setTime(d.getTime() + d.getTimezoneOffset() * 60 * 1000);
+                  row.setValue(d);
+                }}
+              />
+            }
+          </div>
+        )
+    }
+
     return (
     <div style={{margin: '3vw'}}>
       {loaded 
         ? <div>
           <DataGrid
-            dataSource={data}
+            dataSource={jobs}
             showBorders
             showRowLines
             allowColumnResizing
@@ -66,37 +85,26 @@ const GlassGasket = (props) => {
             highlightChanges
             repaintChangesOnly
             twoWayBindingEnabled
-            columnResizingMode="nextColumn"
+            columnResizingMode="widget"
             wordWrapEnabled
             autoExpandAll
             highlightChanges
-            onInitNewRow={onRowInit}
-            // onInitialized={onRowInit}
             onRowUpdated={handleUpdate}
-            onRowInserted={handleUpdate}
-            onRowRemoved={rowRemoved}
-            // onCellPrepared={cellPrepared}
             onRowPrepared={renderRow}
             cellHintEnabled
-
           >
 
             <GroupPanel visible={false} autoExpandAll/>
             <SearchPanel visible highlightCaseSensitive={false} />
             <Grouping autoExpandAll />
-            {/* <FilterRow visible={true} /> */}
             <Sorting mode="multiple" />
 
             <Editing
-              mode="batch"
+              mode="cell"
               allowUpdating
               useIcons
               allowSorting
             />
-
-            {/* <Column type="buttons">
-                <Button name="delete" />
-            </Column> */}
 
             <Column
                 dataField="jobNumber" 
@@ -105,7 +113,6 @@ const GlassGasket = (props) => {
                 alignment="center" 
                 fixed
             >
-                <RequiredRule />
             </Column>
 
             <Column 
@@ -115,16 +122,24 @@ const GlassGasket = (props) => {
                 alignment="left"
                 fixed
             >
-                    <RequiredRule />
             </Column>
+
+            <Column
+                dataField="orderLinkToShop"
+                caption="Link To Shop Start?"
+                dataType="boolean"
+                calculateCellValue={row => row.orderLinkToShop ? row.orderLinkToShop : false}
+            />
 
             <Column
                 dataField="orderWeekOf"
                 dataType="date"
                 caption="Order Week Of"
                 alignment="center"
+                minWidth="160"
+                cellRender={orderWeekRender}
+                editCellRender={orderWeekEdit}
             >
-                <RequiredRule />
             </Column>
 
             <Column
@@ -133,7 +148,6 @@ const GlassGasket = (props) => {
                 caption="Glass Required"
                 alignment="center"
             >
-                <RequiredRule />
             </Column>
 
             <Column
@@ -142,7 +156,6 @@ const GlassGasket = (props) => {
                 caption="# Of Lites"
                 alignment="center"
             >
-                <RequiredRule />
             </Column>
 
             <Column
@@ -151,7 +164,6 @@ const GlassGasket = (props) => {
                 caption="Square Footage"
                 alignment="center"
             >
-                <RequiredRule />
             </Column>
 
             <Column
