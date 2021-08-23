@@ -116,7 +116,7 @@ const App = () => {
                     response.data.jobs && setJobs(convertDates(Object.values(response.data.jobs)));
                     response.data.shopdrawings.headers && setShopDrawingHeaders(Object.values(response.data.shopdrawings.headers));
                     response.data.fabmatrix && setFabHeaders(Object.values(response.data.fabmatrix.headers));
-                    response.data.takeoffmatrix.headers && setTakeoffHeaders(Object.values(response.data.takeoffmatrix.headers).sort((x, y) => { return x.offset - y.offset }));
+                    response.data.takeoffmatrix.headers && setTakeoffHeaders(Object.values(response.data.takeoffmatrix.headers));
                     response.data.metal && setMetal(Object.values(response.data.metal));
                 }
                 setProgress(100);
@@ -141,8 +141,12 @@ const App = () => {
         return Math.ceil(toDays(end.getTime() - start.getTime()) / 7);
     }
 
+    const toMondayDate = (date) => {
+        return new Date(date.getTime() + toMS( 1- date.getDay() ));
+    }
+
     const convertDates = (updatedJobs) => {
-        let dateFields = ["start", "fieldStart", "metalTakeoff", "orderWeekOf", ]
+        let dateFields = ["start", "fieldStart", "metalTakeoff", "orderWeekOf"]
         updatedJobs.forEach(job => {
             dateFields.forEach(field => {
                 job[field] =  job[field] ? new Date(job[field]) : new Date();
@@ -163,8 +167,8 @@ const App = () => {
 
         updatedJobs.forEach(job => getJobOffset(job, updatedJobs[0]));
 
-        let calculatedWeeks = Math.floor(toDays(new Date(updatedJobs[updatedJobs.length - 1].start).getTime() - new Date(updatedJobs[0].start).getTime()) / 7);
-
+        let calculatedWeeks = toWeeks(updatedJobs[0].start, updatedJobs[updatedJobs.length - 1].start);
+        
         setWeeks(calculatedWeeks);
 
         createBasicRows(calculatedWeeks);
@@ -318,6 +322,24 @@ const App = () => {
             .catch(error => console.log(error))
     }
 
+    const metalRowInserted = (row) => {
+        axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/metal/${row.data.__KEY__}.json`, row.data)
+        .then(response => setMetal([...metal]))
+        .catch(error => console.log(error))
+    }
+
+    const metalRowUpdated = (row) => {
+        axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/metal/${row.data.__KEY__}.json`, row.data)
+        .then(response => setMetal([...metal]))
+        .catch(error => console.log(error))
+    }
+
+    const metalRowRemoved = (row) => {
+        axios.delete(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/metal/${row.data.__KEY__}.json`)
+        .then(response => setMetal([...metal]))
+        .catch(error => console.log(error))
+    }
+
     return (
         <div className="App">
 
@@ -340,6 +362,7 @@ const App = () => {
                                 onRowInit={onRowInit}
                                 toMS={toMS}
                                 toDays={toDays}
+                                toMondayDate={toMondayDate}
                             />
                         </Route>
                         <Route path="/shop-drawings">
@@ -425,6 +448,10 @@ const App = () => {
                                 toMS={toMS}
                                 toDays={toDays}
                                 toWeeks={toWeeks}
+                                toMondayDate={toMondayDate}
+                                rowInserted={metalRowInserted}
+                                rowRemoved={metalRowRemoved}
+                                rowUpdated={metalRowUpdated}
                             />
                         </Route>
                         <Route path="/field">

@@ -28,15 +28,16 @@ import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import Grid from '@material-ui/core/Grid';
 
 const Metal = (props) => {
-  const { metal, jobs, shops, toMS, toDays, toWeeks } = props;
-  const [loaded, setLoaded] = useState(true);
+  const { metal, jobs, shops, toMS, toDays, toWeeks, toMondayDate, handleUpdate, rowInserted, rowUpdated, rowRemoved } = props;
   const [expanded, setExpanded] = useState(true);
+  const [data, setData] = useState([]);
   const [today, setToday] = useState(new Date());
-  const datagridRef = useRef(null);
+  const [columns, setColumns] = useState([]);
+  const datagrid = useRef(null);
 
   useEffect(() => {
     calculateForOffSets();
-  }, [])
+  }, [ metal ])
 
   const convertToDate = (value) => {
     let thisMonday = today.getTime() + toMS(1 - today.getDay())
@@ -51,27 +52,35 @@ const Metal = (props) => {
 
   const calculateForOffSets = () => {
     let end = jobs[jobs.length - 1];
-
-    let thisMonday = new Date(today.getTime() + toMS(1 - today.getDay()));
-    let startOffset = toOffset(thisMonday);
-
+    let startOffset = toOffset(toMondayDate(today));
     let newCols = [];
 
-    // push offsets which turn into the dates i <= end.offset + end.weeks
-    for (let i = 0; i <= end.offset + end.weeks; i++) {
-      newCols.push(startOffset + i);
-      if (i < 100) {
-        datagridRef.current.instance.addColumn({ dataField: startOffset + i, caption: convertToDate(startOffset + i - startOffset), type: "date" });
-      }
+    for (let i = startOffset; i <= end.offset + end.weeks; i++) {
+      newCols.push({ offset: i, date: convertToDate(i - startOffset) });
     }
 
-    // set up offsets for each job
-    jobs.forEach(job => {
+    let newJobs = JSON.parse(JSON.stringify(jobs));
+
+
+    newJobs.forEach(job => {
+      job.fieldStart = new Date(job.fieldStart);
+      job.start = new Date(job.start);
       job.offsets = [];
       for (let w = 0; w <= job.weeks; w++) {
-        job.offsets.push(job.offset + w);
+        job.offsets.push((job.offset + w).toString());
       }
     })
+
+    setData(newJobs);
+
+    metal.forEach(row => {
+      let job = newJobs.findIndex(j => j.jobName === row.jobName)
+      if (job != -1) {
+        newJobs[job][toOffset(toMondayDate(new Date(row.weekStart))).toString()] = row.lbs;
+      }
+    })
+
+    setColumns(newCols);
   }
 
 
@@ -91,42 +100,17 @@ const Metal = (props) => {
 
     if (cell.data && cell.data.offsets) {
       let isDate = cell.data.offsets.includes(cell.column.dataField);
-      if (isDate && cell.column.type === "date") {
+
+      if (isDate) {
         cell.cellElement.style.backgroundColor = headerColor;
       }
       if (!cell.data.booked && (cell.columnIndex <= 4 || isDate)) {
         cell.cellElement.style.backgroundColor = "cyan";
       }
-      if (cell.column.caption === cell.data.fieldStart.toLocaleDateString()) {
-        cell.cellElement.style.backgroundColor = "red";
+      if (cell.column.caption === toMondayDate(new Date(cell.data.fieldStart)).toLocaleDateString()) {
+        cell.cellElement.style.borderLeft = "solid red 5px";
       }
     }
-  }
-
-  const renderRow = (row) => {
-    if (row.rowType === "group") {
-      let colorEntry = shops.find(shop => shop.__KEY___ === row.data.key);
-      row.rowElement.style.backgroundColor = colorEntry ? colorEntry.colorkey : "white";
-      row.rowElement.style.color = colorEntry ? colorEntry.fontColor : "black";
-    }
-  }
-
-  const rowInserted = (row) => {
-    axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/metal/${row.data.__KEY__}.json`, row.data)
-      .then(response => response)
-      .catch(error => console.log(error))
-  }
-
-  const rowUpdated = (row) => {
-    axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/metal/${row.data.__KEY__}.json`, row.data)
-      .then(response => response)
-      .catch(error => console.log(error))
-  }
-
-  const rowRemoved = (row) => {
-    axios.delete(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/metal/${row.data.__KEY__}.json`)
-      .then(response => response)
-      .catch(error => console.log(error))
   }
 
   return (
@@ -142,14 +126,14 @@ const Metal = (props) => {
         </AccordionSummary>
         <AccordionDetails>
           <Grid container direction="column">
-            <Grid item>
-              {/* <CheckBox
+            {/* <Grid item>
+              <CheckBox
                 text="Expand Rows"
                 value={expanded}
                 onValueChanged={() => setExpanded(!expanded)}
                 style={{ marginBottom: '20px' }}
-              /> */}
-            </Grid>
+              />
+            </Grid> */}
             <Grid item>
               <DataGrid
                 dataSource={metal}
@@ -222,8 +206,9 @@ const Metal = (props) => {
           </Grid>
         </AccordionDetails>
       </Accordion>
+
       <DataGrid
-        dataSource={jobs}
+        dataSource={data}
         showRowLines
         columnAutoWidth
         autoExpandAll
@@ -234,11 +219,9 @@ const Metal = (props) => {
         wordWrapEnabled
         showColumnLines={true}
         onCellPrepared={cellPrepared}
-        onRowPrepared={renderRow}
-        ref={datagridRef}
+        ref={datagrid}
       >
 
-        {/* <GroupPanel visible autoExpandAll /> */}
         <SearchPanel visible highlightCaseSensitive={false} />
         <Grouping autoExpandAll={expanded} />
         <Sorting mode="multiple" />
@@ -246,8 +229,10 @@ const Metal = (props) => {
 
         <Summary recalculateWhileEditing>
           <TotalItem
-            column="pounts"
+            column="lbs"
             summaryType="sum"
+            showInColumn="lbs"
+            customizeText={item => `Total Pounds: ${item.value}`}
           />
         </Summary>
 
@@ -257,28 +242,47 @@ const Metal = (props) => {
           alignment="center"
         />
         <Column fixed
-          minWidth={'10vw'}
+          minWidth={'250px'}
           dataField="jobName"
           caption="Job Name & Wall Type"
           cellRender={jobWallCell}
           alignment="left"
         />
+
         <Column fixed allowSorting
           dataField="start"
           caption="Shop Start Date"
           alignment="center"
           defaultSortOrder="asc"
         />
+
         <Column fixed
-          dataField="end"
-          caption="End Date"
+          dataField="fieldStart"
+          caption="Field Start"
           alignment="center"
         />
+
         <Column fixed
           dataField="lbs"
           caption="lbs"
           alignment="center"
+          calculateCellValue={row => {
+            let cols = datagrid.current.instance.getVisibleColumns().slice(5).filter(col => row[col.dataField]).map(col => row[col.dataField]);
+            const rowTotal = cols.length > 0 ? cols.reduce((total, col) => total + col) : 0;
+            return rowTotal;
+          }}
         />
+
+        {columns.map(col => (
+          <Column
+            key={col.offset}
+            dataField={col.offset.toString()}
+            caption={col.date}
+            alignment="center"
+            dataType="number"
+          />
+        ))}
+
       </DataGrid>
     </div>
   );

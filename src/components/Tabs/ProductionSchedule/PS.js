@@ -8,7 +8,7 @@ import Grid from '@material-ui/core/Grid';
 import Radio from '@material-ui/core/Radio';
 
 const ProductionSchedule = (props) => {
-    const { shops, jobs, handleUpdate, handleShopUpdate, handleShopDelete, rowRemoved, onRowInit, toMS, toDays } = props;
+    const { shops, jobs, handleUpdate, handleShopUpdate, handleShopDelete, rowRemoved, onRowInit, toMS, toDays, toMondayDate } = props;
     const [ tabs, setTabs ] = useState([]);
     const [ loaded, setLoaded ] = useState(false);
     const [ selectedIndex, setSelectedIndex ] = useState(0);
@@ -25,13 +25,14 @@ const ProductionSchedule = (props) => {
                                 handleUpdate={handleUpdate}
                                 toMS={toMS}
                                 toDays={toDays}
+                                toMondayDate={toMondayDate}
                             />
             },
             {
                 'ID': 1,
                 'name': 'Production Schedule',
                 'component': <ProductionScheduleChart 
-                                data={jobs} 
+                                jobs={jobs} 
                                 shopInfo={shops}
                                 handleUpdate={handleUpdate}
                                 handleShopUpdate={handleShopUpdate}
@@ -47,7 +48,8 @@ const ProductionSchedule = (props) => {
                 'ID': 2,
                 'name': 'Units Graph',
                 'component': <Graph 
-                                data={jobs} 
+                                jobs={jobs} 
+                                allShops={shops}
                                 handleUpdate={handleUpdate}
                                 toMS={toMS}
                                 toDays={toDays}

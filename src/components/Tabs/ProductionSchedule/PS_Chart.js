@@ -28,30 +28,30 @@ import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import Grid from '@material-ui/core/Grid';
 
 const ProductionScheduleChart = (props) => {
-  const { shopInfo, data, handleUpdate, handleShopUpdate, handleShopDelete, rowRemoved, onRowInit, toMS, toDays } = props;
+  const { shopInfo, jobs, handleUpdate, handleShopUpdate, handleShopDelete, rowRemoved, onRowInit, toMS, toDays } = props;
   const [loaded, setLoaded] = useState(false);
   const [expanded, setExpanded] = useState(true);
   const [shops, setShops] = useState(shopInfo);
 
   useEffect(() => {
-    data && setLoaded(true);
-  }, [data])
+    jobs && setLoaded(true);
+  }, [jobs])
 
-  const jobWallCell = (data) => {
+  const jobWallCell = (row) => {
     return (
       <div>
-        <span>{data.data.jobName}</span>
+        <span>{row.data.jobName}</span>
         <br></br>
-        <span style={{ color: "#5a87d1" }}>{data.data.wallType}</span>
+        <span style={{ color: "#5a87d1" }}>{row.data.wallType}</span>
       </div>
     )
   }
 
-  const editJobWallCell = (data) => {
+  const editJobWallCell = (row) => {
     return (
       <div style={{ padding: '10px' }}>
-        <TextField id="jobName" type="text" size="small" label="Job Name" variant="outlined" onChange={e => data.data.jobName = e.target.value} />
-        <TextField id="wallType" type="text" size="small" label="Wall Type" variant="outlined" onChange={e => data.data.wallType = e.target.value} />
+        <TextField id="jobName" type="text" size="small" label="Job Name" variant="outlined" onChange={e => row.data.jobName = e.target.value} />
+        <TextField id="wallType" type="text" size="small" label="Wall Type" variant="outlined" onChange={e => row.data.wallType = e.target.value} />
       </div>
     )
   }
@@ -115,7 +115,7 @@ const ProductionScheduleChart = (props) => {
       .then(response => { })
       .catch(error => console.log(error))
 
-    data.forEach(job => {
+    jobs.forEach(job => {
       job.groupIndex = newShops.findIndex(shop => shop.__KEY__ === job.groupKey);
       handleUpdate(job);
     });
@@ -254,7 +254,7 @@ const ProductionScheduleChart = (props) => {
 
 
           <DataGrid
-            dataSource={data}
+            dataSource={jobs}
             showRowLines
             showBorders
             columnAutoWidth
@@ -277,7 +277,7 @@ const ProductionScheduleChart = (props) => {
 
             <SearchPanel visible highlightCaseSensitive={false} />
             <Grouping autoExpandAll={expanded} />
-            <LoadPanel enabled />
+            <LoadPanel enabled showIndicator/>
             <GroupPanel visible />
 
             <Editing
@@ -288,12 +288,6 @@ const ProductionScheduleChart = (props) => {
               useIcons
               allowSorting
             />
-
-            {/* <RowDragging
-              // allowReordering
-              // onReorder={onReorder}
-              showDragIcons
-            /> */}
 
             <Column type="buttons">
               <Button name="edit" />
@@ -312,7 +306,7 @@ const ProductionScheduleChart = (props) => {
               }}
             />
 
-            <Column dataField="groupKey" caption="Shop" minWidth={100}>
+            <Column dataField="groupKey" caption="Shop" minWidth={100} >
               <Lookup
                 dataSource={shops}
                 displayExpr="shop"

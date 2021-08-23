@@ -107,7 +107,7 @@ const FabMatrix = (props) => {
 
   const startDateRender = (row) => {
     let job = jobs.find(j => j.__KEY__ === row.data.jobKey);
-    row.data.fabOffset = getOffset(job.start, row.data.start);
+    row.data.fabOffset = job && getOffset(job.start, row.data.start);
     return (
       <div>
         {row.data.start && row.data.start.toLocaleDateString()}

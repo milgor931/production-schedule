@@ -30,10 +30,11 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const ProductionScheduleGantt = (props) => {
-    const { jobs, shops, toMS, toDays } = props;
+    const { jobs, shops, toMS, toDays, toMondayDate } = props;
     const [ loaded, setLoaded ] = useState(true);
     const [ expanded, setExpanded ] = useState(true);
     const [ today, setToday ] = useState(new Date());
+    const [ columns, setColumns ] = useState([]);
     const datagridRef = useRef(null);
 
     useEffect(() => {
@@ -41,9 +42,9 @@ const ProductionScheduleGantt = (props) => {
     }, [])
 
     const convertToDate = (value) => {
-      let thisMonday = today.getTime() + toMS( 1- today.getDay() )
+      let thisMonday = toMondayDate(today);
       let date = (value * 7);
-      date = new Date(toMS(date) + thisMonday);
+      date = new Date(toMS(date) + thisMonday.getTime());
       return date.toLocaleDateString();
     }
 
@@ -55,26 +56,27 @@ const ProductionScheduleGantt = (props) => {
     const calculateForOffSets = () => {
         let end = jobs[jobs.length - 1];
 
-        let thisMonday = new Date(today.getTime() + toMS( 1- today.getDay() ));
+        let thisMonday = toMondayDate(today);
         let startOffset = toOffset(thisMonday);
 
         let newCols = [];
 
-        // push offsets which turn into the dates i <= end.offset + end.weeks
-        for (let i = 0; i <= end.offset + end.weeks; i++) {
-            newCols.push(startOffset + i);
-            if (i < 100) {
-              datagridRef.current.instance.addColumn({dataField: startOffset + i, caption: convertToDate(startOffset + i - startOffset), type: "date"});
-            }
+        for (let i = startOffset; i <= end.offset + end.weeks; i++) {
+          newCols.push({
+            offset: i,
+            date: convertToDate(i - startOffset)
+          });
         }
 
         // set up offsets for each job
          jobs.forEach(job => {
             job.offsets = [];
             for (let w = 0; w <= job.weeks; w++) {
-                job.offsets.push(job.offset + w);
+                job.offsets.push((job.offset + w).toString());
             }
         })
+
+        setColumns(newCols);
     }
     
 
@@ -93,15 +95,16 @@ const ProductionScheduleGantt = (props) => {
       let headerColor = cell.rowType === "data" && colorEntry ? colorEntry.colorkey : "white";
 
       if (cell.data && cell.data.offsets) {
-        let isDate = cell.data.offsets.includes(cell.column.dataField);
-        if (isDate && cell.column.type === "date") {
+        let isDate = cell.data.offsets.includes(cell.column.dataField.toString());
+
+        if (isDate) {
           cell.cellElement.style.backgroundColor = headerColor;
         }
         if (!cell.data.booked && (cell.columnIndex <= 4 || isDate)) {
           cell.cellElement.style.backgroundColor = "cyan";
         }
-        if (cell.column.caption === cell.data.fieldStart.toLocaleDateString()) {
-          cell.cellElement.style.backgroundColor = "red";
+        if (cell.column.caption === toMondayDate(cell.data.fieldStart).toLocaleDateString()) {
+          cell.cellElement.style.borderLeft = "solid red 5px";
         }
       }
        
@@ -159,7 +162,7 @@ const ProductionScheduleGantt = (props) => {
               alignment="center"
             />
             <Column fixed 
-              minWidth={'10vw'} 
+              minWidth={'250px'}
               dataField="jobName" 
               caption="Job Name & Wall Type" 
               cellRender={jobWallCell} 
@@ -172,10 +175,18 @@ const ProductionScheduleGantt = (props) => {
               defaultSortOrder="asc"
             />
             <Column fixed 
-              dataField="end" 
-              caption="End Date" 
+              dataField="fieldStart" 
+              caption="Field Start" 
               alignment="center"
             />
+
+            {columns.map(col => (
+              <Column
+                key={col.offset}
+                dataField={col.offset}
+                caption={col.date}
+              />
+            ))}
 
             <Summary recalculateWhileEditing>
               <GroupItem

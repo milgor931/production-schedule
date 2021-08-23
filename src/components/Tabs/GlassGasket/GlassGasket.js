@@ -41,7 +41,7 @@ const GlassGasket = (props) => {
         <div>
             {row.data.orderWeekOf && row.data.orderWeekOf.toLocaleDateString()}
             <br />
-            {<p style={{ color: "#3f50b5" }}> {row.data.orderWeekOffset} weeks after shop date </p>}
+            {<p style={{ color: "#3f50b5" }}> {row.data.orderWeekOffset} weeks after shop start </p>}
         </div>
         )
     }
@@ -204,6 +204,7 @@ const GlassGasket = (props) => {
                 dataType="boolean"
                 caption="PGT Transferred"
                 alignment="center"
+                calculateCellValue={row => row.pgtTransferred ? row.pgtTransferred : false}
             >
             </Column>
 

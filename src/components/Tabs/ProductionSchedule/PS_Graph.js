@@ -31,32 +31,27 @@ const sources = [
 ];
 
 const Graph = (props) => {
-  const { data, toMS, toDays } = props;
+  const { jobs, allShops, toMS, toDays } = props;
   const [ state, setState ] = React.useState({});
-  const [ jobs, setJobs ] = useState([]);
-  const [ shops, setShops ] = useState(["La Verne"]);
+  const [ data, setData ] = useState([]);
+  const [ shops, setShops ] = useState([]);
   const [ loaded, setLoaded ] = useState(false);
 
   useEffect(() => {
-    if (data) {
-      setShops(findShopDups().reverse())
-      setLoaded(true);
-    }
-  }, [ data ])
+    let newShops = allShops.map(shop => shop.shop);
+    setShops(newShops);
+    setLoaded(true);
+  }, [])
 
   useEffect(() => {
     setLoaded(false);
-    jobs && calculateForOffSets();
+    calculateForOffSets();
     setLoaded(true);
   }, [ state ])
 
-  const findShopDups = () => {
-    return [ ...new Set(data.map(item => item.shop)) ];
-  }
-
   const calculateForOffSets = () => {
     let all_data = [];
-    data.forEach(job => {
+    jobs.forEach(job => {
       for (let w = 0; w < job.weeks; w++) {
         all_data.push({ shop: job.shop, offset: (job.offset + w), unitsPerWeek: job.unitsPerWeek, emps: job.emps })
       }
@@ -77,7 +72,7 @@ const Graph = (props) => {
       })
       new_data.push({ offset: i, units: total_units, emps: total_emps})
     }
-    setJobs(new_data);
+    setData(new_data);
   }
 
   const handleChange = (event) => {
@@ -91,7 +86,7 @@ const Graph = (props) => {
   }
 
   const shopSwitches = shops.map(shop => (
-      <Grid item>
+      <Grid item key={shop}>
         <FormControlLabel
           key={shop}
           control={
@@ -111,19 +106,17 @@ const Graph = (props) => {
   return (
     <div>
       <Grid container direction="row" style={{width: '100%'}}>
-        <Hidden mdDown>
           <Grid item style={{width: '10vw'}} >
-              <FormGroup column style={{marginTop: '50px', padding: '10px'}}>
+              <FormGroup style={{marginTop: '50px', padding: '10px'}}>
                 <Typography>
-                  SHOPS
+                  Choose Shops
                 </Typography> 
                 {shopSwitches}
               </FormGroup>
           </Grid>
-        </Hidden>
         <Grid item style={{width: "80vw", marginTop: "20px"}}>
           <Chart
-            dataSource={jobs}
+            dataSource={data}
             title="Units and Employees Over Time"
           >
             <CommonSeriesSettings
