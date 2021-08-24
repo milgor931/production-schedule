@@ -99,15 +99,18 @@ const Metal = (props) => {
     let headerColor = cell.rowType === "data" && colorEntry ? colorEntry.colorkey : "white";
 
     if (cell.data && cell.data.offsets) {
-      let isDate = cell.data.offsets.includes(cell.column.dataField);
+      let isDate = cell.data.offsets.includes(cell.column.dataField.toString());
 
       if (isDate) {
         cell.cellElement.style.backgroundColor = headerColor;
       }
+      if (cell.data.booked && cell.data.engineering && (cell.columnIndex <= 4 || isDate)) {
+        cell.cellElement.style.backgroundColor = "#edada6";
+      }
       if (!cell.data.booked && (cell.columnIndex <= 4 || isDate)) {
         cell.cellElement.style.backgroundColor = "cyan";
       }
-      if (cell.column.caption === toMondayDate(new Date(cell.data.fieldStart)).toLocaleDateString()) {
+      if (cell.column.caption === toMondayDate(cell.data.fieldStart).toLocaleDateString()) {
         cell.cellElement.style.borderLeft = "solid red 5px";
       }
     }

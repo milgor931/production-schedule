@@ -60,8 +60,8 @@ const ProductionScheduleChart = (props) => {
     if (row.rowType === "data") {
       if (!row.data.booked) {
         row.rowElement.style.backgroundColor = "cyan";
-      } else if (row.data.header) {
-        row.rowElement.style.backgroundColor = "#a8a8a8";
+      } else if (row.data.booked && row.data.engineering) {
+        row.rowElement.style.backgroundColor = "#edada6";
       }
     }
     else if (row.rowType === "group") {
@@ -170,7 +170,6 @@ const ProductionScheduleChart = (props) => {
                     onRowUpdated={handleShopUpdate}
                     onRowRemoved={handleShopDelete}
                     onInitNewRow={onShopRowInit}
-
                   >
                     <Editing
                       mode="cell"
@@ -318,12 +317,22 @@ const ProductionScheduleChart = (props) => {
               dataField="booked"
               alignment="center"
               dataType="boolean"
+              calculateCellValue={row => row.booked ? row.booked : false}
+            />
+
+            <Column
+              dataField="engineering"
+              caption="Engineering Release?"
+              alignment="center"
+              dataType="boolean"
+              calculateCellValue={row => row.engineering && row.booked ? row.engineering : false}
             />
 
             <Column
               dataField="stickwall"
               alignment="center"
               dataType="boolean"
+              calculateCellValue={row => row.stickwall ? row.stickwall : false}
             />
 
             <Column

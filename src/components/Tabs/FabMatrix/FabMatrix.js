@@ -22,10 +22,11 @@ import Grid from '@material-ui/core/Grid';
 import DateBox from "devextreme/ui/date_box";
 
 const FabMatrix = (props) => {
-  const { rows, weeks, activities, toDays, jobs, toWeeks, toMS, getOffset } = props;
+  const { rows, weeks, activities, toDays, jobs, toWeeks, toMS, getOffset, toMondayDate } = props;
   const [data, setData] = useState(null);
   const [loaded, setLoaded] = useState(true);
   const [expanded, setExpanded] = useState(true);
+  const [columns, setColumns] = useState([]);
   const mainDataGrid = useRef(null);
 
   useEffect(() => {
@@ -45,12 +46,13 @@ const FabMatrix = (props) => {
 
     activities.forEach(activity => {
       let numWeeksForProject = toWeeks(activity.start, activity.end);
-
       let activityDates = [];
+      let start = toMondayDate(activity.start);
 
       for (let i = 0; i <= numWeeksForProject; i++) {
-        let time = activity.start.getTime() + toMS(i * 7);
-        activityDates.push(new Date(time));
+        var date = new Date(start.valueOf());
+        date.setDate(date.getDate() + (i * 7));
+        activityDates.push(date);
       }
 
       for (let i = 0; i < weeks; i++) {
@@ -67,6 +69,7 @@ const FabMatrix = (props) => {
 
   const createColumns = () => {
     let cols = mainDataGrid.current.instance.option("columns");
+    // let cols = [];
     let filteredActivities = [...new Set(activities.map(item => item.employee))];
     filteredActivities.forEach(header => {
       cols.push({ dataField: header, caption: header })
@@ -123,22 +126,22 @@ const FabMatrix = (props) => {
       <div>
         {link
           ? <input
-            placeholder="weeks before shop start"
-            onChange={e => {
-              let weeks = e.target.value;
-              let job = jobs.find(job => job.__KEY__ === row.data.jobKey);
-              let fabDate = new Date(job.start.getTime() - toMS(weeks * 7));
-              row.setValue(fabDate);
-            }}
-          />
+              placeholder="weeks before shop start"
+              onChange={e => {
+                let weeks = e.target.value;
+                let job = jobs.find(job => job.__KEY__ === row.data.jobKey);
+                let fabDate = new Date(job.start.getTime() - toMS(weeks * 7));
+                row.setValue(fabDate);
+              }}
+            />
           : <input
-            type="date"
-            onChange={e => {
-              let d = new Date(e.target.value);
-              d.setTime(d.getTime() + d.getTimezoneOffset() * 60 * 1000);
-              row.setValue(d);
-            }}
-          />
+              type="date"
+              onChange={e => {
+                let d = new Date(e.target.value);
+                d.setTime(d.getTime() + d.getTimezoneOffset() * 60 * 1000);
+                row.setValue(d);
+              }}
+            />
         }
       </div>
     )

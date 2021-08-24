@@ -1,12 +1,6 @@
 // colorful blue #00c7d9
 // dark blue #3f50b5
-
-// database call --> passes props down through app ( only 1 database call at the start )
-// pass down handlers
-// fix takeoff matrix
-
-// add shop ---> default colorkey error 
-
+// salmon color #edada6
 
 import React, { useState, useEffect } from 'react';
 import TabPanel from './components/Navigation/TabPanel';
@@ -35,44 +29,37 @@ const tabs = [
     {
         'ID': 1,
         'name': 'Production Schedule',
-        'link': '/production-schedule',
-        'component': <ProductionSchedule />
+        'link': '/production-schedule'
     },
     {
         'ID': 2,
         'name': 'Shop Drawings',
-        'link': '/shop-drawings',
-        'component': <ShopDrawings />
+        'link': '/shop-drawings'
     },
     {
         'ID': 3,
         'name': 'Takeoff Matrix',
-        'link': '/takeoff-matrix',
-        'component': <TakeoffMatrix />
+        'link': '/takeoff-matrix'
     },
     {
         'ID': 4,
         'name': 'Panel Matrix',
-        'link': '/panel-matrix',
-        'component': <PanelMatrix />
+        'link': '/panel-matrix'
     },
     {
         'ID': 5,
         'name': 'Fab Matrix',
-        'link': '/fab-matrix',
-        'component': <FabMatrix />
+        'link': '/fab-matrix'
     },
     {
         'ID': 6,
         'name': 'All Activities',
-        'link': '/all-activities',
-        'component': <AllActivities />
+        'link': '/all-activities'
     },
     {
         'ID': 7,
         'name': 'Glass & Gasket',
-        'link': '/glass-and-gasket',
-        'component': <GlassGasket />
+        'link': '/glass-and-gasket'
     },
     {
         'ID': 8,
@@ -106,6 +93,7 @@ const App = () => {
     const [weeks, setWeeks] = useState(0);
     const [metal, setMetal] = useState([]);
     const [takeoff, setTakeoff] = useState([]);
+    const [field, setField] = useState([]);
 
     useEffect(() => {
 
@@ -118,6 +106,7 @@ const App = () => {
                     response.data.fabmatrix && setFabHeaders(Object.values(response.data.fabmatrix.headers));
                     response.data.takeoffmatrix.headers && setTakeoffHeaders(Object.values(response.data.takeoffmatrix.headers));
                     response.data.metal && setMetal(Object.values(response.data.metal));
+                    response.data.field && setField(Object.values(response.data.field));
                 }
                 setProgress(100);
                 setLoaded(true);
@@ -141,8 +130,16 @@ const App = () => {
         return Math.ceil(toDays(end.getTime() - start.getTime()) / 7);
     }
 
-    const toMondayDate = (date) => {
-        return new Date(date.getTime() + toMS( 1- date.getDay() ));
+    const toMondayDate = (d) => {
+        var day = d.getDay(),
+            diff = d.getDate() - day + (day == 0 ? -6:1); // adjust when day is sunday
+        return new Date(d.setDate(diff));
+    }
+
+    Date.prototype.addDays = function(days) {
+        var date = new Date(this.valueOf());
+        date.setDate(date.getDate() + days);
+        return date;
     }
 
     const convertDates = (updatedJobs) => {
@@ -156,9 +153,7 @@ const App = () => {
                 job.weeks = Math.ceil(job.units / job.unitsPerWeek);
             }
 
-            let time = job.weeks * 7 * 24 * 60 * 60 * 1000;
-            time = job.start.getTime() + time;
-            job.end = new Date(time);
+            job.end = job.start.addDays(job.weeks);
         })
 
         updatedJobs.sort(function (a, b) {
@@ -168,7 +163,7 @@ const App = () => {
         updatedJobs.forEach(job => getJobOffset(job, updatedJobs[0]));
 
         let calculatedWeeks = toWeeks(updatedJobs[0].start, updatedJobs[updatedJobs.length - 1].start);
-        
+
         setWeeks(calculatedWeeks);
 
         createBasicRows(calculatedWeeks);
@@ -177,15 +172,14 @@ const App = () => {
     }
 
     const getJobOffset = (job, firstJob) => {
-        let jobMondayDate = new Date(job.start.getTime() + toMS(1 - job.start.getDay()));
+        let jobMondayDate = toMondayDate(job.start);
         job.offset = toWeeks(firstJob.start, jobMondayDate);
     }
 
     const getOffset = (date, start) => {
         date = new Date(date);
         start = new Date(start);
-        let days = toDays(date.getTime());
-        return Math.ceil((days - toDays(start.getTime())) / 7);
+        return toWeeks(start, date);
     }
 
     const handleUpdate = (row) => {
@@ -234,10 +228,6 @@ const App = () => {
 
     const onRowInit = (row) => {
         row.data.groupIndex = shops.length;
-        row.data.booked = false;
-        row.data.stickwall = false;
-        row.data.shop = "";
-        row.data.shopName = "";
         row.data.jobName = "job name";
         row.data.wallType = "wall type";
         row.data.weeks = 0;
@@ -248,9 +238,9 @@ const App = () => {
 
     const createBasicRows = (calculatedWeeks) => {
         let rows = [];
+        let today = toMondayDate(new Date()).getTime();
+
         for (let i = 0; i < calculatedWeeks; i++) {
-            let today = new Date();
-            today = today.getTime() + toMS(1 - today.getDay());
 
             let date = today + toMS(i * 7);
 
@@ -276,12 +266,12 @@ const App = () => {
         columns.find(col => col.dataField === "date") && columns.shift();
 
         jobs.forEach((job, jobIndex) => {
-            let startOffset = 14;
-            let metalTakeoffDate = new Date(job.start.getTime() + toMS(startOffset * 7));
+            let startOffset = job.weeksToGoBack;
+            let metalTakeoffDate = new Date(toMondayDate(job.start).getTime() - toMS(startOffset * 7));
 
             while (checkIfOnSameDate(metalTakeoffDate, jobIndex)) {
                 startOffset += 1;
-                metalTakeoffDate = new Date(job.start.getTime() - toMS(startOffset * 7));
+                metalTakeoffDate = new Date(toMondayDate(job.start).getTime() - toMS(startOffset * 7));
             }
 
             job.metalTakeoff = metalTakeoffDate;
@@ -337,6 +327,24 @@ const App = () => {
     const metalRowRemoved = (row) => {
         axios.delete(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/metal/${row.data.__KEY__}.json`)
         .then(response => setMetal([...metal]))
+        .catch(error => console.log(error))
+    }
+
+    const fieldRowInserted = (row) => {
+        axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/field/${row.data.__KEY__}.json`, row.data)
+        .then(response => setField([...field]))
+        .catch(error => console.log(error))
+    }
+
+    const fieldRowUpdated = (row) => {
+        axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/field/${row.data.__KEY__}.json`, row.data)
+        .then(response => setField([...field]))
+        .catch(error => console.log(error))
+    }
+
+    const fieldRowRemoved = (row) => {
+        axios.delete(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/field/${row.data.__KEY__}.json`)
+        .then(response => setField([...field]))
         .catch(error => console.log(error))
     }
 
@@ -404,7 +412,6 @@ const App = () => {
                                 toDays={toDays}
                                 toMS={toMS}
                                 toWeeks={toWeeks}
-                                getOffset={getOffset}
                             />
                         </Route>
                         <Route path="/fab-matrix">
@@ -418,6 +425,7 @@ const App = () => {
                                 toWeeks={toWeeks}
                                 handleUpdate={handleUpdate}
                                 getOffset={getOffset}
+                                toMondayDate={toMondayDate}
                             />
                         </Route>
                         <Route path="/all-activities">
@@ -456,9 +464,17 @@ const App = () => {
                         </Route>
                         <Route path="/field">
                             <Field
-                                data={jobs}
+                                field={field}
+                                jobs={jobs}
+                                shops={shops}
+                                handleUpdate={handleUpdate}
                                 toMS={toMS}
                                 toDays={toDays}
+                                toWeeks={toWeeks}
+                                toMondayDate={toMondayDate}
+                                rowInserted={fieldRowInserted}
+                                rowRemoved={fieldRowRemoved}
+                                rowUpdated={fieldRowUpdated}
                             />
                         </Route>
                     </Switch>

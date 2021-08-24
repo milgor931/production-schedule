@@ -9,20 +9,14 @@ import DataGrid, {
   Editing,
   Sorting
 } from 'devextreme-react/data-grid';
-import { makeStyles } from '@material-ui/core/styles';
-import axios from 'axios';
 
 const AllActivities = (props) => {
     const { jobs, handleUpdate, onRowInit, shopdrawings, fabmatrix } = props;
     const [ loaded, setLoaded ] = useState(true);
 
     const renderRow = (row) => {
-      if (row.rowType === "data") {
-        if (!row.data.booked) {
+      if (row.rowType === "data" && !row.data.booked) {
           row.rowElement.style.backgroundColor = "cyan";
-        } else if (row.data.header) {
-          row.rowElement.style.backgroundColor = "#a8a8a8";
-        }
       } 
     }
 
@@ -169,9 +163,9 @@ const AllActivities = (props) => {
                 alignment="center"
                 allowEditing={false}
                 calculateCellValue={row => {
-                    let date = fabmatrix.find(item => item.jobName === row.jobName);
+                    let date = fabmatrix.find(item => item.jobKey=== row.__KEY__);
                     row.fabDrawings = date && new Date(date.start);
-                    return date ? new Date(date.start).toLocaleDateString() : "";
+                    return date ? row.fabDrawings.toLocaleDateString() : date;
                 }}
             >
             </Column>
