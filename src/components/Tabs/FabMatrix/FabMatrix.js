@@ -50,8 +50,7 @@ const FabMatrix = (props) => {
       let start = toMondayDate(activity.start);
 
       for (let i = 0; i <= numWeeksForProject; i++) {
-        var date = new Date(start.valueOf());
-        date.setDate(date.getDate() + (i * 7));
+        let date = start.addDays(i * 7);
         activityDates.push(date);
       }
 
@@ -126,22 +125,22 @@ const FabMatrix = (props) => {
       <div>
         {link
           ? <input
-              placeholder="weeks before shop start"
-              onChange={e => {
-                let weeks = e.target.value;
-                let job = jobs.find(job => job.__KEY__ === row.data.jobKey);
-                let fabDate = new Date(job.start.getTime() - toMS(weeks * 7));
-                row.setValue(fabDate);
-              }}
-            />
+            placeholder="weeks before shop start"
+            onChange={e => {
+              let weeks = e.target.value;
+              let job = jobs.find(job => job.__KEY__ === row.data.jobKey);
+              let fabDate = new Date(job.start.getTime() - toMS(weeks * 7));
+              row.setValue(fabDate);
+            }}
+          />
           : <input
-              type="date"
-              onChange={e => {
-                let d = new Date(e.target.value);
-                d.setTime(d.getTime() + d.getTimezoneOffset() * 60 * 1000);
-                row.setValue(d);
-              }}
-            />
+            type="date"
+            onChange={e => {
+              let d = new Date(e.target.value);
+              d.setTime(d.getTime() + d.getTimezoneOffset() * 60 * 1000);
+              row.setValue(d);
+            }}
+          />
         }
       </div>
     )
@@ -168,12 +167,8 @@ const FabMatrix = (props) => {
             <AccordionDetails>
               <Grid container direction="column">
                 <Grid item>
-                  <CheckBox
-                    text="Expand Rows"
-                    value={expanded}
-                    onValueChanged={() => setExpanded(!expanded)}
-                    style={{ marginBottom: '20px' }}
-                  />
+                  <input type="checkbox" style={{ width: "30px" }} id="expand" name="expand" defaultChecked value={expanded} onChange={() => setExpanded(!expanded)} />
+                  <label htmlFor="expand">Expand All</label>
                 </Grid>
                 <Grid item>
                   <DataGrid

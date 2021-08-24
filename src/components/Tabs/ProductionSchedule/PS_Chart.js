@@ -144,12 +144,8 @@ const ProductionScheduleChart = (props) => {
             <AccordionDetails>
               <Grid container direction="column">
                 <Grid item>
-                  <CheckBox
-                    text="Expand Rows"
-                    value={expanded}
-                    onValueChanged={() => setExpanded(!expanded)}
-                    style={{ marginBottom: '20px' }}
-                  />
+                  <input type="checkbox" style={{ width: "30px" }} id="expand" name="expand" defaultChecked value={expanded} onChange={() => setExpanded(!expanded)} />
+                  <label htmlFor="expand">Expand All</label>
                 </Grid>
                 <Grid item>
                   <DataGrid
@@ -276,7 +272,7 @@ const ProductionScheduleChart = (props) => {
 
             <SearchPanel visible highlightCaseSensitive={false} />
             <Grouping autoExpandAll={expanded} />
-            <LoadPanel enabled showIndicator/>
+            <LoadPanel enabled showIndicator />
             <GroupPanel visible />
 
             <Editing

@@ -20,6 +20,7 @@ import Grid from '@material-ui/core/Grid';
 const TakeoffMatrix = (props) => {
     const { rows, weeks, jobs, headers, createRows, takeoff, toWeeks, toDays, toMS, rowInserted, rowUpdated, rowRemoved } = props;
     const [loaded, setLoaded] = useState(true);
+
     const mainDataGrid = useRef(null);
 
     const rowPrepared = (row) => {

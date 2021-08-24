@@ -94,6 +94,7 @@ const App = () => {
     const [metal, setMetal] = useState([]);
     const [takeoff, setTakeoff] = useState([]);
     const [field, setField] = useState([]);
+    const [jobsites, setJobsites] = useState([]);
 
     useEffect(() => {
 
@@ -107,6 +108,7 @@ const App = () => {
                     response.data.takeoffmatrix.headers && setTakeoffHeaders(Object.values(response.data.takeoffmatrix.headers));
                     response.data.metal && setMetal(Object.values(response.data.metal));
                     response.data.field && setField(Object.values(response.data.field));
+                    response.data.jobsites && setJobsites(Object.values(response.data.jobsites));
                 }
                 setProgress(100);
                 setLoaded(true);
@@ -383,6 +385,7 @@ const App = () => {
                                 toMS={toMS}
                                 handleUpdate={handleUpdate}
                                 toWeeks={toWeeks}
+                                toMondayDate={toMondayDate}
                             />
                         </Route>
                         <Route path="/takeoff-matrix">
@@ -465,6 +468,7 @@ const App = () => {
                         <Route path="/field">
                             <Field
                                 field={field}
+                                jobsites={jobsites}
                                 jobs={jobs}
                                 shops={shops}
                                 handleUpdate={handleUpdate}

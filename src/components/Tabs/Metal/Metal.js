@@ -129,14 +129,10 @@ const Metal = (props) => {
         </AccordionSummary>
         <AccordionDetails>
           <Grid container direction="column">
-            {/* <Grid item>
-              <CheckBox
-                text="Expand Rows"
-                value={expanded}
-                onValueChanged={() => setExpanded(!expanded)}
-                style={{ marginBottom: '20px' }}
-              />
-            </Grid> */}
+            <Grid item>
+              <input type="checkbox" style={{ width: "30px" }} id="expand" name="expand" defaultChecked value={expanded} onChange={() => setExpanded(!expanded)} />
+              <label htmlFor="expand">Expand All</label>
+            </Grid>
             <Grid item>
               <DataGrid
                 dataSource={metal}
@@ -163,6 +159,7 @@ const Metal = (props) => {
                 />
 
                 <Grouping autoExpandAll={expanded} />
+                {/* <LoadPanel enabled showIndicator /> */}
 
                 <Column type="buttons">
                   <Button name="delete" />

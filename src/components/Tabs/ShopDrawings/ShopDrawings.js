@@ -21,7 +21,7 @@ import CheckBox from 'devextreme-react/check-box';
 import Grid from '@material-ui/core/Grid';
 
 const ShopDrawings = (props) => {
-    const { rows, weeks, activities, toDays, jobs, toWeeks, toMS } = props;
+    const { rows, weeks, activities, toDays, jobs, toWeeks, toMS, toMondayDate } = props;
     const [ data, setData] = useState(null);
     const [ loaded, setLoaded ] = useState(true);
     const [ expanded, setExpanded ] = useState(true);
@@ -46,10 +46,11 @@ const ShopDrawings = (props) => {
             let numWeeksForProject = toWeeks(activity.start, activity.end);
 
             let activityDates = [];
-    
+            let start = toMondayDate(activity.start);
+
             for (let i = 0; i <= numWeeksForProject; i++) {
-                let time = activity.start.getTime() + toMS(i * 7);
-                activityDates.push(new Date(time));
+                let date = start.addDays(i * 7);
+                activityDates.push(date);
             }
 
             for (let i = 0; i < weeks; i++) {
@@ -118,12 +119,8 @@ const ShopDrawings = (props) => {
                 <AccordionDetails>
                 <Grid container direction="column">
                     <Grid item>
-                    <CheckBox 
-                        text="Expand Rows"
-                        value={expanded}
-                        onValueChanged={() => setExpanded(!expanded)} 
-                        style={{ marginBottom: '20px' }}
-                    />
+                        <input type="checkbox" style={{ width: "30px" }} id="expand" name="expand" defaultChecked value={expanded} onChange={() => setExpanded(!expanded)} />
+                        <label htmlFor="expand">Expand All</label>
                     </Grid>
                     <Grid item>
                     <DataGrid

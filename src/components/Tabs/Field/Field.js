@@ -28,7 +28,7 @@ import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import Grid from '@material-ui/core/Grid';
 
 const Field = (props) => {
-  const { field, jobs, shops, toMS, toDays, toWeeks, toMondayDate, handleUpdate, rowInserted, rowUpdated, rowRemoved } = props;
+  const { field, jobsites, jobs, shops, toMS, toDays, toWeeks, toMondayDate, handleUpdate, rowInserted, rowUpdated, rowRemoved } = props;
   const [expanded, setExpanded] = useState(true);
   const [data, setData] = useState([]);
   const [today, setToday] = useState(new Date());
@@ -38,7 +38,7 @@ const Field = (props) => {
 
   useEffect(() => {
     calculateForOffSets();
-  }, [ field ])
+  }, [field])
 
   const convertToDate = (value) => {
     let thisMonday = today.getTime() + toMS(1 - today.getDay())
@@ -82,6 +82,16 @@ const Field = (props) => {
 
     setTotalEmps(total);
     setColumns(newCols);
+  }
+
+  const jobsiteUpdated = (row) => {
+    axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/jobsites/${row.data.__KEY__}.json`, row.data)
+    .catch(error => console.log(error))
+  }
+
+  const jobsiteRemoved = (row) => {
+    axios.delete(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/jobsites/${row.data.__KEY__}.json`)
+    .catch(error => console.log(error))
   }
 
 
@@ -130,14 +140,60 @@ const Field = (props) => {
         </AccordionSummary>
         <AccordionDetails>
           <Grid container direction="column">
-            {/* <Grid item>
-              <CheckBox
-                text="Expand Rows"
-                value={expanded}
-                onValueChanged={() => setExpanded(!expanded)}
-                style={{ marginBottom: '20px' }}
-              />
-            </Grid> */}
+            <Grid item>
+              <input type="checkbox" style={{ width: "30px" }} id="expand" name="expand" defaultChecked value={expanded} onChange={() => setExpanded(!expanded)} />
+              <label htmlFor="expand">Expand All</label>
+            </Grid>
+
+            <Grid item style={{marginTop: "20px"}}>
+
+              <Accordion>
+                <AccordionSummary
+                  expandIcon={<ExpandMoreIcon />}
+                  aria-controls="panel1a-content"
+                  id="panel1a-header"
+                >
+                  <Typography>Edit Jobsites</Typography>
+                </AccordionSummary>
+                <AccordionDetails>
+                  <DataGrid
+                    dataSource={jobsites}
+                    showRowLines
+                    showBorders
+                    allowColumnResizing
+                    columnAutoWidth
+                    highlightChanges
+                    repaintChangesOnly
+                    twoWayBindingEnabled
+                    wordWrapEnabled
+                    autoExpandAll
+                    highlightChanges
+                    onRowUpdated={jobsiteUpdated}
+                    onRowRemoved={jobsiteRemoved}
+                    onRowInserted={jobsiteUpdated}
+                  >
+                    <Editing
+                      mode="cell"
+                      allowUpdating
+                      allowDeleting
+                      allowAdding
+                      useIcons
+                    />
+
+                    <Column type="buttons">
+                      <Button name="delete" />
+                    </Column>
+
+                    <Column
+                      dataField="jobsite"
+                      caption="Jobsite"
+                      alignment="left"
+                    />
+                  </DataGrid>
+                </AccordionDetails>
+              </Accordion>
+            </Grid>
+
             <Grid item>
               <DataGrid
                 dataSource={field}
@@ -193,7 +249,7 @@ const Field = (props) => {
                   minWidth={250}
                 >
                   <Lookup
-                    dataSource={[{jobsite: "Fremont"}, {jobsite: "Southern California"}, {jobsite: "Vegas"}]}
+                    dataSource={jobsites}
                     displayExpr="jobsite"
                     valueExpr="jobsite"
                   />
@@ -311,7 +367,7 @@ const Field = (props) => {
           calculateCellValue={row => {
             let cols = datagrid.current.instance.getVisibleColumns().slice(5).filter(col => row[col.dataField]).map(col => row[col.dataField]);
             const rowTotal = cols.length > 0 ? cols.reduce((total, col) => total + col) : 0;
-            const avgEmployees = rowTotal > 0 ? Math.ceil(rowTotal/cols.length) : 0;
+            const avgEmployees = rowTotal > 0 ? Math.ceil(rowTotal / cols.length) : 0;
             return avgEmployees;
           }}
         />
