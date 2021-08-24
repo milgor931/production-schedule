@@ -100,7 +100,7 @@ const App = () => {
         axios.get(`https://ww-production-schedule-default-rtdb.firebaseio.com/data.json`)
             .then(response => {
                 if (response.data) {
-                    response.data.shops && setShops(response.data.shops);
+                    response.data.shops && setShops(Object.values(response.data.shops).sort((x, y) => { return x.index - y.index }));
                     response.data.jobs && setJobs(convertDates(Object.values(response.data.jobs)));
                     response.data.shopdrawings.headers && setShopDrawingHeaders(Object.values(response.data.shopdrawings.headers));
                     response.data.fabmatrix && setFabHeaders(Object.values(response.data.fabmatrix.headers));
