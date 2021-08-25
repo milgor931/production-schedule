@@ -25,6 +25,7 @@ const ShopDrawings = (props) => {
     const [ data, setData] = useState(null);
     const [ loaded, setLoaded ] = useState(true);
     const [ expanded, setExpanded ] = useState(true);
+    const [ columns, setColumns ] = useState([]);
     const mainDataGrid = useRef(null);
 
     useEffect(() => {
@@ -111,8 +112,7 @@ const ShopDrawings = (props) => {
                 <AccordionSummary
                     expandIcon={<ExpandMoreIcon />}
                     aria-controls="panel1a-content"
-                    id="panel1a-header"
-                    
+                    id="panel1a-header"   
                 >
                 <Typography>Adjust Columns</Typography>
                 </AccordionSummary>
@@ -244,7 +244,6 @@ const ShopDrawings = (props) => {
                 width={"auto"}
                 allowEditing={false}
             />
-        
           </DataGrid>
         </div>
         : 

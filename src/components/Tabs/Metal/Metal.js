@@ -1,18 +1,13 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import Spinner from '../../UI/Spinner';
-import CheckBox from "devextreme/ui/check_box";
 import DataGrid, {
   Column,
   Grouping,
-  GroupPanel,
   LoadPanel,
   SearchPanel,
   Summary,
   TotalItem,
-  GroupItem,
   Sorting,
-  SortByGroupSummaryInfo,
   Editing,
   Button,
   RequiredRule,

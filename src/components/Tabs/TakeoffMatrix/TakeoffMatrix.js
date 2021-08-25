@@ -21,8 +21,6 @@ const TakeoffMatrix = (props) => {
     const { rows, weeks, jobs, headers, createRows, takeoff, toWeeks, toDays, toMS, rowInserted, rowUpdated, rowRemoved } = props;
     const [loaded, setLoaded] = useState(true);
 
-    const mainDataGrid = useRef(null);
-
     const rowPrepared = (row) => {
         row.rowElement.style.backgroundColor = row.rowIndex % 2 ? "#b5bdc9" : "white";
     }
@@ -115,7 +113,6 @@ const TakeoffMatrix = (props) => {
                         autoExpandAll
                         highlightChanges
                         onRowPrepared={rowPrepared}
-                        ref={mainDataGrid}
                     >
 
                         <GroupPanel visible={false} autoExpandAll />

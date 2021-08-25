@@ -130,7 +130,8 @@ const PanelMatrix = (props) => {
                             row.setValue(date);
                         }}
                     />
-                    : <input
+                    : 
+                    <input
                         type="date"
                         value={row.data.panelRelease}
                         onChange={e => {
@@ -139,6 +140,7 @@ const PanelMatrix = (props) => {
                             row.setValue(d);
                         }}
                     />
+                    
                 }
             </div>
         )
