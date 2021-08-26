@@ -30,12 +30,13 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const ProductionScheduleGantt = (props) => {
-    const { jobs, shops, toMS, toDays, toMondayDate } = props;
+    const { data, toMS, toDays, toMondayDate } = props;
     const [ loaded, setLoaded ] = useState(true);
     const [ expanded, setExpanded ] = useState(true);
     const [ today, setToday ] = useState(new Date());
     const [ columns, setColumns ] = useState([]);
-    const datagridRef = useRef(null);
+    const jobs = data.jobs;
+    const shops = data.shops;
 
     useEffect(() => {
       calculateForOffSets();
@@ -138,7 +139,6 @@ const ProductionScheduleGantt = (props) => {
             showColumnLines={true}
             onCellPrepared={cellPrepared}
             onRowPrepared={renderRow}
-            ref={datagridRef}
           >
 
             <GroupPanel visible autoExpandAll/>

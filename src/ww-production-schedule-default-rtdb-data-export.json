@@ -1,5 +1,130 @@
-[
-  {
+{
+  "fabmatrix" : {
+    "headers" : {
+      "12200732-9ebf-bece-262f-269556502b1e" : {
+        "__KEY__" : "12200732-9ebf-bece-262f-269556502b1e",
+        "activity" : "Something",
+        "employee" : "Christian",
+        "end" : "2021-08-30T07:00:00.000Z",
+        "fabOffset" : 3,
+        "jobKey" : "d6273a85-5de2-da84-613e-41a4fd3631ad",
+        "linkToShopDate" : true,
+        "start" : "2021-06-22T01:05:12.614Z",
+        "weeksBeforeStart" : 6
+      },
+      "1bbfa7f2-c799-5e26-716a-858224855e66" : {
+        "__KEY__" : "1bbfa7f2-c799-5e26-716a-858224855e66",
+        "activity" : "Project 63 Activity",
+        "employee" : "Edgar",
+        "end" : "2021-10-25T07:00:00.000Z",
+        "fabOffset" : 44,
+        "jobKey" : "e55ad8c8-e1c1-1b12-25c0-2bebd9e9d69a",
+        "linkToShopDate" : false,
+        "start" : "2021-08-23T07:00:00.000Z",
+        "weeksBeforeStart" : 6
+      },
+      "364a5bf6-3938-ebaa-6a17-0d181a4bb1b6" : {
+        "__KEY__" : "364a5bf6-3938-ebaa-6a17-0d181a4bb1b6",
+        "activity" : "Google Gibraltar Bldg. 2",
+        "employee" : "Pedro",
+        "end" : "2021-09-27T07:00:00.000Z",
+        "fabOffset" : -6,
+        "jobKey" : "acd95726-d56f-e6a3-c892-1a38bb5487dd",
+        "linkToShopDate" : true,
+        "start" : "2021-05-24T20:46:01.836Z",
+        "weeksBeforeStart" : 6
+      },
+      "64799f2f-7c06-ec7c-3e9b-3264b38a65bc" : {
+        "__KEY__" : "64799f2f-7c06-ec7c-3e9b-3264b38a65bc",
+        "activity" : "New Activity",
+        "employee" : "Christine",
+        "end" : "2021-09-20T07:00:00.000Z",
+        "fabOffset" : -6,
+        "jobKey" : "4fd1967c-2d9d-2ec9-6c82-7b28eb2990b2",
+        "start" : "2021-08-24T15:46:14.717Z",
+        "weeksBeforeStart" : 6
+      },
+      "68d57a84-bb37-3286-338d-1533a32e8b7a" : {
+        "__KEY__" : "68d57a84-bb37-3286-338d-1533a32e8b7a",
+        "activity" : "Training",
+        "employee" : "Pedro",
+        "end" : "2021-08-30T07:00:00.000Z",
+        "fabOffset" : 38,
+        "jobKey" : "78f59956-6d88-11ec-44ab-5c5dc286da3d",
+        "jobName" : "Instil Bio",
+        "linkToShopDate" : true,
+        "start" : "2021-08-03T19:36:38.687Z",
+        "weeksBeforeStart" : "3"
+      },
+      "cbd514a6-b5f5-0e2a-c5cb-c9ceed2b3d2b" : {
+        "__KEY__" : "cbd514a6-b5f5-0e2a-c5cb-c9ceed2b3d2b",
+        "activity" : "Fab Drawings For Mathilda",
+        "employee" : "Yana",
+        "end" : "2021-11-15T08:00:00.000Z",
+        "fabOffset" : 3,
+        "jobKey" : "c6160902-1e03-32da-43ef-d285c5b7431e",
+        "linkToShopDate" : true,
+        "start" : "2021-02-08T20:38:12.597Z",
+        "weeksBeforeStart" : 6
+      },
+      "df8bff25-41cd-3a2c-8285-e33c74858ded" : {
+        "__KEY__" : "df8bff25-41cd-3a2c-8285-e33c74858ded",
+        "activity" : "100 Altair",
+        "employee" : "Christian",
+        "end" : "2022-04-14T07:00:00.000Z",
+        "fabOffset" : 6,
+        "jobKey" : "35696dbd-1916-c3ef-489a-d366e919ba17",
+        "linkToShopDate" : true,
+        "start" : "2022-03-17T18:11:01.460Z",
+        "weeksBeforeStart" : 6
+      }
+    }
+  },
+  "field" : {
+    "2b146c98-e0c1-27ab-7084-b261b5b69517" : {
+      "__KEY__" : "2b146c98-e0c1-27ab-7084-b261b5b69517",
+      "jobName" : "Stephens Creek Phase 2",
+      "jobsite" : "Fremont",
+      "numberOfEmployees" : 12,
+      "offsetFromField" : 12
+    },
+    "2bd8628e-511a-09ce-8142-face54799d73" : {
+      "__KEY__" : "2bd8628e-511a-09ce-8142-face54799d73",
+      "jobName" : "UCI College of Health Science",
+      "jobsite" : "Southern California",
+      "numberOfEmployees" : 12,
+      "offsetFromField" : 0
+    },
+    "50afb594-396e-77e4-3e6a-e6519f0c1c57" : {
+      "__KEY__" : "50afb594-396e-77e4-3e6a-e6519f0c1c57",
+      "jobName" : "Valley Children's",
+      "jobsite" : "Southern California",
+      "numberOfEmployees" : 100,
+      "offsetFromField" : 2
+    },
+    "7485618e-47b0-d678-93d9-579d1b7898d4" : {
+      "__KEY__" : "7485618e-47b0-d678-93d9-579d1b7898d4",
+      "jobName" : "Stephens Creek Phase 2",
+      "jobsite" : "Southern California",
+      "numberOfEmployees" : 3,
+      "offsetFromField" : 2
+    },
+    "7815c39c-572e-1c6b-396d-980b65cafdd8" : {
+      "__KEY__" : "7815c39c-572e-1c6b-396d-980b65cafdd8",
+      "jobName" : "UCI College of Health Science",
+      "jobsite" : "Southern California",
+      "numberOfEmployees" : 13,
+      "offsetFromField" : 1
+    },
+    "87a71a98-729e-1b2c-410d-be63eb5e5312" : {
+      "__KEY__" : "87a71a98-729e-1b2c-410d-be63eb5e5312",
+      "jobName" : "Pathline Bldg. 8",
+      "jobsite" : "Fremont",
+      "numberOfEmployees" : 20,
+      "offsetFromField" : 1
+    }
+  },
+  "jobs" : [ {
     "PM" : "Lisa Castro",
     "__KEY__" : "1c9a985e-b65c-6c4e-8686-0da2d374cb6a",
     "booked" : true,
@@ -40,8 +165,7 @@
     "wallType" : "wall type",
     "weeks" : 9,
     "weeksToGoBack" : 14
-  },
-  {
+  }, {
     "__KEY__" : "26dc8417-ec8a-69db-8d35-e66ad86a878e",
     "booked" : false,
     "customer" : "Devcon",
@@ -69,8 +193,7 @@
     "wallType" : "wall type",
     "weeks" : 85,
     "weeksToGoBack" : 5
-  },
-  {
+  }, {
     "PM" : "Shiloh",
     "__KEY__" : "35696dbd-1916-c3ef-489a-d366e919ba17",
     "booked" : false,
@@ -105,8 +228,7 @@
     "wallType" : "wall type",
     "weeks" : 10,
     "weeksToGoBack" : 5
-  },
-  {
+  }, {
     "__KEY__" : "4358c8ca-296b-abfb-245b-aa062dd5e280",
     "booked" : false,
     "customer" : "Vance Brown",
@@ -134,8 +256,7 @@
     "wallType" : "wall type",
     "weeks" : 1,
     "weeksToGoBack" : 5
-  },
-  {
+  }, {
     "__KEY__" : "4798ac4c-5aca-abb6-03e8-343c6d504ac3",
     "booked" : false,
     "customer" : "Vance Brown",
@@ -163,8 +284,7 @@
     "wallType" : "wall type",
     "weeks" : 4,
     "weeksToGoBack" : 3
-  },
-  {
+  }, {
     "__KEY__" : "4fd1967c-2d9d-2ec9-6c82-7b28eb2990b2",
     "booked" : true,
     "customer" : "Hathaway",
@@ -196,8 +316,7 @@
     "wallType" : "wall type",
     "weeks" : 73,
     "weeksToGoBack" : 7
-  },
-  {
+  }, {
     "__KEY__" : "555533d5-a8d4-8541-a45b-580d5fe4d1c6",
     "booked" : true,
     "customer" : "Devcon",
@@ -229,8 +348,7 @@
     "wallType" : "wall type",
     "weeks" : 84,
     "weeksToGoBack" : 5
-  },
-  {
+  }, {
     "__KEY__" : "78f59956-6d88-11ec-44ab-5c5dc286da3d",
     "booked" : true,
     "customer" : "Vance Brown",
@@ -253,8 +371,7 @@
     "wallType" : "Unitized CW Custsom",
     "weeks" : 6,
     "weeksToGoBack" : 14
-  },
-  {
+  }, {
     "__KEY__" : "7e111970-2bd7-c392-5121-eaba375b9c45",
     "booked" : false,
     "customer" : "Devcon",
@@ -282,8 +399,7 @@
     "wallType" : "Unitized CW Custom",
     "weeks" : 2,
     "weeksToGoBack" : 3
-  },
-  {
+  }, {
     "__KEY__" : "8439bc95-7873-e44d-57a0-e8f4dc6ec8cd",
     "booked" : true,
     "customer" : "Devcon",
@@ -306,8 +422,7 @@
     "wallType" : "Unitized CW Custom",
     "weeks" : 3,
     "weeksToGoBack" : 14
-  },
-  {
+  }, {
     "__KEY__" : "9db88857-c46c-5c91-c2f1-7b8c56a08874",
     "booked" : true,
     "customer" : "W.E. O'Neil",
@@ -335,8 +450,7 @@
     "wallType" : "wall type",
     "weeks" : 10,
     "weeksToGoBack" : 3
-  },
-  {
+  }, {
     "__KEY__" : "a2455389-16c2-ab29-99ba-9e64e3556473",
     "booked" : false,
     "customer" : "Turner",
@@ -364,8 +478,7 @@
     "wallType" : "wall type",
     "weeks" : 1,
     "weeksToGoBack" : 9
-  },
-  {
+  }, {
     "__KEY__" : "a39dc48d-5387-55d9-a826-8c66ed7c1e5b",
     "booked" : false,
     "customer" : "Level 10",
@@ -393,8 +506,7 @@
     "wallType" : "wall type",
     "weeks" : 41,
     "weeksToGoBack" : 3
-  },
-  {
+  }, {
     "__KEY__" : "c56346f4-e8b6-287a-9ca4-18747717c6cc",
     "booked" : true,
     "customer" : "DPR",
@@ -422,8 +534,7 @@
     "wallType" : "wall type",
     "weeks" : 5,
     "weeksToGoBack" : 3
-  },
-  {
+  }, {
     "__KEY__" : "c6160902-1e03-32da-43ef-d285c5b7431e",
     "booked" : true,
     "customer" : "Level 10",
@@ -446,8 +557,7 @@
     "wallType" : "Unitized CW Custom",
     "weeks" : 1,
     "weeksToGoBack" : 14
-  },
-  {
+  }, {
     "__KEY__" : "c9d964f6-ea07-893d-6df9-f86288d9ed71",
     "booked" : false,
     "customer" : "Vance Brown",
@@ -475,8 +585,7 @@
     "wallType" : "wall type",
     "weeks" : 4,
     "weeksToGoBack" : 5
-  },
-  {
+  }, {
     "__KEY__" : "d5933d0d-c1df-6e3a-606d-9d8585e34adb",
     "booked" : true,
     "customer" : "Devcon",
@@ -504,8 +613,7 @@
     "wallType" : "wall type",
     "weeks" : 10,
     "weeksToGoBack" : 6
-  },
-  {
+  }, {
     "__KEY__" : "d6273a85-5de2-da84-613e-41a4fd3631ad",
     "booked" : true,
     "customer" : "Hathaway",
@@ -529,8 +637,7 @@
     "wallType" : "Unitized CW Custom",
     "weeks" : 20,
     "weeksToGoBack" : 6
-  },
-  {
+  }, {
     "__KEY__" : "da46731b-b16a-cc7d-d8a6-f96117620362",
     "booked" : false,
     "customer" : "MJ DEAN",
@@ -558,8 +665,7 @@
     "wallType" : "wall type",
     "weeks" : 4,
     "weeksToGoBack" : 7
-  },
-  {
+  }, {
     "__KEY__" : "ee140dec-ed3b-6c40-0842-fceb7c653d71",
     "booked" : true,
     "customer" : "Hathaway",
@@ -583,8 +689,7 @@
     "wallType" : "Unitized CW Custom",
     "weeks" : 1,
     "weeksToGoBack" : 11
-  },
-  {
+  }, {
     "__KEY__" : "fc645e4b-37e3-a111-6ccb-233931843d3d",
     "booked" : true,
     "customer" : "Devcon",
@@ -607,5 +712,196 @@
     "wallType" : "Unitized CW Custom",
     "weeks" : 4,
     "weeksToGoBack" : 14
+  } ],
+  "jobsites" : {
+    "3d359a1d-eb7c-af18-9196-5502bc1e8598" : {
+      "__KEY__" : "3d359a1d-eb7c-af18-9196-5502bc1e8598",
+      "jobsite" : "Southern California"
+    },
+    "81527583-9567-72b1-6914-aa9eb4917a4d" : {
+      "__KEY__" : "81527583-9567-72b1-6914-aa9eb4917a4d",
+      "jobsite" : "Fremont"
+    },
+    "e8aacb7d-b301-e274-dae2-f7db227fd7d4" : {
+      "__KEY__" : "e8aacb7d-b301-e274-dae2-f7db227fd7d4",
+      "jobsite" : "Las Vegas"
+    }
+  },
+  "metal" : {
+    "148e53d7-e100-bc1d-5cab-22b54825a284" : {
+      "__KEY__" : "148e53d7-e100-bc1d-5cab-22b54825a284",
+      "jobName" : "600 Ellis",
+      "lbs" : 500,
+      "weekStart" : "2021-08-30T07:00:00.000Z"
+    },
+    "1c37799b-c57a-d82a-26c4-670c9802ccd9" : {
+      "__KEY__" : "1c37799b-c57a-d82a-26c4-670c9802ccd9",
+      "jobName" : "600 Ellis",
+      "lbs" : 60,
+      "weekStart" : "2021-08-23T07:00:00.000Z"
+    },
+    "1c4218b0-fd17-c1fe-bd37-eccea47b86e1" : {
+      "__KEY__" : "1c4218b0-fd17-c1fe-bd37-eccea47b86e1",
+      "jobName" : "UCI College of Health Science",
+      "lbs" : 89,
+      "weekStart" : "2021-09-08T07:00:00.000Z"
+    },
+    "6d9b1125-31bc-227e-97c9-538915e25a59" : {
+      "__KEY__" : "6d9b1125-31bc-227e-97c9-538915e25a59",
+      "jobName" : "Pathline Bldg. 8",
+      "lbs" : 30,
+      "weekStart" : "2021-08-24T07:00:00.000Z"
+    }
+  },
+  "shopdrawings" : {
+    "headers" : {
+      "1a042265-bbed-5a3c-5531-617b7cb904a2" : {
+        "__KEY__" : "1a042265-bbed-5a3c-5531-617b7cb904a2",
+        "activity" : "Shop Drawings for Stephens Creek",
+        "employee" : "Jessica D",
+        "end" : "2021-09-06T07:00:00.000Z",
+        "jobName" : "Stephens Creek Phase 2",
+        "jobNumber" : "10-100",
+        "start" : "2021-08-16T07:00:00.000Z"
+      },
+      "238667ac-f365-3f43-ab8a-e2f1cb602533" : {
+        "__KEY__" : "238667ac-f365-3f43-ab8a-e2f1cb602533",
+        "activity" : "Shop Drawings for Something Else",
+        "employee" : "Jessica D",
+        "end" : "2021-10-25T07:00:00.000Z",
+        "jobName" : "UCI College of Health Science",
+        "jobNumber" : "10-233",
+        "start" : "2021-09-14T06:52:58.000Z"
+      },
+      "25c207b0-cc32-6bd5-8842-1ae374b6e993" : {
+        "__KEY__" : "25c207b0-cc32-6bd5-8842-1ae374b6e993",
+        "activity" : "Shop Drawings for Project 63",
+        "employee" : "Juan A",
+        "end" : "2021-09-27T07:00:00.000Z",
+        "jobName" : "Project 63",
+        "start" : "2021-08-30T07:00:00.000Z"
+      },
+      "3517d216-85cb-a53b-cfe7-3d456c2d3149" : {
+        "__KEY__" : "3517d216-85cb-a53b-cfe7-3d456c2d3149",
+        "activity" : "Shop Drawings",
+        "employee" : "Juan A",
+        "end" : "2021-09-13T07:00:00.000Z",
+        "jobName" : "UNLV Medical EDU",
+        "start" : "2021-08-23T07:00:00.000Z"
+      },
+      "45d8db52-c93f-af33-4ca1-529e91ce9ab1" : {
+        "__KEY__" : "45d8db52-c93f-af33-4ca1-529e91ce9ab1",
+        "activity" : "Shop Drawings",
+        "employee" : "Saline",
+        "end" : "2021-12-20T08:00:00.000Z",
+        "jobName" : "Pathline Bldg. 8",
+        "start" : "2021-11-08T08:00:00.000Z"
+      },
+      "4d67a467-ce9e-c595-7942-4d2251d7b7e7" : {
+        "__KEY__" : "4d67a467-ce9e-c595-7942-4d2251d7b7e7",
+        "activity" : "Shop Drawings",
+        "employee" : "Mike B",
+        "end" : "2021-10-25T07:00:00.000Z",
+        "jobName" : "100 Altair",
+        "start" : "2021-09-27T07:00:00.000Z"
+      },
+      "517407b1-1a50-e759-2573-426deac2e8e4" : {
+        "__KEY__" : "517407b1-1a50-e759-2573-426deac2e8e4",
+        "activity" : "Mockups",
+        "employee" : "Juan A",
+        "end" : "2022-02-14T08:00:00.000Z",
+        "jobName" : "600 Ellis",
+        "start" : "2021-09-20T07:00:00.000Z"
+      },
+      "8823615f-3de9-ea8e-8866-c46fb4dcd754" : {
+        "__KEY__" : "8823615f-3de9-ea8e-8866-c46fb4dcd754",
+        "activity" : "Shop Drawings for Pathline",
+        "employee" : "Saline",
+        "end" : "2021-09-13T07:00:00.000Z",
+        "jobName" : "West Edge",
+        "start" : "2021-08-09T07:00:00.000Z"
+      },
+      "ae4440b4-5cf1-824a-f1fd-e1d5b5fccb38" : {
+        "__KEY__" : "ae4440b4-5cf1-824a-f1fd-e1d5b5fccb38",
+        "activity" : "Shop Drawings for Valley Children's",
+        "employee" : "Saline",
+        "end" : "2021-11-08T08:00:00.000Z",
+        "jobName" : "Valley Children's",
+        "start" : "2021-09-13T07:00:00.000Z"
+      },
+      "b0e371e9-c454-b677-68d8-5dfda153eaed" : {
+        "__KEY__" : "b0e371e9-c454-b677-68d8-5dfda153eaed",
+        "activity" : "Shop Drawings",
+        "employee" : "Mike B",
+        "end" : "2021-09-27T07:00:00.000Z",
+        "jobName" : "Lawson Lane West 2",
+        "start" : "2021-08-16T07:00:00.000Z"
+      }
+    }
+  },
+  "shops" : [ {
+    "__KEY__" : "b7e3d8e6-abc8-2e2e-e393-aca799ca67ea",
+    "colorkey" : "#fffc9c",
+    "fontColor" : "#000000",
+    "index" : 0,
+    "shop" : "Shop B"
+  }, {
+    "__KEY__" : "5d5bca6c-2e4f-534e-68e3-c991d6c96a8b",
+    "colorkey" : "#bae0c3",
+    "fontColor" : "#000000",
+    "index" : 1,
+    "shop" : "Shop A"
+  }, {
+    "__KEY__" : "b2e444c3-5f8c-fe87-3f54-165710a577ad",
+    "colorkey" : "#d5d3f2",
+    "fontColor" : "#000000",
+    "index" : 2,
+    "shop" : "La Verne"
+  } ],
+  "takeoffmatrix" : {
+    "headers" : {
+      "0e4e6845-d185-dc86-55c2-dc2aa859a591" : {
+        "__KEY__" : "0e4e6845-d185-dc86-55c2-dc2aa859a591",
+        "dataField" : "idDrafting",
+        "header" : "Id's Drafting",
+        "offset" : -7
+      },
+      "494fb539-ee14-79ec-de37-13a462abd643" : {
+        "__KEY__" : "494fb539-ee14-79ec-de37-13a462abd643",
+        "dataField" : "checkModel",
+        "header" : "Check Model",
+        "offset" : -2
+      },
+      "a5288f34-d733-9e20-a40b-c92cb546615a" : {
+        "__KEY__" : "a5288f34-d733-9e20-a40b-c92cb546615a",
+        "dataField" : "palletSchedule",
+        "header" : "Pallet Schedule",
+        "offset" : -1
+      },
+      "a7396939-d2e8-68be-bc1c-8b6879408cd0" : {
+        "__KEY__" : "a7396939-d2e8-68be-bc1c-8b6879408cd0",
+        "dataField" : "metalTakeoff",
+        "header" : "Metal Takeoff",
+        "offset" : 0
+      },
+      "c42aad33-79e7-9dac-57b4-b8d37e35c5e9" : {
+        "__KEY__" : "c42aad33-79e7-9dac-57b4-b8d37e35c5e9",
+        "dataField" : "glassTakeoff",
+        "header" : "Glass Takeoff",
+        "offset" : 1
+      },
+      "d03701d7-aedc-cf56-7948-812c10a69823" : {
+        "__KEY__" : "d03701d7-aedc-cf56-7948-812c10a69823",
+        "dataField" : "doorSchedule",
+        "header" : "Door Schedule",
+        "offset" : 1
+      },
+      "df4a9da3-71bc-dad9-e201-08ca59bc55c5" : {
+        "__KEY__" : "df4a9da3-71bc-dad9-e201-08ca59bc55c5",
+        "dataField" : "shopUseBrakeShapesAndSteel",
+        "header" : "Shop Use Brake Shapes and Steel",
+        "offset" : 2
+      }
+    }
   }
-]
+}

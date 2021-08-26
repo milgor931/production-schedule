@@ -11,26 +11,26 @@ import DataGrid, {
   RequiredRule,
   Lookup
 } from 'devextreme-react/data-grid';
-import axios from 'axios';
 import Accordion from '@material-ui/core/Accordion';
 import AccordionSummary from '@material-ui/core/AccordionSummary';
 import AccordionDetails from '@material-ui/core/AccordionDetails';
 import Typography from '@material-ui/core/Typography';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
-import CheckBox from 'devextreme-react/check-box';
 import Grid from '@material-ui/core/Grid';
-import DateBox from "devextreme/ui/date_box";
 
 const FabMatrix = (props) => {
-  const { rows, weeks, activities, toDays, jobs, toWeeks, toMS, getOffset, toMondayDate } = props;
-  const [data, setData] = useState(null);
+  const { data, handleUpdate, rows, weeks, toWeeks, toMS, getOffset, toMondayDate } = props;
   const [loaded, setLoaded] = useState(true);
   const [expanded, setExpanded] = useState(true);
   const [columns, setColumns] = useState([]);
+  const [fabMatrixData, setFabMatrixData] = useState([]);
   const mainDataGrid = useRef(null);
 
+  const jobs = data.jobs ? data.jobs : [];
+  const fabmatrix = data.fabmatrix ? data.fabmatrix : [];
+
   useEffect(() => {
-    activities.forEach(activity => {
+    fabmatrix.forEach(activity => {
       activity.start = new Date(activity.start);
       activity.end = new Date(activity.end);
     })
@@ -40,68 +40,47 @@ const FabMatrix = (props) => {
 
   const createRows = () => {
     let newRows = JSON.parse(JSON.stringify(rows));
-    let cols = mainDataGrid.current.instance.option("columns");
-    let columns = [...cols];
-    columns.shift();
 
-    activities.forEach(activity => {
-      let numWeeksForProject = toWeeks(activity.start, activity.end);
-      let activityDates = [];
-      let start = toMondayDate(activity.start);
+    fabmatrix.forEach(activity => {
+        let numWeeksForProject = toWeeks(activity.start, activity.end);
 
-      for (let i = 0; i <= numWeeksForProject; i++) {
-        let date = start.addDays(i * 7);
-        activityDates.push(date);
-      }
+        let activityDates = [];
+        let start = toMondayDate(activity.start);
 
-      for (let i = 0; i < weeks; i++) {
-        activityDates.forEach(date => {
-          if (date.toLocaleDateString() === newRows[i].date) {
-            newRows[i][activity.employee] = activity.activity;
-          }
-        })
-      }
+        for (let i = 0; i <= numWeeksForProject; i++) {
+            let date = start.addDays(i * 7);
+            activityDates.push(date);
+        }
+
+        for (let i = 0; i < weeks; i++) {
+            activityDates.forEach(date => {
+                if (date.toLocaleDateString() === newRows[i].date) {
+                    newRows[i][activity.employee] = activity.activity;
+                }
+            })
+        }
     })
 
-    setData(newRows);
-  }
+    setFabMatrixData(newRows);
+}
 
   const createColumns = () => {
-    let cols = mainDataGrid.current.instance.option("columns");
-    // let cols = [];
-    let filteredActivities = [...new Set(activities.map(item => item.employee))];
-    filteredActivities.forEach(header => {
-      cols.push({ dataField: header, caption: header })
-    })
-  }
+    let cols = [ ...new Set(fabmatrix.map(item => item.employee )) ];
+    setColumns(cols);
+}
 
-  const rowInserted = (row) => {
-    let datagrid = mainDataGrid.current.instance;
-    if (datagrid.getVisibleColumns().find(col => col.dataField === row.data.employee) === undefined) {
-      datagrid.addColumn({ dataField: row.data.employee })
-    }
+const rowUpdatedHandler = (rowData) => {
+    const newData = { ...data, fabmatrix: fabmatrix };
 
-    axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/fabmatrix/headers/${row.data.__KEY__}.json`, row.data)
-      .then(response => createRows())
-      .catch(error => console.log(error))
-  }
+    createColumns();
 
-  const rowUpdated = (row) => {
-    axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/fabmatrix/headers/${row.data.__KEY__}.json`, row.data)
-      .then(response => createRows())
-      .catch(error => console.log(error))
-  }
-
-  const rowRemoved = (row) => {
-    let datagrid = mainDataGrid.current.instance;
-
-    let isLastOne = activities.filter(activity => activity.employee === row.data.employee).length === 0;
-    isLastOne && datagrid.deleteColumn(row.data.employee);
-
-    axios.delete(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/fabmatrix/headers/${row.data.__KEY__}.json`)
-      .then(response => createRows())
-      .catch(error => console.log(error))
-  }
+    rowData.component.beginCustomLoading();
+    handleUpdate(newData).then((response) => {
+            createRows();
+            rowData.component.endCustomLoading();
+        }
+    );
+}
 
   const rowPrepared = (row) => {
     row.rowElement.style.backgroundColor = row.rowIndex % 2 ? "#b5bdc9" : "white";
@@ -172,7 +151,7 @@ const FabMatrix = (props) => {
                 </Grid>
                 <Grid item>
                   <DataGrid
-                    dataSource={activities}
+                    dataSource={fabmatrix}
                     showRowLines
                     showBorders
                     allowColumnResizing
@@ -185,10 +164,10 @@ const FabMatrix = (props) => {
                     autoExpandAll
                     highlightChanges
                     cellHintEnabled
-                    onRowUpdated={rowUpdated}
-                    onRowRemoved={rowRemoved}
-                    onRowInserted={rowInserted}
                     onInitNewRow={rowInit}
+                    onRowUpdated={rowUpdatedHandler}
+                        onRowRemoved={rowUpdatedHandler}
+                        onRowInserted={rowUpdatedHandler}
                   >
                     <Editing
                       mode="cell"
@@ -285,7 +264,7 @@ const FabMatrix = (props) => {
           </Accordion>
 
           <DataGrid
-            dataSource={data}
+            dataSource={fabMatrixData}
             showBorders
             showRowLines
             allowColumnResizing
@@ -317,6 +296,14 @@ const FabMatrix = (props) => {
               width={"auto"}
               allowEditing={false}
             />
+
+            { columns.map(column => (
+                <Column
+                    key={column}
+                    dataField={column}
+                    caption={column}
+                />
+            ))}
 
           </DataGrid>
         </div>

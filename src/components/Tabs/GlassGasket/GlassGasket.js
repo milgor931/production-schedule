@@ -22,8 +22,9 @@ import DataGrid, {
 } from 'devextreme-react/data-grid';
 
 const GlassGasket = (props) => {
-    const { jobs, handleUpdate, toMS, toDays, toWeeks, getOffset } = props;
+    const { data, handleUpdate, toMS, getOffset } = props;
     const [ loaded, setLoaded ] = useState(true);
+    const jobs = data.jobs ? data.jobs : [];
 
     const renderRow = (row) => {
       if (row.rowType === "data") {

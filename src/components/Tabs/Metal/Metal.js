@@ -13,8 +13,6 @@ import DataGrid, {
   RequiredRule,
   Lookup
 } from 'devextreme-react/data-grid';
-import axios from 'axios';
-import { makeStyles } from '@material-ui/core/styles';
 import Accordion from '@material-ui/core/Accordion';
 import AccordionSummary from '@material-ui/core/AccordionSummary';
 import AccordionDetails from '@material-ui/core/AccordionDetails';
@@ -23,16 +21,19 @@ import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import Grid from '@material-ui/core/Grid';
 
 const Metal = (props) => {
-  const { metal, jobs, shops, toMS, toDays, toWeeks, toMondayDate, handleUpdate, rowInserted, rowUpdated, rowRemoved } = props;
+  const { data, handleUpdate, toMS, toWeeks, toMondayDate } = props;
+  const [metalData, setMetalData] = useState([]);
   const [expanded, setExpanded] = useState(true);
-  const [data, setData] = useState([]);
   const [today, setToday] = useState(new Date());
   const [columns, setColumns] = useState([]);
-  const datagrid = useRef(null);
+
+  const jobs = data.jobs ? data.jobs : [];
+  const metal = data.metal ? data.metal : [];
+  const shops = data.shops ? data.shops : [];
 
   useEffect(() => {
     calculateForOffSets();
-  }, [ metal ])
+  }, [ data ])
 
   const convertToDate = (value) => {
     let thisMonday = today.getTime() + toMS(1 - today.getDay())
@@ -56,7 +57,6 @@ const Metal = (props) => {
 
     let newJobs = JSON.parse(JSON.stringify(jobs));
 
-
     newJobs.forEach(job => {
       job.fieldStart = new Date(job.fieldStart);
       job.start = new Date(job.start);
@@ -66,11 +66,12 @@ const Metal = (props) => {
       }
     })
 
-    setData(newJobs);
+    setMetalData(newJobs);
 
     metal.forEach(row => {
       let job = newJobs.findIndex(j => j.jobName === row.jobName)
       if (job != -1) {
+
         newJobs[job][toOffset(toMondayDate(new Date(row.weekStart))).toString()] = row.lbs;
       }
     })
@@ -111,6 +112,16 @@ const Metal = (props) => {
     }
   }
 
+  const rowUpdatedHandler = (rowData) => {
+    const newData = { ...data, metal: metal };
+
+    rowData.component.beginCustomLoading();
+    handleUpdate(newData).then((response) =>
+      rowData.component.endCustomLoading()
+    );
+  };
+
+
   return (
     <div style={{ margin: "3vw" }}>
       <Accordion>
@@ -141,9 +152,9 @@ const Metal = (props) => {
                 wordWrapEnabled
                 autoExpandAll
                 highlightChanges
-                onRowUpdated={rowUpdated}
-                onRowRemoved={rowRemoved}
-                onRowInserted={rowInserted}
+                onRowUpdated={rowUpdatedHandler}
+                onRowRemoved={rowUpdatedHandler}
+                onRowInserted={rowUpdatedHandler}
               >
                 <Editing
                   mode="cell"
@@ -203,7 +214,7 @@ const Metal = (props) => {
       </Accordion>
 
       <DataGrid
-        dataSource={data}
+        dataSource={metalData}
         showRowLines
         columnAutoWidth
         autoExpandAll
@@ -214,7 +225,6 @@ const Metal = (props) => {
         wordWrapEnabled
         showColumnLines={true}
         onCellPrepared={cellPrepared}
-        ref={datagrid}
       >
 
         <SearchPanel visible highlightCaseSensitive={false} />
@@ -262,7 +272,7 @@ const Metal = (props) => {
           caption="lbs"
           alignment="center"
           calculateCellValue={row => {
-            let cols = datagrid.current.instance.getVisibleColumns().slice(5).filter(col => row[col.dataField]).map(col => row[col.dataField]);
+            let cols = columns.filter(col => row[col.offset.toString()]).map(col => row[col.offset.toString()]);
             const rowTotal = cols.length > 0 ? cols.reduce((total, col) => total + col) : 0;
             return rowTotal;
           }}

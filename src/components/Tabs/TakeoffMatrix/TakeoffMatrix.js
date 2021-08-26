@@ -1,5 +1,5 @@
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import Spinner from '../../UI/Spinner';
 import DataGrid, {
     Column,
@@ -9,7 +9,6 @@ import DataGrid, {
     Editing,
     Button
 } from 'devextreme-react/data-grid';
-import axios from 'axios';
 import Accordion from '@material-ui/core/Accordion';
 import AccordionSummary from '@material-ui/core/AccordionSummary';
 import AccordionDetails from '@material-ui/core/AccordionDetails';
@@ -18,8 +17,10 @@ import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import Grid from '@material-ui/core/Grid';
 
 const TakeoffMatrix = (props) => {
-    const { rows, weeks, jobs, headers, createRows, takeoff, toWeeks, toDays, toMS, rowInserted, rowUpdated, rowRemoved } = props;
+    const { data, takeoffData } = props;
     const [loaded, setLoaded] = useState(true);
+
+    const takeoff = data.takeoffmatrix ? data.takeoffmatrix : [];
 
     const rowPrepared = (row) => {
         row.rowElement.style.backgroundColor = row.rowIndex % 2 ? "#b5bdc9" : "white";
@@ -47,7 +48,7 @@ const TakeoffMatrix = (props) => {
                             <Grid container direction="column">
                                 <Grid item>
                                     <DataGrid
-                                        dataSource={headers}
+                                        dataSource={takeoff}
                                         showRowLines
                                         showBorders
                                         allowColumnResizing
@@ -59,9 +60,6 @@ const TakeoffMatrix = (props) => {
                                         wordWrapEnabled
                                         autoExpandAll
                                         highlightChanges
-                                        onRowUpdated={rowUpdated}
-                                        onRowRemoved={rowRemoved}
-                                        onRowInserted={rowInserted}
                                         onEditorPreparing={editorPreparing}
                                     >
                                         <Editing
@@ -100,7 +98,7 @@ const TakeoffMatrix = (props) => {
                     </Accordion>
 
                     <DataGrid
-                        dataSource={takeoff}
+                        dataSource={takeoffData}
                         showBorders
                         showRowLines
                         allowColumnResizing
@@ -133,7 +131,7 @@ const TakeoffMatrix = (props) => {
                             allowEditing={false}
                         />
 
-                        {headers.map(header => {
+                        {takeoff.map(header => {
                             return (
                                 <Column
                                     key={header.__KEY__}

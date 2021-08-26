@@ -11,8 +11,11 @@ import DataGrid, {
 } from 'devextreme-react/data-grid';
 
 const AllActivities = (props) => {
-    const { jobs, handleUpdate, onRowInit, shopdrawings, fabmatrix } = props;
+    const { data, handleUpdate } = props;
     const [ loaded, setLoaded ] = useState(true);
+    const jobs = data.jobs ? data.jobs : [];
+    const shopdrawings = data.shopdrawings ? data.shopdrawings : [];
+    const fabmatrix = data.fabmatrix ? data.fabmatrix : [];
 
     const renderRow = (row) => {
       if (row.rowType === "data" && !row.data.booked) {
@@ -37,11 +40,7 @@ const AllActivities = (props) => {
             wordWrapEnabled
             autoExpandAll
             highlightChanges
-            onInitNewRow={onRowInit}
-            // onInitialized={onRowInit}
             onRowUpdated={handleUpdate}
-            onRowInserted={handleUpdate}
-            // onCellPrepared={cellPrepared}
             onRowPrepared={renderRow}
             cellHintEnabled
 

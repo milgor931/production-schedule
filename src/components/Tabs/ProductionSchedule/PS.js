@@ -8,7 +8,7 @@ import Grid from '@material-ui/core/Grid';
 import Radio from '@material-ui/core/Radio';
 
 const ProductionSchedule = (props) => {
-    const { shops, jobs, handleUpdate, handleShopUpdate, handleShopDelete, rowRemoved, onRowInit, toMS, toDays, toMondayDate } = props;
+    const { data, handleUpdate, toMS, toDays, toMondayDate } = props;
     const [ tabs, setTabs ] = useState([]);
     const [ loaded, setLoaded ] = useState(false);
     const [ selectedIndex, setSelectedIndex ] = useState(0);
@@ -20,8 +20,7 @@ const ProductionSchedule = (props) => {
                 'ID': 0,
                 'name': 'Gantt',
                 'component': <DG_Grantt
-                                jobs={jobs} 
-                                shops={shops}
+                                data={data}
                                 handleUpdate={handleUpdate}
                                 toMS={toMS}
                                 toDays={toDays}
@@ -32,14 +31,8 @@ const ProductionSchedule = (props) => {
                 'ID': 1,
                 'name': 'Production Schedule',
                 'component': <ProductionScheduleChart 
-                                jobs={jobs} 
-                                shopInfo={shops}
+                                data={data}
                                 handleUpdate={handleUpdate}
-                                handleShopUpdate={handleShopUpdate}
-                                handleShopDelete={handleShopDelete}
-                                rowAdded={handleUpdate}
-                                rowRemoved={rowRemoved}
-                                onRowInit={onRowInit}
                                 toMS={toMS}
                                 toDays={toDays}
                             />
@@ -48,8 +41,7 @@ const ProductionSchedule = (props) => {
                 'ID': 2,
                 'name': 'Units Graph',
                 'component': <Graph 
-                                jobs={jobs} 
-                                allShops={shops}
+                                data={data}
                                 handleUpdate={handleUpdate}
                                 toMS={toMS}
                                 toDays={toDays}
@@ -59,7 +51,7 @@ const ProductionSchedule = (props) => {
 
         setLoaded(true);
 
-    }, [ jobs ])
+    }, [ data ])
     
     const inputs = ["gantt", "chart", "graph"].map((value, index) => 
         <Grid item key={index}>
@@ -84,7 +76,7 @@ const ProductionSchedule = (props) => {
                     {inputs}
                 </Grid>
 
-                <div> {jobs && tabs[selectedIndex].component} </div>
+                <div> {data && tabs[selectedIndex].component} </div>
             </div>
             : 
             <Spinner />

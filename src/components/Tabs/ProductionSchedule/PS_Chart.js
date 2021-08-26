@@ -28,10 +28,11 @@ import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import Grid from '@material-ui/core/Grid';
 
 const ProductionScheduleChart = (props) => {
-  const { shopInfo, jobs, handleUpdate, handleShopUpdate, handleShopDelete, rowRemoved, onRowInit, toMS, toDays } = props;
+  const { data, handleUpdate } = props;
   const [loaded, setLoaded] = useState(false);
   const [expanded, setExpanded] = useState(true);
-  const [shops, setShops] = useState(shopInfo);
+  const jobs = data.jobs;
+  const shops = data.shops;
 
   useEffect(() => {
     jobs && setLoaded(true);
@@ -65,7 +66,7 @@ const ProductionScheduleChart = (props) => {
       }
     }
     else if (row.rowType === "group") {
-      let colorEntry = shopInfo.find(shop => shop.shop === row.data.key);
+      let colorEntry = shops.find(shop => shop.shop === row.data.key);
       row.rowElement.style.backgroundColor = colorEntry ? colorEntry.colorkey : "white";
       row.rowElement.style.color = colorEntry ? colorEntry.fontColor : "black";
     }
@@ -95,38 +96,43 @@ const ProductionScheduleChart = (props) => {
   }
 
   const onShopReorder = (e) => {
-    const itemData = e.itemData;
-    const from = e.fromIndex;
-    const to = e.toIndex;
-
     const newShops = [...shops];
-
-    newShops.splice(from, 1);
-    newShops.splice(to, 0, itemData);
+    newShops.splice(e.fromIndex, 1);
+    newShops.splice(e.toIndex, 0, e.itemData);
 
     newShops.forEach(shop => shop.index = newShops.indexOf(shop))
 
-    // ensures that data is not pushed to database as an array
-    let newShopsObject = newShops.reduce((acc, cur) => ({ [cur.__KEY__]: cur, ...acc }), {});
-
-    setShops(newShops);
-
-    axios.put("https://ww-production-schedule-default-rtdb.firebaseio.com/data/shops.json", newShopsObject)
-      .then(response => { })
-      .catch(error => console.log(error))
-
     jobs.forEach(job => {
       job.groupIndex = newShops.findIndex(shop => shop.__KEY__ === job.groupKey);
-      handleUpdate(job);
     });
 
+    handleUpdate({ ...data, shop: newShops, jobs: jobs })
   }
+
+  const rowUpdatedHandler = (rowData) => {
+    const newData = { ...data, jobs: jobs };
+
+    rowData.component.beginCustomLoading();
+    handleUpdate(newData).then((response) =>
+      rowData.component.endCustomLoading()
+    );
+  };
 
   const onShopRowInit = (row) => {
     row.data.shop = "";
     row.data.fontColor = "#000";
     row.data.colorkey = "#fff";
     row.data.index = shops.length;
+  }
+
+  const onRowInit = (row) => {
+    row.data.groupIndex = shops.length;
+    row.data.jobName = "job name";
+    row.data.wallType = "wall type";
+    row.data.weeks = 0;
+    row.data.start = new Date();
+    row.data.fieldStart = new Date();
+    row.data.id = row.data.__KEY__;
   }
 
   return (
@@ -162,10 +168,10 @@ const ProductionScheduleChart = (props) => {
                     autoExpandAll
                     highlightChanges
                     cellHintEnabled
-                    onRowInserted={handleShopUpdate}
-                    onRowUpdated={handleShopUpdate}
-                    onRowRemoved={handleShopDelete}
                     onInitNewRow={onShopRowInit}
+                    onRowInserted={rowUpdatedHandler}
+                    onRowRemoved={rowUpdatedHandler}
+                    onRowUpdated={rowUpdatedHandler}
                   >
                     <Editing
                       mode="cell"
@@ -263,11 +269,11 @@ const ProductionScheduleChart = (props) => {
             highlightChanges
             activeStateEnabled
             onInitNewRow={onRowInit}
-            onRowUpdated={handleUpdate}
-            onRowInserted={handleUpdate}
-            onRowRemoved={rowRemoved}
             onCellPrepared={cellPrepared}
             onEditingStart={editingStart}
+            onRowInserted={rowUpdatedHandler}
+            onRowRemoved={rowUpdatedHandler}
+            onRowUpdated={rowUpdatedHandler}
           >
 
             <SearchPanel visible highlightCaseSensitive={false} />

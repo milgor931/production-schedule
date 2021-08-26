@@ -31,11 +31,13 @@ const sources = [
 ];
 
 const Graph = (props) => {
-  const { jobs, allShops, toMS, toDays } = props;
+  const { data, toMS, toDays } = props;
   const [ state, setState ] = React.useState({});
-  const [ data, setData ] = useState([]);
+  const [ graphData, setGraphData ] = useState([]);
   const [ shops, setShops ] = useState([]);
   const [ loaded, setLoaded ] = useState(false);
+  const jobs = data.jobs ? data.jobs : [];
+  const allShops = data.shops ? data.shops : [];
 
   useEffect(() => {
     let newShops = allShops.map(shop => shop.shop);
@@ -72,7 +74,7 @@ const Graph = (props) => {
       })
       new_data.push({ offset: i, units: total_units, emps: total_emps})
     }
-    setData(new_data);
+    setGraphData(new_data);
   }
 
   const handleChange = (event) => {
@@ -116,7 +118,7 @@ const Graph = (props) => {
           </Grid>
         <Grid item style={{width: "80vw", marginTop: "20px"}}>
           <Chart
-            dataSource={data}
+            dataSource={graphData}
             title="Units and Employees Over Time"
           >
             <CommonSeriesSettings

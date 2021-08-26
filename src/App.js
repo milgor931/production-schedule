@@ -89,36 +89,36 @@ const App = () => {
     const [shopDrawingHeaders, setShopDrawingHeaders] = useState([]);
     const [fabHeaders, setFabHeaders] = useState([]);
     const [dateRows, setDateRows] = useState([]);
-    const [takeoffHeaders, setTakeoffHeaders] = useState([]);
     const [weeks, setWeeks] = useState(0);
     const [metal, setMetal] = useState([]);
-    const [takeoff, setTakeoff] = useState([]);
+    const [takeoffData, setTakeoffData] = useState([]);
     const [field, setField] = useState([]);
     const [jobsites, setJobsites] = useState([]);
+    const [data, setData] = useState([]);
 
     useEffect(() => {
 
         axios.get(`https://ww-production-schedule-default-rtdb.firebaseio.com/data.json`)
             .then(response => {
                 if (response.data) {
-                    response.data.shops && setShops(Object.values(response.data.shops).sort((x, y) => { return x.index - y.index }));
-                    response.data.jobs && setJobs(convertDates(Object.values(response.data.jobs)));
-                    response.data.shopdrawings.headers && setShopDrawingHeaders(Object.values(response.data.shopdrawings.headers));
-                    response.data.fabmatrix && setFabHeaders(Object.values(response.data.fabmatrix.headers));
-                    response.data.takeoffmatrix.headers && setTakeoffHeaders(Object.values(response.data.takeoffmatrix.headers));
-                    response.data.metal && setMetal(Object.values(response.data.metal));
-                    response.data.field && setField(Object.values(response.data.field));
-                    response.data.jobsites && setJobsites(Object.values(response.data.jobsites));
+                    // let newData = { ...JSON.parse(response.data) };
+                    let newData = { ...response.data };
+                    // axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/metal.json`, Object.values(response.data.metal))
+                    newData = { ...newData, jobs: convertDates(newData.jobs) }
+                    setData(newData);
                 }
+                
                 setProgress(100);
                 setLoaded(true);
             })
             .catch(error => console.log(error))
+        // axios.get(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/metal.json`, Object.values(response.data.metal))
+
     }, [])
 
     useEffect(() => {
-        createRows(takeoffHeaders);
-    }, [ takeoffHeaders ])
+        data.takeoffmatrix && createRows(data.takeoffmatrix);
+    }, [ data.takeoffmatrix ])
 
     const toMS = (days) => {
         return days * 24 * 60 * 60 * 1000;
@@ -184,30 +184,30 @@ const App = () => {
         return toWeeks(start, date);
     }
 
-    const handleUpdate = (row) => {
-        row = row.data ? row.data : row;
-        let copy = [...jobs];
-        let index = copy.findIndex(job => job.__KEY__ === row.__KEY__)
-        copy[index] = row;
-
-        axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/jobs/${row.__KEY__}.json`, row)
-            .then(response => {
-                setJobs(copy);
-            })
-            .catch(error => console.log(error))
-    }
-
-    const handleShopUpdate = (row) => {
-        let copy = [...jobs];
-
-        copy.filter(job => job.groupKey === row.data.__KEY__).forEach(job => {
-            job.shop = row.data.shop
-            handleUpdate(job)
-        })
-
-        axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/shops/${row.data.__KEY__}.json`, row.data)
-            .then(response => setShops([...shops]))
-    }
+    const handleUpdate = async (newData) => {
+        // newData = JSON.stringify(newData);
+      
+        let response = await axios
+          .put(`https://ww-production-schedule-default-rtdb.firebaseio.com/data.json`, newData)
+          .then((result) => {
+            setData(newData);
+      
+            // setOpenNotification({
+            //   open: true,
+            //   message: "Item was updated successfully.",
+            //   type: "success",
+            // });
+          })
+          .catch((error) => {
+            // setOpenNotification({
+            //   open: true,
+            //   message: "Item was not updated successfully.",
+            //   type: "error",
+            // });
+          });
+      
+        return response;
+      };
 
     const handleShopDelete = (row) => {
         let jobsNotInShop = jobs.filter(job => job.groupKey !== row.data.__KEY__);
@@ -220,22 +220,6 @@ const App = () => {
         axios.delete(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/shops/${row.data.__KEY__}.json`)
             .then(response => setShops([...shops]))
             .catch(error => console.log(error))
-    }
-
-    const rowRemoved = (row) => {
-        axios.delete(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/jobs/${row.data.id}.json`)
-            .then(response => setJobs([...jobs]))
-            .catch(error => console.log(error))
-    }
-
-    const onRowInit = (row) => {
-        row.data.groupIndex = shops.length;
-        row.data.jobName = "job name";
-        row.data.wallType = "wall type";
-        row.data.weeks = 0;
-        row.data.start = new Date();
-        row.data.fieldStart = new Date();
-        row.data.id = row.data.__KEY__;
     }
 
     const createBasicRows = (calculatedWeeks) => {
@@ -264,10 +248,9 @@ const App = () => {
 
     const createRows = (cols) => {
         let newRows = JSON.parse(JSON.stringify(dateRows));
-        let columns = [...cols];
-        columns.find(col => col.dataField === "date") && columns.shift();
+        let columns = cols.slice(0);
 
-        jobs.forEach((job, jobIndex) => {
+        data.jobs.forEach((job, jobIndex) => {
             let startOffset = job.weeksToGoBack;
             let metalTakeoffDate = new Date(toMondayDate(job.start).getTime() - toMS(startOffset * 7));
 
@@ -284,7 +267,7 @@ const App = () => {
         })
 
         for (let i = 0; i < weeks; i++) {
-            jobs.forEach(job => {
+            data.jobs.forEach(job => {
                 columns.forEach(col => {
                     if (job[col.dataField].toLocaleDateString() === newRows[i].date) {
                         newRows[i][col.dataField] = job.jobName;
@@ -292,62 +275,7 @@ const App = () => {
                 })
             })
         }
-
-        setTakeoff(newRows);
-    }
-
-    const takeoffRowInserted = (row) => {
-        axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/takeoffmatrix/headers/${row.data.__KEY__}.json`, row.data)
-            .then(response => setTakeoffHeaders([...takeoffHeaders]))
-            .catch(error => console.log(error))
-    }
-
-    const takeoffRowUpdated = (row) => {
-        axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/takeoffmatrix/headers/${row.data.__KEY__}.json`, row.data)
-            .then(response => setTakeoffHeaders([...takeoffHeaders]))
-            .catch(error => console.log(error))
-    }
-
-    const takeoffRowRemoved = (row) => {
-        axios.delete(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/takeoffmatrix/headers/${row.data.__KEY__}.json`)
-            .then(response => setTakeoffHeaders([...takeoffHeaders]))
-            .catch(error => console.log(error))
-    }
-
-    const metalRowInserted = (row) => {
-        axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/metal/${row.data.__KEY__}.json`, row.data)
-        .then(response => setMetal([...metal]))
-        .catch(error => console.log(error))
-    }
-
-    const metalRowUpdated = (row) => {
-        axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/metal/${row.data.__KEY__}.json`, row.data)
-        .then(response => setMetal([...metal]))
-        .catch(error => console.log(error))
-    }
-
-    const metalRowRemoved = (row) => {
-        axios.delete(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/metal/${row.data.__KEY__}.json`)
-        .then(response => setMetal([...metal]))
-        .catch(error => console.log(error))
-    }
-
-    const fieldRowInserted = (row) => {
-        axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/field/${row.data.__KEY__}.json`, row.data)
-        .then(response => setField([...field]))
-        .catch(error => console.log(error))
-    }
-
-    const fieldRowUpdated = (row) => {
-        axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/field/${row.data.__KEY__}.json`, row.data)
-        .then(response => setField([...field]))
-        .catch(error => console.log(error))
-    }
-
-    const fieldRowRemoved = (row) => {
-        axios.delete(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/field/${row.data.__KEY__}.json`)
-        .then(response => setField([...field]))
-        .catch(error => console.log(error))
+        setTakeoffData(newRows);
     }
 
     return (
@@ -363,13 +291,8 @@ const App = () => {
 
                         <Route path="/production-schedule">
                             <ProductionSchedule
-                                jobs={jobs}
-                                shops={shops}
+                                data={data}
                                 handleUpdate={handleUpdate}
-                                handleShopUpdate={handleShopUpdate}
-                                handleShopDelete={handleShopDelete}
-                                rowRemoved={rowRemoved}
-                                onRowInit={onRowInit}
                                 toMS={toMS}
                                 toDays={toDays}
                                 toMondayDate={toMondayDate}
@@ -377,40 +300,32 @@ const App = () => {
                         </Route>
                         <Route path="/shop-drawings">
                             <ShopDrawings
-                                jobs={jobs}
-                                activities={shopDrawingHeaders}
+                                data={data}
+                                handleUpdate={handleUpdate}
                                 rows={dateRows}
                                 weeks={weeks}
                                 toDays={toDays}
                                 toMS={toMS}
-                                handleUpdate={handleUpdate}
                                 toWeeks={toWeeks}
                                 toMondayDate={toMondayDate}
                             />
                         </Route>
                         <Route path="/takeoff-matrix">
                             <TakeoffMatrix
-                                jobs={jobs}
+                                data={data}
+                                takeoffData={takeoffData}
                                 rows={dateRows}
                                 weeks={weeks}
                                 toMS={toMS}
                                 toDays={toDays}
                                 toWeeks={toWeeks}
-                                handleUpdate={handleUpdate}
-                                headers={takeoffHeaders}
                                 createRows={createRows}
-                                takeoff={takeoff}
-                                rowInserted={takeoffRowInserted}
-                                rowUpdated={takeoffRowUpdated}
-                                rowRemoved={takeoffRowRemoved}
                             />
                         </Route>
                         <Route path="/panel-matrix">
                             <PanelMatrix
-                                data={jobs}
+                                data={data}
                                 handleUpdate={handleUpdate}
-                                rowRemoved={rowRemoved}
-                                onRowInit={onRowInit}
                                 getOffset={getOffset}
                                 toDays={toDays}
                                 toMS={toMS}
@@ -419,30 +334,26 @@ const App = () => {
                         </Route>
                         <Route path="/fab-matrix">
                             <FabMatrix
-                                jobs={jobs}
-                                activities={fabHeaders}
+                                data={data}
+                                handleUpdate={handleUpdate}
                                 rows={dateRows}
                                 weeks={weeks}
                                 toDays={toDays}
                                 toMS={toMS}
                                 toWeeks={toWeeks}
-                                handleUpdate={handleUpdate}
-                                getOffset={getOffset}
                                 toMondayDate={toMondayDate}
+                                getOffset={getOffset}
                             />
                         </Route>
                         <Route path="/all-activities">
                             <AllActivities
-                                jobs={jobs}
-                                takeoff={takeoffHeaders}
-                                shopdrawings={shopDrawingHeaders}
-                                fabmatrix={fabHeaders}
+                                data={data}
                                 handleUpdate={handleUpdate}
                             />
                         </Route>
                         <Route path="/glass-and-gasket">
                             <GlassGasket
-                                jobs={jobs}
+                                data={data}
                                 handleUpdate={handleUpdate}
                                 toMS={toMS}
                                 toDays={toDays}
@@ -452,21 +363,17 @@ const App = () => {
                         </Route>
                         <Route path="/metal">
                             <Metal
-                                metal={metal}
-                                jobs={jobs}
-                                shops={shops}
+                                data={data}
                                 handleUpdate={handleUpdate}
                                 toMS={toMS}
                                 toDays={toDays}
                                 toWeeks={toWeeks}
                                 toMondayDate={toMondayDate}
-                                rowInserted={metalRowInserted}
-                                rowRemoved={metalRowRemoved}
-                                rowUpdated={metalRowUpdated}
                             />
                         </Route>
-                        <Route path="/field">
+                        {/* <Route path="/field">
                             <Field
+                                data={data}
                                 field={field}
                                 jobsites={jobsites}
                                 jobs={jobs}
@@ -480,7 +387,7 @@ const App = () => {
                                 rowRemoved={fieldRowRemoved}
                                 rowUpdated={fieldRowUpdated}
                             />
-                        </Route>
+                        </Route> */}
                     </Switch>
                 </div>
                 :

@@ -21,16 +21,6 @@ import DataGrid, {
     RemoteOperations
 } from 'devextreme-react/data-grid';
 import { makeStyles } from '@material-ui/core/styles';
-import IconButton from '@material-ui/core/IconButton';
-import UpdateIcon from '@material-ui/icons/Update';
-import TextField from '@material-ui/core/TextField';
-import DateBox from "devextreme/ui/date_box";
-import 'date-fns';
-import DateFnsUtils from '@date-io/date-fns';
-import {
-    MuiPickersUtilsProvider,
-    KeyboardDatePicker,
-} from '@material-ui/pickers';
 
 const useStyles = makeStyles((theme) => ({
     formControl: {
@@ -47,18 +37,17 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const PanelMatrix = (props) => {
-    const { data, handleUpdate, onRowInit, rowRemoved, toDays, toMS, toWeeks, getOffset } = props;
+    const { data, handleUpdate, toMS, getOffset } = props;
     const [loaded, setLoaded] = useState(true);
     const classes = useStyles();
-    const datagridRef = useRef(null);
+
+    const jobs = data.jobs ? data.jobs : [];
 
     const renderRow = (row) => {
-        if (row.rowType === "data") {
-            if (!row.data.booked) {
+        if (row.rowType === "data" && !row.data.booked) {
                 row.rowElement.style.backgroundColor = "cyan";
-            } else if (row.data.header) {
-                row.rowElement.style.backgroundColor = "#a8a8a8";
-            }
+        } else if (row.rowType === "data" && row.data.booked && row.data.engineering) {
+            row.rowElement.style.backgroundColor = "#edada6";
         }
     }
 
@@ -146,12 +135,21 @@ const PanelMatrix = (props) => {
         )
     }
 
+    const rowUpdatedHandler = (rowData) => {
+        const newData = { ...data, jobs: jobs };
+    
+        rowData.component.beginCustomLoading();
+        handleUpdate(newData).then((response) =>
+          rowData.component.endCustomLoading()
+        );
+      };
+
     return (
         <div>
             {loaded
                 ? <div style={{ margin: '3vw' }}>
                     <DataGrid
-                        dataSource={data}
+                        dataSource={jobs}
                         showBorders
                         showRowLines
                         allowColumnResizing
@@ -163,15 +161,11 @@ const PanelMatrix = (props) => {
                         autoExpandAll
                         highlightChanges
                         columnResizingMode="widget"
-                        onInitNewRow={onRowInit}
-                        // onInitialized={onRowInit}
-                        onRowUpdated={handleUpdate}
-                        onRowInserted={handleUpdate}
-                        onRowRemoved={rowRemoved}
-                        // onCellPrepared={cellPrepared}
                         onRowPrepared={renderRow}
                         cellHintEnabled
-                        ref={datagridRef}
+                        onRowInserted={rowUpdatedHandler}
+                        onRowRemoved={rowUpdatedHandler}
+                        onRowUpdated={rowUpdatedHandler}
                     >
 
                         <GroupPanel visible={false} autoExpandAll />

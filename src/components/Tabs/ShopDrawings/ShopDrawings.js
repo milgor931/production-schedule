@@ -11,25 +11,26 @@ import DataGrid, {
   RequiredRule,
   Lookup
 } from 'devextreme-react/data-grid';
-import axios from 'axios';
 import Accordion from '@material-ui/core/Accordion';
 import AccordionSummary from '@material-ui/core/AccordionSummary';
 import AccordionDetails from '@material-ui/core/AccordionDetails';
 import Typography from '@material-ui/core/Typography';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
-import CheckBox from 'devextreme-react/check-box';
 import Grid from '@material-ui/core/Grid';
 
 const ShopDrawings = (props) => {
-    const { rows, weeks, activities, toDays, jobs, toWeeks, toMS, toMondayDate } = props;
-    const [ data, setData] = useState(null);
+    const { data, rows, handleUpdate, weeks, toWeeks, toMondayDate } = props;
     const [ loaded, setLoaded ] = useState(true);
     const [ expanded, setExpanded ] = useState(true);
+    const [ shopDrawingsData, setShopDrawingsData ] = useState([]);
     const [ columns, setColumns ] = useState([]);
     const mainDataGrid = useRef(null);
 
+    const jobs = data.jobs ? data.jobs : [];
+    const shopdrawings = data.shopdrawings ? data.shopdrawings : [];
+
     useEffect(() => {
-        activities.forEach(activity => {
+        shopdrawings.forEach(activity => {
             activity.start = new Date(activity.start);
             activity.end = new Date(activity.end);
         })
@@ -39,11 +40,8 @@ const ShopDrawings = (props) => {
 
     const createRows = () => {
         let newRows = JSON.parse(JSON.stringify(rows));
-        let cols = mainDataGrid.current.instance.option("columns");
-        let columns = [ ...cols ];
-        columns.shift();
 
-        activities.forEach(activity => {
+        shopdrawings.forEach(activity => {
             let numWeeksForProject = toWeeks(activity.start, activity.end);
 
             let activityDates = [];
@@ -63,41 +61,25 @@ const ShopDrawings = (props) => {
             }
         })
 
-        setData(newRows);
+        setShopDrawingsData(newRows);
     }
 
     const createColumns = () => {
-        let cols = mainDataGrid.current.instance.option("columns");
-        let filteredActivities = [ ...new Set(activities.map(item => item.employee )) ];
-        filteredActivities.forEach(header => cols.push({dataField: header, caption: header}))
+        let cols = [ ...new Set(shopdrawings.map(item => item.employee )) ];
+        setColumns(cols);
     }
 
-    const rowInserted = (row) => {
-        let datagrid = mainDataGrid.current.instance;
-        if (datagrid.getVisibleColumns().find(col => col.dataField === row.data.employee) === undefined) {
-            datagrid.addColumn({dataField: row.data.employee })
-        }
+    const rowUpdatedHandler = (rowData) => {
+        const newData = { ...data, shopdrawings: shopdrawings };
 
-        axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/shopdrawings/headers/${row.data.__KEY__}.json`, row.data)
-        .then(response => createRows())
-        .catch(error => console.log(error))
-    }
-
-    const rowUpdated = (row) => {
-        axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/shopdrawings/headers/${row.data.__KEY__}.json`, row.data)
-        .then(response => createRows())
-        .catch(error => console.log(error))
-    }
-
-    const rowRemoved = (row) => {
-        let datagrid = mainDataGrid.current.instance;
-
-        let isLastOne = activities.filter(activity => activity.employee === row.data.employee).length === 0;
-        isLastOne && datagrid.deleteColumn(row.data.employee);
-        
-        axios.delete(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/shopdrawings/headers/${row.data.__KEY__}.json`)
-        .then(response => createRows())
-        .catch(error => console.log(error))
+        createColumns();
+    
+        rowData.component.beginCustomLoading();
+        handleUpdate(newData).then((response) => {
+                createRows();
+                rowData.component.endCustomLoading();
+            }
+        );
     }
 
     const rowPrepared = (row) => {
@@ -124,7 +106,7 @@ const ShopDrawings = (props) => {
                     </Grid>
                     <Grid item>
                     <DataGrid
-                        dataSource={activities}
+                        dataSource={shopdrawings}
                         showRowLines
                         showBorders
                         allowColumnResizing
@@ -135,9 +117,9 @@ const ShopDrawings = (props) => {
                         wordWrapEnabled
                         autoExpandAll
                         highlightChanges
-                        onRowUpdated={rowUpdated}
-                        onRowRemoved={rowRemoved}
-                        onRowInserted={rowInserted}
+                        onRowUpdated={rowUpdatedHandler}
+                        onRowRemoved={rowUpdatedHandler}
+                        onRowInserted={rowUpdatedHandler}
                     >
                         <Editing
                             mode="cell"
@@ -212,7 +194,7 @@ const ShopDrawings = (props) => {
           </Accordion>
 
           <DataGrid
-            dataSource={data}
+            dataSource={shopDrawingsData}
             showBorders
             showRowLines
             allowColumnResizing
@@ -244,6 +226,14 @@ const ShopDrawings = (props) => {
                 width={"auto"}
                 allowEditing={false}
             />
+
+            { columns.map(column => (
+                <Column
+                    key={column}
+                    dataField={column}
+                    caption={column}
+                />
+            ))}
           </DataGrid>
         </div>
         : 
