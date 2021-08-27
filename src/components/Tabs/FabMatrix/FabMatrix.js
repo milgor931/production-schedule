@@ -19,7 +19,7 @@ import Grid from '@material-ui/core/Grid';
 
 const FabMatrix = (props) => {
   const { data, handleUpdate, rows, weeks, toWeeks, toMondayDate, addDays } = props;
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(false);
   const [columns, setColumns] = useState([]);
   const [fabMatrixData, setFabMatrixData] = useState([]);
 
@@ -110,11 +110,15 @@ const FabMatrix = (props) => {
             }}
           />
           : <input
-            type="date"
+            type="text"
+            placeholder="MM/DD/YYYY"
             onChange={e => {
-              let d = new Date(e.target.value);
-              d.setTime(d.getTime() + d.getTimezoneOffset() * 60 * 1000);
-              row.setValue(d);
+              if ((new Date(e.target.value) !== "Invalid Date") && !isNaN(new Date(e.target.value))) {
+                let d = new Date(e.target.value);
+                d.setTime(d.getTime() + d.getTimezoneOffset() * 60 * 1000);
+                row.setValue(d);
+              }
+              
             }}
           />
         }
@@ -141,7 +145,7 @@ const FabMatrix = (props) => {
         <AccordionDetails>
           <Grid container direction="column">
             <Grid item>
-              <input type="checkbox" style={{ width: "30px" }} id="expand" name="expand" defaultChecked value={expanded} onChange={() => setExpanded(!expanded)} />
+              <input type="checkbox" style={{ width: "30px" }} id="expand" name="expand" value={expanded} onChange={() => setExpanded(!expanded)} />
               <label htmlFor="expand">Expand All</label>
             </Grid>
             <Grid item>
@@ -179,6 +183,23 @@ const FabMatrix = (props) => {
                 </Column>
 
                 <Column
+                  dataField="employeeName"
+                  groupIndex={0}
+                  calculateGroupValue="employee"
+                  groupCellRender={row => {
+                    return <div style={{ flexDirection: "row", display: "flex", alignItems: "center", fontSize: "15px" }}>{row.value}</div>
+                  }}
+                />
+                <Column
+                  dataField="employee"
+                  caption="Employee"
+                  dataType="string"
+                  alignment="left"
+                >
+                  <RequiredRule />
+                </Column>
+
+                <Column
                   dataField="jobKey"
                   caption="Job"
                   alignment="left"
@@ -209,22 +230,6 @@ const FabMatrix = (props) => {
                   calculateCellValue={row => row.linkToShopDate ? row.linkToShopDate : false}
                 />
 
-                <Column
-                  dataField="employeeName"
-                  groupIndex={0}
-                  calculateGroupValue="employee"
-                  groupCellRender={row => {
-                    return <div style={{ flexDirection: "row", display: "flex", alignItems: "center", fontSize: "15px" }}>{row.value}</div>
-                  }}
-                />
-                <Column
-                  dataField="employee"
-                  caption="Employee"
-                  dataType="string"
-                  alignment="left"
-                >
-                  <RequiredRule />
-                </Column>
                 <Column
                   dataField="start"
                   caption="Start Date"

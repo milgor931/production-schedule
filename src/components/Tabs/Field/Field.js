@@ -22,7 +22,7 @@ import Grid from '@material-ui/core/Grid';
 
 const Field = (props) => {
   const { data, handleUpdate, toWeeks, toMondayDate, addDays } = props;
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(false);
   const [fieldData, setFieldData] = useState([]);
   const [today, setToday] = useState(new Date());
   const [columns, setColumns] = useState([]);
@@ -89,7 +89,7 @@ const Field = (props) => {
   }
 
   const cellPrepared = (cell) => {
-    if (cell.data) {
+    if (cell.data && cell.rowType === "data") {
       let isDate = typeof cell.data[cell.column.dataField] === "number";
 
       if (isDate) {
@@ -108,7 +108,9 @@ const Field = (props) => {
   }
 
   const rowUpdatedHandler = (rowData) => {
-    const newData = { ...data, field: field, jobsites: jobsites };
+    const filteredField = field.filter(fieldItem => jobsites.find(jobsite => jobsite.jobsite === fieldItem.jobsite))
+
+    const newData = { ...data, field: filteredField, jobsites: jobsites };
 
     rowData.component.beginCustomLoading();
     handleUpdate(newData).then((response) =>
@@ -130,7 +132,7 @@ const Field = (props) => {
         <AccordionDetails>
           <Grid container direction="column">
             <Grid item>
-              <input type="checkbox" style={{ width: "30px" }} id="expand" name="expand" defaultChecked value={expanded} onChange={() => setExpanded(!expanded)} />
+              <input type="checkbox" style={{ width: "30px" }} id="expand" name="expand" value={expanded} onChange={() => setExpanded(!expanded)} />
               <label htmlFor="expand">Expand All</label>
             </Grid>
 

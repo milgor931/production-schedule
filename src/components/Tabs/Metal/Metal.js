@@ -23,7 +23,7 @@ import Grid from '@material-ui/core/Grid';
 const Metal = (props) => {
   const { data, handleUpdate, toWeeks, toMondayDate, addDays } = props;
   const [metalData, setMetalData] = useState([]);
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(false);
   const [today, setToday] = useState(new Date());
   const [columns, setColumns] = useState([]);
 
@@ -87,7 +87,7 @@ const Metal = (props) => {
     let colorEntry = cell.rowType === "data" ? shops.find(shop => shop.__KEY__ === cell.data.groupKey) : "";
     let headerColor = cell.rowType === "data" && colorEntry ? colorEntry.colorkey : "white";
 
-    if (cell.data && cell.data.offsets) {
+    if (cell.data && cell.rowType === "data") {
       let offset = toWeeks(jobs[0].start, cell.data.start);
       cell.data.offset = offset
 
@@ -132,7 +132,7 @@ const Metal = (props) => {
         <AccordionDetails>
           <Grid container direction="column">
             <Grid item>
-              <input type="checkbox" style={{ width: "30px" }} id="expand" name="expand" defaultChecked value={expanded} onChange={() => setExpanded(!expanded)} />
+              <input type="checkbox" style={{ width: "30px" }} id="expand" name="expand" value={expanded} onChange={() => setExpanded(!expanded)} />
               <label htmlFor="expand">Expand All</label>
             </Grid>
             <Grid item>
@@ -217,7 +217,7 @@ const Metal = (props) => {
         highlightChanges
         repaintChangesOnly
         twoWayBindingEnabled
-        columnResizingMode="nextColumn"
+        columnResizingMode="widget"
         wordWrapEnabled
         showColumnLines={true}
         onCellPrepared={cellPrepared}

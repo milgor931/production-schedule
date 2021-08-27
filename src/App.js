@@ -51,7 +51,7 @@ const App = () => {
                 if (response.data) {
                     let newData = JSON.parse(response.data) ;
                 
-                    newData = { ...newData, jobs: convertDates(newData.jobs) }
+                    newData = newData.jobs && { ...newData, jobs: convertDates(newData.jobs) }
                     setData(newData);
                 }
                 setProgress(100);

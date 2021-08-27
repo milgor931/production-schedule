@@ -72,7 +72,6 @@ const AllActivities = (props) => {
                     caption="Job Number"
                     alignment="center"
                     allowEditing={false}
-                    fixed
                 >
                 </Column>
 
@@ -82,7 +81,6 @@ const AllActivities = (props) => {
                     caption="Job Name"
                     alignment="left"
                     allowEditing={false}
-                    fixed
                 >
                 </Column>
 

@@ -19,7 +19,7 @@ import Grid from '@material-ui/core/Grid';
 
 const ShopDrawings = (props) => {
     const { data, rows, handleUpdate, weeks, toWeeks, toMondayDate, addDays } = props;
-    const [expanded, setExpanded] = useState(true);
+    const [expanded, setExpanded] = useState(false);
     const [shopDrawingsData, setShopDrawingsData] = useState([]);
     const [columns, setColumns] = useState([]);
 
@@ -97,7 +97,7 @@ const ShopDrawings = (props) => {
                 <AccordionDetails>
                     <Grid container direction="column">
                         <Grid item>
-                            <input type="checkbox" style={{ width: "30px" }} id="expand" name="expand" defaultChecked value={expanded} onChange={() => setExpanded(!expanded)} />
+                            <input type="checkbox" style={{ width: "30px" }} id="expand" name="expand" value={expanded} onChange={() => setExpanded(!expanded)} />
                             <label htmlFor="expand">Expand All</label>
                         </Grid>
                         <Grid item>
@@ -201,6 +201,7 @@ const ShopDrawings = (props) => {
                 wordWrapEnabled
                 autoExpandAll
                 highlightChanges
+                columnResizingMode="widget"
                 onRowPrepared={rowPrepared}
             >
 

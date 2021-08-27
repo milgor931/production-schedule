@@ -65,13 +65,15 @@ const PanelMatrix = (props) => {
                         }}
                     />
                     : <input
-                        type="date"
-                        value={row.data.panelFabs}
+                        type="text"
+                        placeholder="MM/DD/YYYY"
                         onChange={e => {
+                        if ((new Date(e.target.value) !== "Invalid Date") && !isNaN(new Date(e.target.value))) {
                             let d = new Date(e.target.value);
                             d.setTime(d.getTime() + d.getTimezoneOffset() * 60 * 1000);
                             row.setValue(d);
-                        }}
+                        }
+                    }}
                     />
                 }
             </div>
@@ -106,12 +108,14 @@ const PanelMatrix = (props) => {
                     />
                     :
                     <input
-                        type="date"
-                        value={row.data.panelRelease}
+                        type="text"
+                        placeholder="MM/DD/YYYY"
                         onChange={e => {
-                            let d = new Date(e.target.value);
-                            d.setTime(d.getTime() + d.getTimezoneOffset() * 60 * 1000);
-                            row.setValue(d);
+                            if ((new Date(e.target.value) !== "Invalid Date") && !isNaN(new Date(e.target.value))) {
+                                let d = new Date(e.target.value);
+                                d.setTime(d.getTime() + d.getTimezoneOffset() * 60 * 1000);
+                                row.setValue(d);
+                            }
                         }}
                     />
 
@@ -176,7 +180,6 @@ const PanelMatrix = (props) => {
                     caption="Job Number"
                     alignment="center"
                     allowEditing={false}
-                    fixed
                 >
                 </Column>
 
@@ -186,7 +189,6 @@ const PanelMatrix = (props) => {
                     caption="Job Name"
                     alignment="left"
                     allowEditing={false}
-                    fixed
                 >
                 </Column>
 

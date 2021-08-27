@@ -10,7 +10,7 @@ import DataGrid, {
 } from 'devextreme-react/data-grid';
 
 const GlassGasket = (props) => {
-    const { data, handleUpdate, toMS, toWeeks } = props;
+    const { data, handleUpdate, toWeeks, addDays } = props;
 
     const jobs = data.jobs ? data.jobs : [];
 
@@ -41,17 +41,20 @@ const GlassGasket = (props) => {
                     ? <input
                         placeholder="weeks after shop start"
                         onChange={e => {
-                            let weeks = e.target.value;
-                            let date = new Date(row.data.start.getTime() + toMS(weeks * 7));
+                            let weeks = parseInt(e.target.value);
+                            let date = addDays(new Date(row.data.start), weeks * 7);
                             row.setValue(date);
                         }}
                     />
                     : <input
-                        type="date"
+                        type="text"
+                        placeholder="MM/DD/YYYY"
                         onChange={e => {
-                            let d = new Date(e.target.value);
-                            d.setTime(d.getTime() + d.getTimezoneOffset() * 60 * 1000);
-                            row.setValue(d);
+                            if ((new Date(e.target.value) !== "Invalid Date") && !isNaN(new Date(e.target.value))) {
+                                let d = new Date(e.target.value);
+                                d.setTime(d.getTime() + d.getTimezoneOffset() * 60 * 1000);
+                                row.setValue(d);
+                            }
                         }}
                     />
                 }
@@ -106,7 +109,7 @@ const GlassGasket = (props) => {
                     dataType="string"
                     caption="Job Number"
                     alignment="center"
-                    fixed
+
                 >
                 </Column>
 
@@ -115,7 +118,7 @@ const GlassGasket = (props) => {
                     dataType="string"
                     caption="Job Name"
                     alignment="left"
-                    fixed
+
                 >
                 </Column>
 

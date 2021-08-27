@@ -15,7 +15,7 @@ import DataGrid, {
 
 const ProductionScheduleGantt = (props) => {
   const { data, toMondayDate, addDays, toWeeks } = props;
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(false);
   const [columns, setColumns] = useState([]);
 
   const jobs = data.jobs ? data.jobs : [];
@@ -32,7 +32,7 @@ const ProductionScheduleGantt = (props) => {
 
   const calculateForOffSets = () => {
     let end = jobs[jobs.length - 1];
-    let startOffset = toWeeks(jobs[0].start, new Date());
+    let startOffset = toWeeks(jobs[0].start, toMondayDate(new Date()));
     let newCols = [];
 
     for (let i = startOffset; i <= end.offset + end.weeks; i++) {
@@ -59,17 +59,17 @@ const ProductionScheduleGantt = (props) => {
     let colorEntry = cell.rowType === "data" ? shops.find(shop => shop.__KEY__ === cell.data.groupKey) : "";
     let headerColor = cell.rowType === "data" && colorEntry ? colorEntry.colorkey : "white";
     
-    if (cell.data && cell.data.offsets) {
+    if (cell.data && cell.rowType === "data") {
 
       let offset = toWeeks(jobs[0].start, cell.data.start);
-      cell.data.offset = offset
+      cell.data.offset = offset;
 
       let isDate = parseInt(cell.column.dataField) >= offset && parseInt(cell.column.dataField) <= offset + cell.data.weeks;
       
       if (isDate) {
         cell.cellElement.style.backgroundColor = headerColor;
       }
-      if (cell.data.booked && cell.data.engineering && (cell.columnIndex <= 4)) {
+      if (cell.data.booked && cell.data.engineering && (cell.columnIndex <= 4 || isDate)) {
         cell.cellElement.style.backgroundColor = "#edada6";
       }
       if (!cell.data.booked && (cell.columnIndex <= 4 || isDate)) {
@@ -92,7 +92,7 @@ const ProductionScheduleGantt = (props) => {
 
   return (
     <div>
-      <input type="checkbox" style={{ width: "30px" }} id="expand" name="expand" defaultChecked value={expanded} onChange={() => setExpanded(!expanded)} />
+      <input type="checkbox" style={{ width: "30px" }} id="expand" name="expand" value={expanded} onChange={() => setExpanded(!expanded)} />
       <label htmlFor="expand">Expand All</label>
       <DataGrid
         dataSource={jobs}
@@ -123,7 +123,7 @@ const ProductionScheduleGantt = (props) => {
           calculateGroupValue="groupKey"
           groupCellRender={row => {
             let shop = shops.find(shop => row.value === shop.__KEY__);
-            return shop && <div style={{ flexDirection: "row", display: "flex", alignItems: "center", borderRadius: "10px", backgroundColor: shop.colorkey, padding: "10px", color: shop.fontColor, fontSize: "15px" }}><b style={{ fontSize: '20px' }}> {shop.shop}:  </b> &nbsp; Units: {row.summaryItems[0].value} | Units Per Week: {row.summaryItems[1].value} | Employees: {row.summaryItems[2].value}</div>
+            return shop && <div style={{ flexDirection: "row", display: "flex", alignItems: "center", borderRadius: "10px", backgroundColor: shop.colorkey, padding: "10px", color: shop.fontColor, fontSize: "15px" }}><b style={{ fontSize: '20px' }}> {shop.shop}:  </b> &nbsp; Units: {row.summaryItems[0].value} | Units Per Week: {row.summaryItems[2].value} | Employees: {row.summaryItems[1].value}</div>
           }}
         />
 

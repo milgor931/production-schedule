@@ -23,11 +23,10 @@ import AccordionDetails from '@material-ui/core/AccordionDetails';
 import Typography from '@material-ui/core/Typography';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import Grid from '@material-ui/core/Grid';
-import { daysToWeeks } from 'date-fns/fp';
 
 const ProductionScheduleChart = (props) => {
-  const { data, handleUpdate, toWeeks } = props;
-  const [expanded, setExpanded] = useState(true);
+  const { data, handleUpdate, toWeeks, addDays } = props;
+  const [expanded, setExpanded] = useState(false);
 
   const jobs = data.jobs ? data.jobs : [];
   const shops = data.shops ? data.shops : [];
@@ -46,7 +45,7 @@ const ProductionScheduleChart = (props) => {
     return (
       <div style={{ padding: '10px' }}>
         <input id="jobName" type="text" placeholder="job name" onChange={e => row.setValue(e.target.value)} />
-        <input id="wallType" type="text" placeholder="Wall Type"  onChange={e => row.data.wallType = e.target.value} />
+        <input id="wallType" type="text" placeholder="Wall Type" onChange={e => row.data.wallType = e.target.value} />
       </div>
     )
   }
@@ -128,13 +127,20 @@ const ProductionScheduleChart = (props) => {
 
   const onRowInit = (row) => {
     row.data.groupIndex = shops.length;
-    row.data.jobName = "job name";
-    row.data.wallType = "wall type";
+    row.data.jobName = "";
+    row.data.wallType = "";
+    row.data.units = 0;
+    row.data.unitsPerWeek = 0;
+    row.data.emps = 0;
     row.data.weeks = 0;
+    row.data.weeksToGoBack = 14;
   }
 
   return (
     <div>
+      <input type="checkbox" style={{ width: "30px" }} id="expand" name="expand" value={expanded} onChange={() => setExpanded(!expanded)} />
+      <label htmlFor="expand">Expand All</label>
+
       <Accordion>
         <AccordionSummary
           expandIcon={<ExpandMoreIcon />}
@@ -145,10 +151,6 @@ const ProductionScheduleChart = (props) => {
         </AccordionSummary>
         <AccordionDetails>
           <Grid container direction="column">
-            <Grid item>
-              <input type="checkbox" style={{ width: "30px" }} id="expand" name="expand" defaultChecked value={expanded} onChange={() => setExpanded(!expanded)} />
-              <label htmlFor="expand">Expand All</label>
-            </Grid>
             <Grid item>
               <DataGrid
                 dataSource={shops}
@@ -237,7 +239,6 @@ const ProductionScheduleChart = (props) => {
         </AccordionDetails>
       </Accordion>
 
-
       <DataGrid
         dataSource={jobs}
         showRowLines
@@ -263,7 +264,6 @@ const ProductionScheduleChart = (props) => {
         <SearchPanel visible highlightCaseSensitive={false} />
         <Grouping autoExpandAll={expanded} />
         <LoadPanel enabled showIndicator />
-        {/* <GroupPanel visible /> */}
 
         <Editing
           mode="cell"
@@ -287,7 +287,7 @@ const ProductionScheduleChart = (props) => {
           calculateGroupValue="groupKey"
           groupCellRender={row => {
             const shop = shops.find(shop => row.value === shop.__KEY__);
-            return shop && <div style={{ borderRadius: "10px", backgroundColor: shop.colorkey, padding: "15px", color: shop.fontColor }}><p style={{ fontSize: '20px' }}>{shop.shop}</p>  <p style={{ fontSize: '15px' }}>Units: {row.summaryItems[0].value} | Units Per Week: {row.summaryItems[1].value} | Employees: {row.summaryItems[2].value}</p></div>
+            return shop && <div style={{ borderRadius: "10px", backgroundColor: shop.colorkey, padding: "15px", color: shop.fontColor }}><p style={{ fontSize: '20px' }}>{shop.shop}</p>  <p style={{ fontSize: '15px' }}>Units: {row.summaryItems[0].value} | Units Per Week: {row.summaryItems[2].value} | Employees: {row.summaryItems[1].value}</p></div>
           }}
         />
 
@@ -388,9 +388,7 @@ const ProductionScheduleChart = (props) => {
           allowEditing={false}
           calculateCellValue={row => {
             if (row.weeks) {
-              let time = row.weeks * 7 * 24 * 60 * 60 * 1000;
-              time = row.start && row.start.getTime() + time;
-              row.end = new Date(time);
+              row.end = addDays(row.start, row.weeks);
               return row.end;
             }
           }}
