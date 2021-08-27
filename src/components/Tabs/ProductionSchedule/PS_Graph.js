@@ -25,7 +25,7 @@ const sources = [
 
 const Graph = (props) => {
   const { data, toMondayDate, addDays } = props;
-  const [ state, setState ] = React.useState({});
+  const [ state, setState ] = useState({});
   const [ graphData, setGraphData ] = useState([]);
 
   const jobs = data.jobs ? data.jobs : [];
