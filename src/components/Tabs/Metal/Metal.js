@@ -1,5 +1,5 @@
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import DataGrid, {
   Column,
   Grouping,
@@ -21,7 +21,7 @@ import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import Grid from '@material-ui/core/Grid';
 
 const Metal = (props) => {
-  const { data, handleUpdate, toMS, toWeeks, toMondayDate } = props;
+  const { data, handleUpdate, toWeeks, toMondayDate, addDays } = props;
   const [metalData, setMetalData] = useState([]);
   const [expanded, setExpanded] = useState(true);
   const [today, setToday] = useState(new Date());
@@ -36,9 +36,7 @@ const Metal = (props) => {
   }, [ data ])
 
   const convertToDate = (value) => {
-    let thisMonday = today.getTime() + toMS(1 - today.getDay())
-    let date = (value * 7);
-    date = new Date(toMS(date) + thisMonday);
+    let date = addDays(toMondayDate(today), value * 7);
     return date.toLocaleDateString();
   }
 
@@ -60,18 +58,13 @@ const Metal = (props) => {
     newJobs.forEach(job => {
       job.fieldStart = new Date(job.fieldStart);
       job.start = new Date(job.start);
-      job.offsets = [];
-      for (let w = 0; w <= job.weeks; w++) {
-        job.offsets.push((job.offset + w).toString());
-      }
     })
 
     setMetalData(newJobs);
 
     metal.forEach(row => {
-      let job = newJobs.findIndex(j => j.jobName === row.jobName)
+      let job = newJobs.findIndex(j => j.jobName === row.jobName);
       if (job != -1) {
-
         newJobs[job][toOffset(toMondayDate(new Date(row.weekStart))).toString()] = row.lbs;
       }
     })
@@ -95,8 +88,11 @@ const Metal = (props) => {
     let headerColor = cell.rowType === "data" && colorEntry ? colorEntry.colorkey : "white";
 
     if (cell.data && cell.data.offsets) {
-      let isDate = cell.data.offsets.includes(cell.column.dataField.toString());
+      let offset = toWeeks(jobs[0].start, cell.data.start);
+      cell.data.offset = offset
 
+      let isDate = parseInt(cell.column.dataField) >= offset && parseInt(cell.column.dataField) <= offset + cell.data.weeks;
+      
       if (isDate) {
         cell.cellElement.style.backgroundColor = headerColor;
       }
@@ -165,7 +161,7 @@ const Metal = (props) => {
                 />
 
                 <Grouping autoExpandAll={expanded} />
-                {/* <LoadPanel enabled showIndicator /> */}
+                <LoadPanel enabled showIndicator />
 
                 <Column type="buttons">
                   <Button name="delete" />

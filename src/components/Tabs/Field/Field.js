@@ -1,25 +1,18 @@
 
-import React, { useState, useRef, useEffect } from 'react';
-import Spinner from '../../UI/Spinner';
-import CheckBox from "devextreme/ui/check_box";
+import React, { useState, useEffect } from 'react';
 import DataGrid, {
   Column,
   Grouping,
-  GroupPanel,
   LoadPanel,
   SearchPanel,
   Summary,
   TotalItem,
-  GroupItem,
   Sorting,
-  SortByGroupSummaryInfo,
   Editing,
   Button,
   RequiredRule,
   Lookup
 } from 'devextreme-react/data-grid';
-import axios from 'axios';
-import { makeStyles } from '@material-ui/core/styles';
 import Accordion from '@material-ui/core/Accordion';
 import AccordionSummary from '@material-ui/core/AccordionSummary';
 import AccordionDetails from '@material-ui/core/AccordionDetails';
@@ -28,27 +21,28 @@ import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import Grid from '@material-ui/core/Grid';
 
 const Field = (props) => {
-  const { field, jobsites, jobs, shops, toMS, toDays, toWeeks, toMondayDate, handleUpdate, rowInserted, rowUpdated, rowRemoved } = props;
+  const { data, handleUpdate, toWeeks, toMondayDate, addDays } = props;
   const [expanded, setExpanded] = useState(true);
-  const [data, setData] = useState([]);
+  const [fieldData, setFieldData] = useState([]);
   const [today, setToday] = useState(new Date());
   const [columns, setColumns] = useState([]);
   const [totalEmps, setTotalEmps] = useState(0);
-  const datagrid = useRef(null);
+
+  const jobs = data.jobs ? data.jobs : [];
+  const jobsites = data.jobsites ? data.jobsites : [];
+  const field = data.field ? data.field : [];
 
   useEffect(() => {
     calculateForOffSets();
-  }, [field])
+  }, [ data ]);
 
   const convertToDate = (value) => {
-    let thisMonday = today.getTime() + toMS(1 - today.getDay())
-    let date = (value * 7);
-    date = new Date(toMS(date) + thisMonday);
+    let date = addDays(toMondayDate(today), value * 7);
     return date.toLocaleDateString();
   }
 
   const toOffset = (date) => {
-    return toWeeks(jobs[0].start, date);
+    return toWeeks(toMondayDate(jobs[0].start), toMondayDate(date));
   }
 
   const calculateForOffSets = () => {
@@ -67,7 +61,7 @@ const Field = (props) => {
       job.start = new Date(job.start);
     })
 
-    setData(newJobs);
+    setFieldData(newJobs);
 
     let total = 0;
 
@@ -84,17 +78,6 @@ const Field = (props) => {
     setColumns(newCols);
   }
 
-  const jobsiteUpdated = (row) => {
-    axios.put(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/jobsites/${row.data.__KEY__}.json`, row.data)
-    .catch(error => console.log(error))
-  }
-
-  const jobsiteRemoved = (row) => {
-    axios.delete(`https://ww-production-schedule-default-rtdb.firebaseio.com/data/jobsites/${row.data.__KEY__}.json`)
-    .catch(error => console.log(error))
-  }
-
-
   const jobWallCell = (row) => {
     return (
       <div>
@@ -106,9 +89,6 @@ const Field = (props) => {
   }
 
   const cellPrepared = (cell) => {
-    let colorEntry = cell.rowType === "data" ? shops.find(shop => shop.__KEY__ === cell.data.groupKey) : "";
-    let headerColor = cell.rowType === "data" && colorEntry ? colorEntry.colorkey : "white";
-
     if (cell.data) {
       let isDate = typeof cell.data[cell.column.dataField] === "number";
 
@@ -126,6 +106,15 @@ const Field = (props) => {
       }
     }
   }
+
+  const rowUpdatedHandler = (rowData) => {
+    const newData = { ...data, field: field, jobsites: jobsites };
+
+    rowData.component.beginCustomLoading();
+    handleUpdate(newData).then((response) =>
+      rowData.component.endCustomLoading()
+    );
+  };
 
   return (
     <div style={{ margin: "3vw" }}>
@@ -145,7 +134,7 @@ const Field = (props) => {
               <label htmlFor="expand">Expand All</label>
             </Grid>
 
-            <Grid item style={{marginTop: "20px"}}>
+            <Grid item style={{ marginTop: "20px" }}>
 
               <Accordion>
                 <AccordionSummary
@@ -168,9 +157,9 @@ const Field = (props) => {
                     wordWrapEnabled
                     autoExpandAll
                     highlightChanges
-                    onRowUpdated={jobsiteUpdated}
-                    onRowRemoved={jobsiteRemoved}
-                    onRowInserted={jobsiteUpdated}
+                    onRowUpdated={rowUpdatedHandler}
+                    onRowRemoved={rowUpdatedHandler}
+                    onRowInserted={rowUpdatedHandler}
                   >
                     <Editing
                       mode="cell"
@@ -207,9 +196,9 @@ const Field = (props) => {
                 wordWrapEnabled
                 autoExpandAll
                 highlightChanges
-                onRowUpdated={rowUpdated}
-                onRowRemoved={rowRemoved}
-                onRowInserted={rowInserted}
+                onRowUpdated={rowUpdatedHandler}
+                onRowRemoved={rowUpdatedHandler}
+                onRowInserted={rowUpdatedHandler}
               >
                 <Editing
                   mode="cell"
@@ -307,7 +296,7 @@ const Field = (props) => {
       </Accordion>
 
       <DataGrid
-        dataSource={data}
+        dataSource={fieldData}
         showRowLines
         columnAutoWidth
         autoExpandAll
@@ -318,7 +307,6 @@ const Field = (props) => {
         wordWrapEnabled
         showColumnLines={true}
         onCellPrepared={cellPrepared}
-        ref={datagrid}
       >
 
         <SearchPanel visible highlightCaseSensitive={false} />
@@ -365,7 +353,7 @@ const Field = (props) => {
           caption="Avg. # of Employees"
           alignment="center"
           calculateCellValue={row => {
-            let cols = datagrid.current.instance.getVisibleColumns().slice(5).filter(col => row[col.dataField]).map(col => row[col.dataField]);
+            let cols = columns.filter(col => row[col.offset.toString()]).map(col => row[col.offset.toString()]);
             const rowTotal = cols.length > 0 ? cols.reduce((total, col) => total + col) : 0;
             const avgEmployees = rowTotal > 0 ? Math.ceil(rowTotal / cols.length) : 0;
             return avgEmployees;
