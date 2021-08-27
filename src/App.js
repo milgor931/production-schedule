@@ -46,11 +46,11 @@ const App = () => {
 
     useEffect(() => {
 
-        axios.get(`https://ww-production-schedule-default-rtdb.firebaseio.com/data.json`)
+        axios.get(`https://functions-ww.azurewebsites.net/api/ListProductionSchedule`)
             .then(response => {
                 if (response.data) {
-                    // let newData = JSON.parse(response.data) ;
-                    let newData = { ...response.data }
+                    let newData = JSON.parse(response.data) ;
+                
                     newData = { ...newData, jobs: convertDates(newData.jobs) }
                     setData(newData);
                 }
@@ -115,7 +115,7 @@ const App = () => {
         let newState = JSON.stringify(newData);
 
         let response = await axios
-            .put(`https://ww-production-schedule-default-rtdb.firebaseio.com/data.json`, newData)
+            .post(`https://functions-ww.azurewebsites.net/api/UpdateProductionSchedule`, newState)
             .then((result) => {
                 setData(newData);
                 // setOpenNotification({

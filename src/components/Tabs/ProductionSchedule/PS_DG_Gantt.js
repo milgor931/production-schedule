@@ -69,7 +69,7 @@ const ProductionScheduleGantt = (props) => {
       if (isDate) {
         cell.cellElement.style.backgroundColor = headerColor;
       }
-      if (cell.data.booked && cell.data.engineering && (cell.columnIndex <= 4 || isDate)) {
+      if (cell.data.booked && cell.data.engineering && (cell.columnIndex <= 4)) {
         cell.cellElement.style.backgroundColor = "#edada6";
       }
       if (!cell.data.booked && (cell.columnIndex <= 4 || isDate)) {

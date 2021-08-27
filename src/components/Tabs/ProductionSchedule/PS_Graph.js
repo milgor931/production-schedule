@@ -17,7 +17,6 @@ import {
   Label,
 } from 'devextreme-react/chart';
 import { Typography } from '@material-ui/core';
-import { addDays } from 'date-fns';
 
 const sources = [
   { value: 'units', name: 'Units' },
